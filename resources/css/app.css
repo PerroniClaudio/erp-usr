@@ -1,11 +1,65 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/vendor/pagination/*.blade.php';
+
 @source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source "../**/*.blade.php";
+@source "../**/*.js";
+@source "../**/*.vue";
+@source "../views";
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+    name: "mytheme";
+    default: true; /* set as default */
+    prefersdark: true; /* set as default dark mode (prefers-color-scheme:dark) */
+    color-scheme: dark; /* color of browser-provided UI */
+
+    --color-base-100: #1d232a;
+    --color-base-200: #191e24;
+    --color-base-300: #15191e;
+    --color-base-content: #e8e8e3;
+    --color-primary: #e73028;
+    --color-primary-content: #130101;
+    --color-secondary: #437f97;
+    --color-secondary-content: #010608;
+    --color-accent: #00cdb8;
+    --color-accent-content: #000f0c;
+    --color-neutral: oklch(50% 0.05 240);
+    --color-neutral-content: oklch(98% 0.01 240);
+    --color-info: oklch(70% 0.2 220);
+    --color-info-content: oklch(98% 0.01 220);
+    --color-success: oklch(65% 0.25 140);
+    --color-success-content: oklch(98% 0.01 140);
+    --color-warning: oklch(80% 0.25 80);
+    --color-warning-content: oklch(20% 0.05 80);
+    --color-error: oklch(65% 0.3 30);
+    --color-error-content: oklch(98% 0.01 30);
+
+    /* border radius */
+    --radius-selector: 1rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
+
+    /* base sizes */
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+
+    /* border size */
+    --border: 1px;
+
+    /* effects */
+    --depth: 0;
+    --noise: 0;
+}
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+body {
+    min-height: 100vh;
 }
