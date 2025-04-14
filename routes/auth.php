@@ -29,6 +29,8 @@ Route::get('/auth/microsoft/callback', function () {
             'provider' => 'microsoft',
         ]);
 
+        $newUser->assignRole('standard'); // Assign the 'standard' role to the new user
+
         Auth::login($newUser);
     }
 

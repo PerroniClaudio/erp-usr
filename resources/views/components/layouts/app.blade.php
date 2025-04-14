@@ -22,18 +22,18 @@
         <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
         <div class="drawer-content flex flex-col">
             <!-- Page content here -->
-            <div class="flex p-2">
+            <div class="container mx-auto flex p-4">
                 <label for="my-drawer-2" class="btn btn-outline border-base-200 drawer-button lg:hidden">
                     <x-lucide-menu class="h-6 w-6" />
                 </label>
             </div>
-            <main class="flex flex-col gap-4">
+            <main class="container mx-auto flex flex-col gap-4 px-4 pb-16">
                 {{ $slot }}
             </main>
         </div>
-        <div class="drawer-side">
+        <div class="drawer-side z-50">
             <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
-            <ul class="menu bg-base-300 text-base-content min-h-full w-80 p-4">
+            <ul class="menu bg-base-300 text-base-content min-h-full w-80 p-4 ">
                 <!-- Sidebar content here -->
                 <li>
                     <a href="">
@@ -44,7 +44,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="">
+                    <a href="{{ route('attendances.index') }}">
                         <div class="flex items-center">
                             <x-lucide-calendar class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.attendances') }}</span>
@@ -78,6 +78,39 @@
                 </li>
             </ul>
         </div>
+    </div>
+
+    <div class="fixed top-4 right-4 z-50">
+        @if (session('success'))
+            <div class="alert alert-success shadow-lg cursor-pointer">
+                <div class="flex items-center gap-1">
+                    <x-lucide-check-circle class="h-6 w-6" />
+                    <span>{{ session('success') }}</span>
+                </div>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-error shadow-lg cursor-pointer">
+                <div class="flex items-center gap-1">
+                    <x-lucide-alert-circle class="h-6 w-6" />
+                    <span>{{ session('error') }}</span>
+                </div>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-error shadow-lg cursor-pointer">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li class="flex items-center gap-1">
+                            <x-lucide-alert-circle class="h-6 w-6" />
+                            {{ $error }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
     </div>
 
     @stack('scripts')
