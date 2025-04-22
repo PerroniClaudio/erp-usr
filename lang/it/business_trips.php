@@ -1,0 +1,30 @@
+<?php
+
+return [
+    'business_trips' => 'Trasferte',
+    'business_trip' => 'Trasferta',
+    'business_trip_create' => 'Crea Trasferta',
+    'business_trip_edit' => 'Modifica Trasferta',
+    'business_trip_delete' => 'Elimina Trasferta',
+    'business_trip_delete_confirm' => 'Sei sicuro di voler eliminare questa trasferta?',
+    'id' => 'ID',
+    'code' => 'Codice',
+    'date_from' => 'Data Inizio',
+    'date_to' => 'Data Fine',
+    'status' => 'Stato',
+    'actions' => 'Azioni',
+    'no_records' => 'Nessun record trovato',
+    'save' => 'Salva',
+    'confirm_delete' => 'Conferma Eliminazione',
+    'business_trip_expenses' => 'Spese Trasferta',
+
+    'company' => 'Azienda',
+    'date' => 'Data',
+    'address' => 'Indirizzo',
+    'payment_type' => 'Tipo di Pagamento',
+    'expense_type' => 'Tipo di Spesa',
+    'amount' => 'Importo',
+    'new_expense' => 'Nuova Spesa',
+
+
+];

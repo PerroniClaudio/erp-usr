@@ -45,6 +45,7 @@
                 </li>
                 <li>
                     <a href="{{ route('attendances.index') }}">
+
                         <div class="flex items-center">
                             <x-lucide-calendar class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.attendances') }}</span>
@@ -52,7 +53,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="">
+                    <a href="{{ route('business-trips.index') }}">
+
                         <div class="flex items-center">
                             <x-lucide-car class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.business_trips') }}</span>

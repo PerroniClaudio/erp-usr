@@ -13,7 +13,7 @@ let calendar = new Calendar(calendarEl, {
     events: function (fetchInfo, successCallback, failureCallback) {
         let page = new Date(fetchInfo.start).getMonth() + 1; // Use the month as the page number
         fetch(
-            `/user-attendances?page=${page}&start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`
+            `/standard/attendances/user?page=${page}&start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`
         )
             .then((response) => response.json())
             .then((data) => {
@@ -24,7 +24,7 @@ let calendar = new Calendar(calendarEl, {
             });
     },
     eventClick: function (info) {
-        window.location.href = `/attendances/${info.event.id}/edit`;
+        window.location.href = `/standard/attendances/${info.event.id}/edit`;
     },
 });
 calendar.render();

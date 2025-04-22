@@ -8,7 +8,7 @@
 
     <hr>
 
-    <div class="card bg-base-200 ">
+    <div class="card bg-base-300 ">
         <form class="card-body" method="POST" action="{{ route('attendances.store') }}">
             @csrf
             <fieldset class="fieldset">
