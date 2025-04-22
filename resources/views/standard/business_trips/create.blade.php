@@ -22,7 +22,6 @@
                         </option>
                     @endforeach
                 </select>
-
             </fieldset>
 
             <fieldset class="fieldset">
