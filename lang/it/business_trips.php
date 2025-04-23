@@ -25,6 +25,7 @@ return [
     'expense_type' => 'Tipo di Spesa',
     'amount' => 'Importo',
     'new_expense' => 'Nuova Spesa',
+    'edit_expense' => 'Modifica Spesa',
 
 
 ];

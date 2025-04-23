@@ -17,9 +17,9 @@
                     <tr>
                         <th>{{ __('business_trips.id') }}</th>
                         <th>{{ __('business_trips.code') }}</th>
-                        <th>{{ __('business_trips.date_from') }}</th>
-                        <th>{{ __('business_trips.date_to') }}</th>
-                        <th>{{ __('business_trips.status') }}</th>
+                        <th class="hidden lg:table-cell">{{ __('business_trips.date_from') }}</th>
+                        <th class="hidden lg:table-cell">{{ __('business_trips.date_to') }}</th>
+                        <th class="hidden lg:table-cell">{{ __('business_trips.status') }}</th>
                         <th>{{ __('business_trips.actions') }}</th>
                     </tr>
                 </thead>
@@ -28,13 +28,13 @@
                         <tr>
                             <td>{{ $businessTrip->id }}</td>
                             <td>{{ $businessTrip->code }}</td>
-                            <td>
+                            <td class="hidden lg:table-cell">
                                 {{ \Carbon\Carbon::parse($businessTrip->date_from)->format('d/m/Y') }}
                             </td>
-                            <td>
+                            <td class="hidden lg:table-cell">
                                 {{ \Carbon\Carbon::parse($businessTrip->date_to)->format('d/m/Y') }}
                             </td>
-                            <td>{{ $businessTrip->status }}</td>
+                            <td class="hidden lg:table-cell">{{ $businessTrip->status }}</td>
 
                             <td>
                                 <a href="{{ route('business-trips.edit', $businessTrip) }}"
