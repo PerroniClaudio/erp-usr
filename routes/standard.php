@@ -28,13 +28,22 @@ Route::group([
     Route::get('/{businessTrip}/edit', [BusinessTripController::class, 'edit'])->name('business-trips.edit');
     Route::put('/{businessTrip}', [BusinessTripController::class, 'update'])->name('business-trips.update');
     Route::delete('/{businessTrip}', [BusinessTripController::class, 'destroy'])->name('business-trips.destroy');
+    Route::get('/validate-address', [BusinessTripController::class, 'validateAddress'])->name('business-trips.validate-address');
 
     /** Spese */
-    Route::get('/validate-address', [BusinessTripController::class, 'validateAddress'])->name('business-trips.validate-address');
     Route::get('/{businessTrip}/expenses', [BusinessTripController::class, 'expenses'])->name('business-trips.expenses');
     Route::get('/{businessTrip}/expenses/create', [BusinessTripController::class, 'createExpense'])->name('business-trips.expenses.create');
     Route::post('/{businessTrip}/expenses', [BusinessTripController::class, 'storeExpense'])->name('business-trips.expenses.store');
     Route::get('/{businessTrip}/expenses/{expense}/edit', [BusinessTripController::class, 'editExpense'])->name('business-trips.expenses.edit');
     Route::put('/{businessTrip}/expenses/{expense}', [BusinessTripController::class, 'updateExpense'])->name('business-trips.expenses.update');
     Route::delete('/{businessTrip}/expenses/{expense}', [BusinessTripController::class, 'destroyExpense'])->name('business-trips.expenses.destroy');
+
+
+    /** Spostamenti */
+    Route::get('/{businessTrip}/transfers', [BusinessTripController::class, 'transfers'])->name('business-trips.transfers');
+    Route::get('/{businessTrip}/transfers/create', [BusinessTripController::class, 'createTransfer'])->name('business-trips.transfers.create');
+    Route::post('/{businessTrip}/transfers', [BusinessTripController::class, 'storeTransfer'])->name('business-trips.transfers.store');
+    Route::get('/{businessTrip}/transfers/{transfer}/edit', [BusinessTripController::class, 'editTransfer'])->name('business-trips.transfers.edit');
+    Route::put('/{businessTrip}/transfers/{transfer}', [BusinessTripController::class, 'updateTransfer'])->name('business-trips.transfers.update');
+    Route::delete('/{businessTrip}/transfers/{transfer}', [BusinessTripController::class, 'destroyTransfer'])->name('business-trips.transfers.destroy');
 });

@@ -123,6 +123,10 @@ class BusinessTripController extends Controller {
         return back()->with('success', 'Trasferta eliminata con successo');
     }
 
+    /**
+     * * SPESE *
+     */
+
     public function getExpenses(BusinessTrip $businessTrip) {
         $expenses = BusinessTripExpense::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
 
@@ -171,7 +175,6 @@ class BusinessTripController extends Controller {
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Spesa aggiornata con successo');
     }
 
-
     public function storeExpense(BusinessTrip $businessTrip, Request $request) {
 
         $fields = $request->validate([
@@ -214,6 +217,29 @@ class BusinessTripController extends Controller {
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Spesa eliminata con successo');
     }
 
+    /**
+     * * TRASFERIMENTI *
+     */
+
+    public function createTransfer(BusinessTrip $businessTrip) {
+        $companies = Auth::user()->companies;
+
+        return view('standard.business_trips.transfers.create', [
+            'businessTrip' => $businessTrip,
+            'companies' => $companies,
+        ]);
+    }
+
+    public function editTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer) {
+        $companies = Auth::user()->companies;
+
+        return view('standard.business_trips.transfers.edit', [
+            'businessTrip' => $businessTrip,
+            'transfer' => $transfer,
+            'companies' => $companies,
+        ]);
+    }
+
     public function getTransfers(BusinessTrip $businessTrip) {
         $transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
 
@@ -224,12 +250,21 @@ class BusinessTripController extends Controller {
 
     public function storeTransfer(BusinessTrip $businessTrip, Request $request) {
 
-
+        $fields = $request->validate([
+            'company_id' => 'required|integer',
+            'date' => 'required|date',
+            'address' => 'required|string',
+            'city' => 'required|string',
+            'province' => 'required|string',
+            'zip_code' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+        ]);
 
         $transfer = BusinessTripTransfer::create([
             'business_trip_id' => $businessTrip->id,
             'company_id' => $request->company_id,
-            'date' => $request->datetime,
+            'date' => $request->date,
             'address' => $request->address,
             'city' => $request->city,
             'province' => $request->province,
@@ -238,7 +273,32 @@ class BusinessTripController extends Controller {
             'longitude' => $request->longitude,
         ]);
 
-        return back()->with('success', 'Trasferimento aggiunto con successo');
+        return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento aggiunto con successo');
+    }
+
+    public function updateTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer, Request $request) {
+
+        $fields = $request->validate([
+            'company_id' => 'required|integer',
+            'date' => 'required|date',
+            'address' => 'required|string',
+            'city' => 'required|string',
+            'province' => 'required|string',
+            'zip_code' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+        ]);
+
+        $transfer->update($fields);
+
+        return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento aggiornato con successo');
+    }
+
+    public function destroyTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer) {
+
+        $transfer->delete();
+
+        return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento eliminato con successo');
     }
 
     /**

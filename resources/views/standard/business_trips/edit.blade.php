@@ -64,6 +64,7 @@
         <div class="col-span-1 lg:col-span-3">
             <div class="flex flex-col gap-4">
                 <x-business_trips.expenses :businessTrip="$businessTrip" :expenses="$expenses" />
+                <x-business_trips.transfers :businessTrip="$businessTrip" :transfers="$transfers" />
             </div>
         </div>
 

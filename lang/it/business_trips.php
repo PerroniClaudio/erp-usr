@@ -17,7 +17,6 @@ return [
     'save' => 'Salva',
     'confirm_delete' => 'Conferma Eliminazione',
     'business_trip_expenses' => 'Spese Trasferta',
-
     'company' => 'Azienda',
     'date' => 'Data',
     'address' => 'Indirizzo',
@@ -26,6 +25,9 @@ return [
     'amount' => 'Importo',
     'new_expense' => 'Nuova Spesa',
     'edit_expense' => 'Modifica Spesa',
-
-
+    'business_trip_transfers' => 'Trasferimenti Trasferta',
+    'new_transfer' => 'Nuovo Trasferimento',
+    'edit_transfer' => 'Modifica Trasferimento',
+    'no_expenses' => 'Nessuna spesa trovata',
+    'no_transfers' => 'Nessun trasferimento trovato',
 ];

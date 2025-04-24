@@ -37,11 +37,9 @@
                             <td class="hidden lg:table-cell">{{ $businessTrip->status }}</td>
 
                             <td>
-                                <a href="{{ route('business-trips.edit', $businessTrip) }}"
-                                    class="text-blue-500 hover:underline">
-                                    <div class="btn btn-secondary">
-                                        <x-lucide-pencil class="w-4 h-4 mr-1" />
-
+                                <a href="{{ route('business-trips.edit', $businessTrip) }}">
+                                    <div class="btn btn-primary">
+                                        <x-lucide-pencil class="w-4 h-4" />
                                     </div>
                                 </a>
 
@@ -51,7 +49,7 @@
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-warning"
                                         onclick="return confirm('{{ __('business_trips.confirm_delete') }}')">
-                                        <x-lucide-trash-2 class="w-4 h-4 mr-1" />
+                                        <x-lucide-trash-2 class="w-4 h-4" />
                                     </button>
                                 </form>
                             </td>

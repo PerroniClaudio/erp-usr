@@ -1,16 +1,16 @@
 @props([
     'businessTrip' => null,
-    'expenses' => [],
+    'transfers' => [],
 ])
 
 <div class="card bg-base-300 max-w-full">
     <div class="card-body">
         <div class="flex items-center justify-between">
             <h2 class="text-xl">
-                {{ __('business_trips.business_trip_expenses') }}
+                {{ __('business_trips.business_trip_transfers') }}
             </h2>
 
-            <a href="{{ route('business-trips.expenses.create', [
+            <a href="{{ route('business-trips.transfers.create', [
                 'businessTrip' => $businessTrip->id,
             ]) }}"
                 class="btn btn-primary">
@@ -28,48 +28,39 @@
                         <th class="hidden lg:table-cell">{{ __('business_trips.company') }}</th>
                         <th>{{ __('business_trips.date') }}</th>
                         <th class="hidden lg:table-cell">{{ __('business_trips.address') }}</th>
-                        <th class="hidden lg:table-cell">{{ __('business_trips.payment_type') }}</th>
-                        <th class="hidden lg:table-cell">{{ __('business_trips.expense_type') }}</th>
-                        <th>{{ __('business_trips.amount') }}</th>
                         <th>{{ __('business_trips.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @unless ($expenses->count())
+                    @unless ($transfers->count())
                         <tr>
                             <td colspan="8" class="text-center">
-                                {{ __('business_trips.no_expenses') }}
+                                {{ __('business_trips.no_transfers') }}
                             </td>
                         </tr>
                     @endunless
-                    @foreach ($expenses as $expense)
+                    @foreach ($transfers as $transfer)
                         <tr>
-                            <td>{{ $expense->id }}</td>
+                            <td>{{ $transfer->id }}</td>
                             <td class="hidden lg:table-cell">
-                                {{ $expense->company ? $expense->company->name : '-' }}
+                                {{ $transfer->company ? $transfer->company->name : '-' }}
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($expense->date)->format('d/m/Y') }}</td>
-                            <td class="hidden lg:table-cell">{{ $expense->address }}</td>
-                            <td class="hidden lg:table-cell">
-                                {{ $expense->paymentType() }}
-                            </td>
-                            <td class="hidden lg:table-cell">
-                                {{ $expense->expenseType() }}
-                            </td>
-                            <td>{{ number_format($expense->amount, 2, ',', '.') }} €</td>
+                            <td>{{ \Carbon\Carbon::parse($transfer->date)->format('d/m/Y') }}</td>
+                            <td class="hidden lg:table-cell">{{ $transfer->address }}</td>
+
                             <td>
-                                <a href="{{ route('business-trips.expenses.edit', [
+                                <a href="{{ route('business-trips.transfers.edit', [
                                     'businessTrip' => $businessTrip->id,
-                                    'expense' => $expense->id,
+                                    'transfer' => $transfer->id,
                                 ]) }}"
                                     class="btn btn-sm btn-primary">
                                     <x-lucide-pencil class="w-4 h-4" />
                                 </a>
 
                                 <form
-                                    action="{{ route('business-trips.expenses.destroy', [
+                                    action="{{ route('business-trips.transfers.destroy', [
                                         'businessTrip' => $businessTrip->id,
-                                        'expense' => $expense->id,
+                                        'transfer' => $transfer->id,
                                     ]) }}"
                                     method="POST" class="inline-block"
                                     onsubmit="return confirm('{{ __('business_trips.confirm_delete') }}');">
