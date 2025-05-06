@@ -55,9 +55,10 @@ Route::group([
 ], function () {
     Route::get('/', [TimeOffRequestController::class, 'index'])->name('time-off-requests.index');
     Route::get('/user', [TimeOffRequestController::class, 'getUserRequests'])->name('time-off-requests.user-requests');
+    Route::get('/estimate-days', [TimeOffRequestController::class, 'estimateDays'])->name('time-off-requests.estimate-days');
     Route::get('/create', [TimeOffRequestController::class, 'create'])->name('time-off-requests.create');
-    Route::post('/', [TimeOffRequestController::class, 'store'])->name('time-off-requests.store');
-    Route::get('/{timeOffRequest}/edit', [TimeOffRequestController::class, 'edit'])->name('time-off-requests.edit');
+    Route::post('/', [TimeOffRequestController::class, 'storeBatch'])->name('time-off-requests.store');
+    Route::get('/{batch_id}/edit', [TimeOffRequestController::class, 'edit'])->name('time-off-requests.edit');
     Route::put('/{timeOffRequest}', [TimeOffRequestController::class, 'update'])->name('time-off-requests.update');
     Route::delete('/{timeOffRequest}', [TimeOffRequestController::class, 'destroy'])->name('time-off-requests.destroy');
 });

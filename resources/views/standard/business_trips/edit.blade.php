@@ -2,7 +2,6 @@
 
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('business_trips.business_trip_edit') }}</h1>
-
     </div>
 
     <hr>
