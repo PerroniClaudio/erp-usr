@@ -13,9 +13,6 @@
         <div id="calendar" class="max-w-full"></div>
     </div>
 
-
-
-
     @push('scripts')
         @vite('resources/js/attedances.js')
     @endpush

@@ -62,16 +62,17 @@
                     </a>
                 </li>
 
-                <li>
+                {{-- <li>
                     <a href="">
                         <div class="flex items-center">
                             <x-lucide-wallet class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.expenses') }}</span>
                         </div>
                     </a>
-                </li>
+                </li> --}}
+
                 <li class="">
-                    <a href="">
+                    <a href="{{ route('time-off-requests.index') }}">
                         <div class="flex items-center">
                             <x-lucide-sun class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.time_off') }}</span>

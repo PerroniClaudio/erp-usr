@@ -34,7 +34,7 @@
                             <td class="hidden lg:table-cell">
                                 {{ \Carbon\Carbon::parse($businessTrip->date_to)->format('d/m/Y') }}
                             </td>
-                            <td class="hidden lg:table-cell">{{ $businessTrip->status }}</td>
+                            <td class="hidden lg:table-cell">{{ $businessTrip->getStatus() }}</td>
 
                             <td>
                                 <a href="{{ route('business-trips.edit', $businessTrip) }}">

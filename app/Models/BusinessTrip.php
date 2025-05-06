@@ -27,4 +27,8 @@ class BusinessTrip extends Model {
     public function transfers() {
         return $this->hasMany(BusinessTripTransfer::class);
     }
+
+    public function getStatus() {
+        return $this->status == 0 ? __('business_trips.status_0') : __('business_trips.status_1');
+    }
 }

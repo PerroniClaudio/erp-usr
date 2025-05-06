@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BusinessTripController;
+use App\Http\Controllers\TimeOffRequestController;
 
 Route::group([
     'middleware' => ['auth', 'role:standard'],
@@ -46,4 +47,17 @@ Route::group([
     Route::get('/{businessTrip}/transfers/{transfer}/edit', [BusinessTripController::class, 'editTransfer'])->name('business-trips.transfers.edit');
     Route::put('/{businessTrip}/transfers/{transfer}', [BusinessTripController::class, 'updateTransfer'])->name('business-trips.transfers.update');
     Route::delete('/{businessTrip}/transfers/{transfer}', [BusinessTripController::class, 'destroyTransfer'])->name('business-trips.transfers.destroy');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:standard'],
+    'prefix' => 'standard/time-off-requests',
+], function () {
+    Route::get('/', [TimeOffRequestController::class, 'index'])->name('time-off-requests.index');
+    Route::get('/user', [TimeOffRequestController::class, 'getUserRequests'])->name('time-off-requests.user-requests');
+    Route::get('/create', [TimeOffRequestController::class, 'create'])->name('time-off-requests.create');
+    Route::post('/', [TimeOffRequestController::class, 'store'])->name('time-off-requests.store');
+    Route::get('/{timeOffRequest}/edit', [TimeOffRequestController::class, 'edit'])->name('time-off-requests.edit');
+    Route::put('/{timeOffRequest}', [TimeOffRequestController::class, 'update'])->name('time-off-requests.update');
+    Route::delete('/{timeOffRequest}', [TimeOffRequestController::class, 'destroy'])->name('time-off-requests.destroy');
 });

@@ -30,4 +30,6 @@ return [
     'edit_transfer' => 'Modifica Trasferimento',
     'no_expenses' => 'Nessuna spesa trovata',
     'no_transfers' => 'Nessun trasferimento trovato',
+    'status_0' => 'Aperto',
+    'status_1' => 'Chiuso',
 ];

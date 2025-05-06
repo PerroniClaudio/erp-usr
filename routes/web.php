@@ -10,5 +10,7 @@ Route::get('/home', function () {
     return view('home');
 })->middleware(['auth'])->name('home');
 
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/standard.php';
+require __DIR__ . '/test.php';
