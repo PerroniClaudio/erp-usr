@@ -314,6 +314,7 @@ class TimeOffRequestController extends Controller {
         return view('standard.time_off_requests.edit', [
             'requests' => $requests,
             'types' => $types,
+            'batch_id' => $batch_id,
         ]);
     }
 
@@ -333,7 +334,7 @@ class TimeOffRequestController extends Controller {
         return redirect()->route('time-off-requests.index')->with('success', 'Richiesta di permesso aggiornata con successo');
     }
 
-    public function updateBatch(Request $request) {
+    public function updateBatch(Request $request, $batch_id) {
         $user = $request->user();
         $requests = json_decode($request->requests);
 
@@ -343,6 +344,7 @@ class TimeOffRequestController extends Controller {
             $fields = [
                 'date_from' => $time_off_request->date_from,
                 'date_to' => $time_off_request->date_to,
+                'time_off_type_id' => $time_off_request->time_off_type_id,
                 'id' => $time_off_request->id,
             ];
 
@@ -356,7 +358,10 @@ class TimeOffRequestController extends Controller {
 
             if ($existingRequest) {
                 DB::rollBack();
-                return redirect()->back()->withErrors(['message' => 'Hai già una richiesta di permesso in questo periodo']);
+                return response()->json([
+                    'error' => 'Hai già una richiesta di permesso in questo periodo',
+                    'conflicting_request_id' => $existingRequest->id,
+                ], 400);
             }
 
             TimeOffRequest::where('id', $time_off_request->id)->update($fields);
@@ -364,7 +369,7 @@ class TimeOffRequestController extends Controller {
 
         DB::commit();
 
-        return redirect()->route('time-off-requests.index')->with('success', 'Richieste di permesso modificate con successo');
+        return response()->json(['success' => 'Richieste di permesso modificate con successo']);
     }
 
     /**

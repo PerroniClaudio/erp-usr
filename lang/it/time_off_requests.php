@@ -16,4 +16,6 @@ return [
     "time_off_set_as_leave" => "Imposta tutti come Rol",
     "time_off_set_as_vacation" => "Imposta tutti come Ferie",
     "submit" => "Invia",
+    "edit_request" => "Modifica Richiesta",
+    "selected_days" => "Giorni Selezionati",
 ];

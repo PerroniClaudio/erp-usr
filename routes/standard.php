@@ -59,6 +59,6 @@ Route::group([
     Route::get('/create', [TimeOffRequestController::class, 'create'])->name('time-off-requests.create');
     Route::post('/', [TimeOffRequestController::class, 'storeBatch'])->name('time-off-requests.store');
     Route::get('/{batch_id}/edit', [TimeOffRequestController::class, 'edit'])->name('time-off-requests.edit');
-    Route::put('/{timeOffRequest}', [TimeOffRequestController::class, 'update'])->name('time-off-requests.update');
+    Route::post('/{batch_id}', [TimeOffRequestController::class, 'updateBatch'])->name('time-off-requests.update');
     Route::delete('/{timeOffRequest}', [TimeOffRequestController::class, 'destroy'])->name('time-off-requests.destroy');
 });

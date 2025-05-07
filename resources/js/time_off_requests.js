@@ -216,3 +216,70 @@ submitButton?.addEventListener("click", async (event) => {
             console.error("Error submitting form:", error);
         });
 });
+
+/** Modifica */
+
+const editButton = document.getElementById("edit-button");
+
+if (editButton) {
+    editButton.addEventListener("click", async (event) => {
+        const rows = document.querySelectorAll(".day-row");
+        const batch_id = document.getElementById("batch_id");
+        const batch_id_value = batch_id.value;
+
+        if (rows.length === 0) {
+            event.preventDefault();
+            displayError("Non ci sono giorni da inviare.");
+            return;
+        }
+
+        const data = Array.from(rows).map((row) => {
+            let date_from =
+                row.querySelector('[name="day"]').value +
+                " " +
+                row.querySelector('[name="start_time"]').value +
+                ":00";
+            let date_to =
+                row.querySelector('[name="day"]').value +
+                " " +
+                row.querySelector('[name="end_time"]').value +
+                ":00";
+
+            return {
+                id: row.getAttribute("data-key"),
+                date_from: date_from,
+                date_to: date_to,
+                time_off_type_id: row.querySelector('[name="type"]').value,
+            };
+        });
+
+        axios
+            .post(`/standard/time-off-requests/${batch_id_value}`, {
+                requests: JSON.stringify(data),
+            })
+            .then((response) => {
+                if (response.status === 200) {
+                    window.location.href = "/standard/time-off-requests";
+                } else {
+                    let data = response.data;
+
+                    let errorElement = document.querySelector(
+                        '.day-row[data-key="' +
+                            data.conflicting_request_id +
+                            '"]'
+                    );
+
+                    errorElement
+                        .querySelector('[name="start_time"]')
+                        .classList.add("border-red-500");
+
+                    errorElement
+                        .querySelector('[name="end_time"]')
+                        .classList.add("border-red-500");
+                }
+            })
+            .catch((error) => {
+                console.error("Error submitting form:", error);
+            });
+    });
+}
