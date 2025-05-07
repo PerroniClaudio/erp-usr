@@ -71,6 +71,17 @@ class GroupController extends Controller {
      */
     public function update(Request $request, Group $group) {
         //
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $group->update([
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+        ]);
+
+        return redirect()->route('groups.index')->with('success', 'Gruppo aggiornato con successo.');
     }
 
     /**
@@ -78,6 +89,14 @@ class GroupController extends Controller {
      */
     public function destroy(Group $group) {
         //
+
+        if ($group->users()->exists()) {
+            return redirect()->route('groups.index')->with('error', 'Impossibile eliminare il gruppo perché ha utenti associati.');
+        }
+
+        $group->delete();
+
+        return redirect()->route('groups.index')->with('success', 'Gruppo eliminato con successo.');
     }
 
     public function associateUsers(Request $request, Group $group) {

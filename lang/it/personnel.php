@@ -16,4 +16,23 @@ return [
     "groups_remove_user" => "Rimuovi utente",
     "groups_search_users" => "Cerca utenti",
     "groups_search_placeholder" => "Cerca per nome o email",
+
+    "companies" => "Aziende",
+    "companies_new_company" => "Nuova azienda",
+    "companies_edit_company" => "Modifica azienda",
+    "companies_delete_company" => "Elimina azienda",
+    "companies_save" => "Salva",
+    "companies_name" => "Nome dell'azienda",
+    "companies_actions" => "Azioni",
+    "companies_users" => "Utenti",
+    "companies_personnel_name" => "Nome",
+    "companies_personnel_email" => "Email",
+    "companies_associate_users" => "Associa utenti",
+    "companies_remove_user" => "Rimuovi utente",
+    "companies_search_users" => "Cerca utenti",
+    "companies_search_placeholder" => "Cerca per nome o email",
+    "companies_available_users" => "Utenti disponibili",
+    "companies_associated_users" => "Utenti associati",
+    "companies_no_users" => "Nessun utente associato",
+
 ];

@@ -69,7 +69,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a>
+                                    <a href="{{ route('companies.index') }}">
                                         <div class="flex items-center">
                                             <x-lucide-building class="h-4 w-4 text-primary" />
                                             <span class="ml-2">{{ __('navbar.personnel_companies') }}</span>
