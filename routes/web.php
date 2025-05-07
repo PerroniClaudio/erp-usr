@@ -13,4 +13,5 @@ Route::get('/home', function () {
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/standard.php';
+require __DIR__ . '/admin.php';
 require __DIR__ . '/test.php';

@@ -54,4 +54,7 @@ class User extends Authenticatable {
     public function timeOffRequests() {
         return $this->hasMany(TimeOffRequest::class);
     }
+    public function groups() {
+        return $this->belongsToMany(Group::class, 'groups_users', 'user_id', 'group_id');
+    }
 }
