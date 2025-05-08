@@ -35,4 +35,9 @@ return [
     "companies_associated_users" => "Utenti associati",
     "companies_no_users" => "Nessun utente associato",
 
+    "users" => "Utenti",
+    "users_name" => "Nome",
+    "users_email" => "Email",
+    "users_actions" => "Azioni",
+
 ];

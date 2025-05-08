@@ -53,7 +53,7 @@
                             </summary>
                             <ul>
                                 <li>
-                                    <a>
+                                    <a href="{{ route('users.index') }}">
                                         <div class="flex items-center">
                                             <x-lucide-contact class="h-4 w-4 text-primary" />
                                             <span class="ml-2">{{ __('navbar.personnel_users') }}</span>
