@@ -82,16 +82,18 @@ class AttendanceController extends Controller {
             'attendance_type_id' => 'required|int',
         ]);
 
-        if (strtotime($fields['time_out']) < strtotime($fields['time_in'])) {
-            return back()->withErrors(['message' => 'L\'orario di fine non può essere maggiore di quello di inizio']);
-        }
+        if (!$user->hasRole('admin')) {
+            if (strtotime($fields['time_out']) < strtotime($fields['time_in'])) {
+                return back()->withErrors(['message' => 'L\'orario di fine non può essere maggiore di quello di inizio']);
+            }
 
-        if (strtotime($fields['date']) > strtotime(date('Y-m-d'))) {
-            return back()->withErrors(['message' => 'Non è possibile creare presenze nel futuro']);
-        }
+            if (strtotime($fields['date']) > strtotime(date('Y-m-d'))) {
+                return back()->withErrors(['message' => 'Non è possibile creare presenze nel futuro']);
+            }
 
-        if (strtotime($fields['date']) < strtotime(date('Y-m-d'))) {
-            return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
+            if (strtotime($fields['date']) < strtotime(date('Y-m-d'))) {
+                return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
+            }
         }
 
 
