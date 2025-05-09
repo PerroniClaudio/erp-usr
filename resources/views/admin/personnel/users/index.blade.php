@@ -26,6 +26,12 @@
                             <button class="btn btn-primary" onclick="openModal({{ $user->id }})">
                                 <x-lucide-file-text class="w-4 h-4" />
                             </button>
+                            <a href="{{ route('users.edit', [
+                                'user' => $user,
+                            ]) }}"
+                                class="btn btn-primary">
+                                <x-lucide-pencil class="w-4 h-4" />
+                            </a>
 
                             <!-- Modal -->
                             <div id="modal-{{ $user->id }}" class="modal">
@@ -34,7 +40,8 @@
                                     <form method="GET" action="{{ route('users.export-cedolino', $user->id) }}">
 
                                         <fieldset class="fieldset">
-                                            <legend class="fieldset-legend">Mese</legend>
+                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}
+                                            </legend>
                                             <select id="month-{{ $user->id }}" name="mese"
                                                 class="select select-bordered">
                                                 @foreach (range(1, 12) as $month)
@@ -46,7 +53,8 @@
                                             </select>
                                         </fieldset>
                                         <fieldset class="fieldset mb-4">
-                                            <legend class="fieldset-legend">Anno</legend>
+                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}
+                                            </legend>
                                             <select id="year-{{ $user->id }}" name="anno"
                                                 class="select select-bordered">
                                                 @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
@@ -56,8 +64,9 @@
                                         </fieldset>
                                         <div class="modal-action">
                                             <button type="button" class="btn btn-secondary"
-                                                onclick="closeModal({{ $user->id }})">Annulla</button>
-                                            <button type="submit" class="btn btn-primary">Esporta</button>
+                                                onclick="closeModal({{ $user->id }})">{{ __('personnel.users_cedolino_cancel') }}</button>
+                                            <button type="submit"
+                                                class="btn btn-primary">{{ __('personnel.users_cedolino_export') }}</button>
                                         </div>
                                     </form>
                                 </div>
