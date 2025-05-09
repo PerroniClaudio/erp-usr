@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\TimeOffRequest;
 use App\Models\TimeOffType;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Carbon\Carbon;
 
 Route::get('/test-time-off', function () {
 
@@ -120,4 +122,54 @@ Route::get('/test-legacy-db', function () {
     foreach ($formattedFerie as $ferieItem) {
         TimeOffRequest::create($ferieItem);
     }
+});
+
+Route::get('/test-cedolino', function () {
+
+    return;
+
+    $mese = 'Aprile';
+    $anno = 2025;
+    $user = User::find(1);
+
+    // Otteniamo i dati per il PDF
+    $mesiMap = [
+        'Gennaio' => 1,
+        'Febbraio' => 2,
+        'Marzo' => 3,
+        'Aprile' => 4,
+        'Maggio' => 5,
+        'Giugno' => 6,
+        'Luglio' => 7,
+        'Agosto' => 8,
+        'Settembre' => 9,
+        'Ottobre' => 10,
+        'Novembre' => 11,
+        'Dicembre' => 12
+    ];
+
+    $meseNumero = $mesiMap[$mese];
+    $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
+    $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
+
+    // Generiamo il PDF dalla vista
+    $pdf = PDF::loadView('cedolini.pdf', [
+        'user' => $user,
+        'mese' => $mese,
+        'anno' => $anno,
+        'meseNumero' => $meseNumero,
+        'primoGiorno' => $primoGiorno,
+        'ultimoGiorno' => $ultimoGiorno
+    ]);
+
+    // Impostiamo le opzioni del PDF
+    $pdf->setPaper('a4', 'landscape');
+    $pdf->setOptions([
+        'dpi' => 150,
+        'defaultFont' => 'sans-serif',
+        'isHtml5ParserEnabled' => true,
+        'isRemoteEnabled' => true
+    ]);
+
+    return $pdf->download('cedolino_' . $user->name . '_' . $mese . '_' . $anno . '.pdf');
 });

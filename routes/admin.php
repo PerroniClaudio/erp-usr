@@ -30,4 +30,5 @@ Route::group([
 
     Route::get('/users', [UsersController::class, 'index'])->name('users.index');
     Route::get('/users/{user}', [UsersController::class, 'edit'])->name('users.edit');
+    Route::get('/users/{user}/export-cedolino', [UsersController::class, 'exportPdf'])->name('users.export-cedolino');
 });
