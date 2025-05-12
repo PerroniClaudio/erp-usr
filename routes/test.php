@@ -9,6 +9,9 @@ use App\Models\TimeOffType;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 Route::get('/test-time-off', function () {
 
@@ -172,4 +175,53 @@ Route::get('/test-cedolino', function () {
     ]);
 
     return $pdf->download('cedolino_' . $user->name . '_' . $mese . '_' . $anno . '.pdf');
+});
+
+Route::get('/test-autoveicoli', function () {
+
+    $files = [
+        "Autocaravan.xlsx",
+        "Benzina-IN.xlsx",
+        "Elettrico-IN.xlsx",
+        "Gasolio-IN.xlsx",
+        "GPL-IN.xlsx",
+        "Ibr-Benzina-IN.xlsx",
+        "Ibr-Gasolio-IN.xlsx",
+        "Plug-in-IN.xlsx",
+        "Benzina-OUT.xlsx",
+        "Elettrico-OUT.xlsx",
+        "Gasolio-OUT.xlsx",
+        "GPL-Metano-OUT.xlsx",
+        "Ibr-Benzina-OUT.xlsx",
+        "Ibr-Gasolio-OUT.xlsx",
+        "Plug-in-OUT.xlsx",
+        "Motoveicoli.xlsx",
+    ];
+
+    $url_prefix = "https://aci.gov.it/app/uploads/2024/12/";
+
+
+
+    foreach ($files as $file) {
+
+        $data = [];
+
+        if ($file == "Gasolio-IN.xlsx") {
+            $url = "https://aci.gov.it/app/uploads/2025/01/Gasolio-IN.xlsx";
+        } else {
+            $url = $url_prefix . $file;
+        }
+        // Check if the file already exists in storage
+        if (!Storage::exists($file)) {
+            // Download the file from the URL
+            $fileContents = file_get_contents($url);
+            Storage::put($file, $fileContents);
+        }
+
+        $filePath = storage_path('app/private/' . $file);
+
+        $data = Excel::toArray([], $filePath);
+
+        echo $file;
+    }
 });
