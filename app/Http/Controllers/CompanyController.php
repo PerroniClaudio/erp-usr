@@ -142,4 +142,27 @@ class CompanyController extends Controller {
             'users' => $users,
         ]);
     }
+
+    public function availableForUser(User $user) {
+        //
+        $companies = Company::whereDoesntHave('users', function ($query) use ($user) {
+            $query->where('users.id', $user->id);
+        })->get();
+
+        return response()->json([
+            'companies' => $companies,
+        ]);
+    }
+
+    public function associateCompanies(Request $request, User $user) {
+        //
+        $companies = json_decode($request->input('companies'), true);
+
+        $user->companies()->syncWithoutDetaching($companies);
+
+        return response()->json([
+            'message' => 'Aziende associate con successo all\'utente.',
+            'companies' => $user->companies()->get(),
+        ]);
+    }
 }

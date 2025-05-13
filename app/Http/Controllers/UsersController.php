@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -200,18 +201,10 @@ class UsersController extends Controller {
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_added'));
     }
 
-    public function disassociateVehicle(Request $request, User $user) {
-        $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id'
-        ]);
+    public function destroyUserVehicle(Request $request, User $user, Vehicle $vehicle) {
+        $user->vehicles()->detach($vehicle->id);
 
-        $user->vehicles()->detach($request->vehicle_id);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => __('personnel.users_updated'),
-            'user' => $user
-        ]);
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_deleted'));
     }
 
     public function editUserVehicle(User $user, Vehicle $vehicle) {
@@ -253,7 +246,13 @@ class UsersController extends Controller {
             'mileage_update_date' => $request->mileage_update_date
         ]);
 
-        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_added'));
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_updated'));
+    }
+
+    public function destroyUserCompany(Request $request, User $user, Company $company) {
+        $user->companies()->detach($company->id);
+
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_company_deleted'));
     }
 
 

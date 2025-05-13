@@ -19,11 +19,10 @@
         <table class="table w-full">
             <thead>
                 <tr>
-                    <th>{{ __('personnel.user_vehicles_id') }}</th>
                     <th>{{ __('personnel.user_vehicles_plate_number') }}</th>
                     <th>{{ __('personnel.user_vehicles_model') }}</th>
                     <th>{{ __('personnel.user_vehicles_brand') }}</th>
-                    <th></th>
+                    <th>Azioni</th>
                 </tr>
             </thead>
             <tbody class="overflow-y-auto">
@@ -36,7 +35,6 @@
                 @endunless
                 @foreach ($user->vehicles as $vehicle)
                     <tr>
-                        <td>{{ $vehicle->id }}</td>
                         <td>{{ $vehicle->pivot->plate_number }}</td>
                         <td>{{ $vehicle->model }}</td>
                         <td>{{ $vehicle->brand }}</td>
@@ -50,7 +48,7 @@
                                 <x-lucide-pencil class="w-4 h-4" />
                             </a>
 
-                            {{-- <form
+                            <form
                                 action="{{ route('users.vehicles.destroy', [
                                     'user' => $user->id,
                                     'vehicle' => $vehicle->id,
@@ -59,10 +57,10 @@
                                 @csrf
                                 @method('DELETE')
 
-                                <button type="submit" class="btn btn-sm btn-error">
+                                <button type="submit" class="btn btn-sm btn-warning">
                                     <x-lucide-trash-2 class="w-4 h-4" />
                                 </button>
-                            </form> --}}
+                            </form>
                         </td>
                     </tr>
                 @endforeach

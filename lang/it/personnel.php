@@ -115,4 +115,12 @@ return [
     "users_vehicles_edit" => "Modifica automezzo",
     "users_vehicles_updated" => "Automezzo aggiornato con successo",
     "users_vehicles_save" => "Salva automezzo",
+    "users_vehicles_deleted" => "Automezzo rimosso con successo",
+    "users_associated_companies" => "Aziende associate",
+    "users_associated_companies_name" => "Nome",
+    "users_associated_companies_no_companies" => "Nessuna azienda associata",
+    "users_associated_companies_actions" => "Azioni",
+    "users_associated_companies_associate_company" => "Associa azienda",
+    "users_associated_companies_no_companies_available" => "Nessuna azienda disponibile",
+    "users_company_deleted" => "Azienda rimossa con successo",
 ];
