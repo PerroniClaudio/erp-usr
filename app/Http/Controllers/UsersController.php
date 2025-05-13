@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Vehicle;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Support\Facades\Http;
@@ -11,6 +12,30 @@ use Illuminate\Support\Facades\Log;
 
 class UsersController extends Controller {
     //
+
+    private $vehicleTypes;
+    private $ownershipTypes;
+    private $purchaseTypes;
+
+    public function __construct() {
+        $this->vehicleTypes = collect([
+            (object)['id' => 1, 'name' => 'Autoveicolo'],
+            (object)['id' => 2, 'name' => 'Ciclomotore'],
+            (object)['id' => 3, 'name' => 'Autocarro']
+        ]);
+
+        $this->ownershipTypes = collect([
+            (object)['id' => 1, 'name' => 'Aziendale'],
+            (object)['id' => 2, 'name' => 'Personale']
+        ]);
+
+        $this->purchaseTypes = collect([
+            (object)['id' => 1, 'name' => 'Acquisto'],
+            (object)['id' => 2, 'name' => 'Leasing'],
+            (object)['id' => 3, 'name' => 'Noleggio a breve termine'],
+            (object)['id' => 4, 'name' => 'Noleggio a lungo termine']
+        ]);
+    }
 
     public function index() {
         $users = User::all();
@@ -131,6 +156,107 @@ class UsersController extends Controller {
             'user' => $user
         ]);
     }
+
+    public function addVehicles(User $user) {
+
+        $brands = Vehicle::select('brand')->distinct()->orderBy('brand', 'asc')->get();
+        $brands = $brands->pluck('brand')->map(function ($brand) {
+            return preg_replace('/[^a-zA-Z0-9\s]/', '', $brand);
+        })->unique()->toArray();
+
+        return view('admin.personnel.users.vehicles.create', [
+            'user' => $user,
+            'brands' => $brands,
+            'vehicleTypes' => $this->vehicleTypes,
+            'ownershipTypes' => $this->ownershipTypes,
+            'purchaseTypes' => $this->purchaseTypes,
+        ]);
+    }
+
+    public function associateVehicle(Request $request, User $user) {
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'vehicle_type' => 'required|integer',
+            'plate_number' => 'nullable|string|max:20',
+            'ownership_type' => 'required|integer',
+            'purchase_type' => 'required|integer',
+            'contract_start_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'mileage' => 'nullable|numeric',
+            'mileage_update_date' => 'nullable|date'
+        ]);
+
+        $user->vehicles()->attach($request->vehicle_id, [
+            'vehicle_type' => $request->vehicle_type,
+            'plate_number' => $request->plate_number,
+            'ownership_type' => $request->ownership_type,
+            'purchase_type' => $request->purchase_type,
+            'contract_start_date' => $request->contract_start_date,
+            'contract_end_date' => $request->contract_end_date,
+            'mileage' => $request->mileage,
+            'mileage_update_date' => $request->mileage_update_date
+        ]);
+
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_added'));
+    }
+
+    public function disassociateVehicle(Request $request, User $user) {
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id'
+        ]);
+
+        $user->vehicles()->detach($request->vehicle_id);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('personnel.users_updated'),
+            'user' => $user
+        ]);
+    }
+
+    public function editUserVehicle(User $user, Vehicle $vehicle) {
+
+        $joinedVehicle = $user->vehicles()->where('vehicles.id', $vehicle->id)->first();
+
+
+        return view('admin.personnel.users.vehicles.edit', [
+            'user' => $user,
+            'vehicle' => $vehicle,
+            'joinedVehicle' => $joinedVehicle,
+            'vehicleTypes' => $this->vehicleTypes,
+            'ownershipTypes' => $this->ownershipTypes,
+            'purchaseTypes' => $this->purchaseTypes,
+        ]);
+    }
+
+    public function updateUserVehicle(Request $request, User $user) {
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'vehicle_type' => 'required|integer',
+            'plate_number' => 'nullable|string|max:20',
+            'ownership_type' => 'required|integer',
+            'purchase_type' => 'required|integer',
+            'contract_start_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'mileage' => 'nullable|numeric',
+            'mileage_update_date' => 'nullable|date'
+        ]);
+
+        $user->vehicles()->updateExistingPivot($request->vehicle_id, [
+            'vehicle_type' => $request->vehicle_type,
+            'plate_number' => $request->plate_number,
+            'ownership_type' => $request->ownership_type,
+            'purchase_type' => $request->purchase_type,
+            'contract_start_date' => $request->contract_start_date,
+            'contract_end_date' => $request->contract_end_date,
+            'mileage' => $request->mileage,
+            'mileage_update_date' => $request->mileage_update_date
+        ]);
+
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_added'));
+    }
+
+
 
     /**
      * Valida un indirizzo utilizzando l'API di Nominatim.

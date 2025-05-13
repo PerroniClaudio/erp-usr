@@ -82,4 +82,17 @@ class User extends Authenticatable {
     public function groups() {
         return $this->belongsToMany(Group::class, 'groups_users', 'user_id', 'group_id');
     }
+    public function vehicles() {
+        return $this->belongsToMany(Vehicle::class, 'user_vehicle', 'user_id', 'vehicle_id')
+            ->withPivot([
+                'vehicle_type',
+                'plate_number',
+                'ownership_type',
+                'purchase_type',
+                'contract_start_date',
+                'contract_end_date',
+                'mileage',
+                'mileage_update_date'
+            ]);
+    }
 }

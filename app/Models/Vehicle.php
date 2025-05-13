@@ -3,9 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Scout\Searchable;
 
 class Vehicle extends Model {
     //
+
+    use Searchable;
+
+    public function toSearchableArray() {
+        return [
+            'id' => $this->id,
+            'brand' => $this->brand,
+            'model' => $this->model,
+        ];
+    }
+
 
     protected $fillable = [
         'brand',
@@ -21,4 +33,16 @@ class Vehicle extends Model {
     protected $casts = [
         'last_update' => 'datetime',
     ];
+
+    public function users() {
+        return $this->belongsToMany(User::class)->withPivot([
+            'vehicle_type',
+            'ownership_type',
+            'purchase_type',
+            'contract_start_date',
+            'contract_end_date',
+            'mileage',
+            'mileage_update_date'
+        ]);
+    }
 }

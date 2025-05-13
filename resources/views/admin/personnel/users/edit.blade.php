@@ -413,6 +413,8 @@
 
             </div>
         </div>
+
+        <x-users.vehicles :user="$user" />
     </div>
 
 

@@ -35,4 +35,8 @@ Route::group([
     Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
     Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
     Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
+    Route::get('/users/{user}/add-vehicles', [UsersController::class, 'addVehicles'])->name('users.add-vehicles');
+    Route::post('/users/{user}/store-vehicles', [UsersController::class, 'associateVehicle'])->name('users.store-vehicles');
+    Route::get('/users/{user}/vehicles/{vehicle}/edit', [UsersController::class, 'editUserVehicle'])->name('users.vehicles.edit');
+    Route::post('/users/{user}/vehicles/{vehicle}/update', [UsersController::class, 'updateUserVehicle'])->name('users.vehicles.update');
 });
