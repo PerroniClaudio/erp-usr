@@ -2,32 +2,32 @@
     'user' => null,
 ])
 
-<template id="company-list-item-template">
-    <tr class="company-row" data-key="0">
-        <td class="company-name-field"></td>
-        <td class="company-action-field">
-            <div class="btn btn-primary add-company-button" data-company-id="">
+<template id="group-list-item-template">
+    <tr class="group-row" data-key="0">
+        <td class="group-name-field"></td>
+        <td class="group-action-field">
+            <div class="btn btn-primary add-group-button" data-group-id="">
                 <x-lucide-plus class="h-4 w-4" />
             </div>
         </td>
     </tr>
 </template>
 
-<template id="company-added-list-item-template">
-    <tr class="company-row" data-key="0">
-        <td class="company-name-field"></td>
-        <td class="company-action-field">
-            <div class="btn btn-primary remove-company-button" data-company-id="">
+<template id="group-added-list-item-template">
+    <tr class="group-row" data-key="0">
+        <td class="group-name-field"></td>
+        <td class="group-action-field">
+            <div class="btn btn-primary remove-group-button" data-group-id="">
                 <x-lucide-minus class="h-4 w-4" />
             </div>
         </td>
     </tr>
 </template>
 
-<template id="company-list-none-available-template">
-    <tr class="company-row" data-key="0">
+<template id="group-list-none-available-template">
+    <tr class="group-row" data-key="0">
         <td colspan="2" class="text-center">
-            {{ __('personnel.users_associated_companies_no_companies_available') }}
+            {{ __('personnel.users_associated_groups_no_groups_available') }}
         </td>
     </tr>
 
@@ -37,9 +37,9 @@
     <div class="card-body">
 
         <div class="flex items-center justify-between">
-            <h2 class="card-title">{{ __('personnel.users_associated_companies') }}</h2>
+            <h2 class="card-title">{{ __('personnel.users_associated_groups') }}</h2>
             </h2>
-            <a class="btn btn-primary" id="associate-users-modal-opener">
+            <a class="btn btn-primary" id="associate-groups-users-modal-opener">
                 <x-lucide-plus class="h-4 w-4" />
             </a>
         </div>
@@ -49,28 +49,28 @@
         <table class="table w-full">
             <thead>
                 <tr>
-                    <th>{{ __('personnel.users_associated_companies_name') }}</th>
+                    <th>{{ __('personnel.users_associated_groups_name') }}</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
             <tbody class="overflow-y-auto">
-                @unless ($user->companies->count())
+                @unless ($user->groups->count())
                     <tr>
                         <td colspan="5" class="text-center">
-                            {{ __('personnel.users_associated_companies_no_companies') }}
+                            {{ __('personnel.users_associated_groups_no_groups') }}
                         </td>
                     </tr>
                 @endunless
-                @foreach ($user->companies as $company)
+                @foreach ($user->groups as $group)
                     <tr>
-                        <td>{{ $company->name }}</td>
+                        <td>{{ $group->name }}</td>
                         <td>
 
 
                             <form
-                                action="{{ route('users.company.destroy', [
+                                action="{{ route('users.group.destroy', [
                                     'user' => $user->id,
-                                    'company' => $company->id,
+                                    'group' => $group->id,
                                 ]) }}"
                                 method="POST" class="inline-block">
                                 @csrf
@@ -93,10 +93,10 @@
 </div>
 
 
-<dialog id="associate_users_modal" class="modal">
+<dialog id="groups_modal" class="modal">
     <div class="modal-box min-w-3/4">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold"> {{ __('personnel.users_associated_companies_associate_company') }}</h3>
+            <h3 class="text-lg font-bold"> {{ __('personnel.users_associated_groups_associate_group') }}</h3>
             <form method="dialog">
                 <!-- if there is a button in form, it will close the modal -->
                 <button class="btn btn-ghost">
@@ -112,11 +112,11 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>{{ __('personnel.users_associated_companies_name') }}</th>
-                                <th>{{ __('personnel.users_associated_companies_actions') }}</th>
+                                <th>{{ __('personnel.users_associated_groups_name') }}</th>
+                                <th>{{ __('personnel.users_associated_groups_actions') }}</th>
                             </tr>
                         </thead>
-                        <tbody id="associate-users-table-body">
+                        <tbody id="associate-groups-users-table-body">
                         </tbody>
                     </table>
 
@@ -128,11 +128,11 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>{{ __('personnel.users_associated_companies_name') }}</th>
-                                    <th>{{ __('personnel.users_associated_companies_actions') }}</th>
+                                    <th>{{ __('personnel.users_associated_groups_name') }}</th>
+                                    <th>{{ __('personnel.users_associated_groups_actions') }}</th>
                                 </tr>
                             </thead>
-                            <tbody id="associated-companies-table-body">
+                            <tbody id="associated-groups-table-body">
                             </tbody>
                         </table>
                     </div>
@@ -141,11 +141,11 @@
         </div>
 
         <div class="modal-action">
-            <button class="btn btn-primary" id="save-companies-button">{{ __('personnel.companies_save') }}</button>
+            <button class="btn btn-primary" id="save-groups-button">{{ __('personnel.groups_save') }}</button>
         </div>
     </div>
 </dialog>
 
 @push('scripts')
-    @vite('resources/js/user_aziende.js')
+    @vite('resources/js/user_groups.js')
 @endpush

@@ -416,11 +416,9 @@
 
         <x-users.vehicles :user="$user" />
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <x-users.companies :user="$user" />
+        <x-users.groups :user="$user" />
 
-            <x-users.companies :user="$user" />
-
-        </div>
     </div>
 
 

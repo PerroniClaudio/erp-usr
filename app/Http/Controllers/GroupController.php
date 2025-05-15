@@ -143,4 +143,16 @@ class GroupController extends Controller {
             "users" => $availableUsers
         ]);
     }
+
+    public function availableForUser(User $user, Request $request) {
+        $query = Group::whereDoesntHave('users', function ($query) use ($user) {
+            $query->where('users.id', $user->id);
+        });
+
+        $availableGroups = $query->get();
+
+        return response()->json([
+            "groups" => $availableGroups
+        ]);
+    }
 }

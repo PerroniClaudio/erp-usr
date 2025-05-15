@@ -22,6 +22,8 @@ Route::group([
     Route::get('/groups/{group}/available-users', [GroupController::class, 'availableUsers'])->name('groups.available-users');
     Route::post('/groups/{group}/associate-users', [GroupController::class, 'associateUsers'])->name('groups.users.associate');
     Route::delete('/groups/{group}/dissociate-users', [GroupController::class, 'dissociateUsers'])->name('groups.users.dissociate');
+    Route::get('/groups/users/available/{user}', [GroupController::class, 'availableForUser'])->name('groups.available-for-user');
+    Route::post('/groups/users/{user}/associate-groups', [GroupController::class, 'associateGroups'])->name('groups.associate-groups');
 
     Route::resource('/companies', CompanyController::class);
     Route::get('/companies/users/available/{user}', [CompanyController::class, 'availableForUser'])->name('companies.available-for-user');

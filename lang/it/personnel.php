@@ -123,4 +123,11 @@ return [
     "users_associated_companies_associate_company" => "Associa azienda",
     "users_associated_companies_no_companies_available" => "Nessuna azienda disponibile",
     "users_company_deleted" => "Azienda rimossa con successo",
+    "users_associated_groups_no_groups_available" => "Nessun gruppo disponibile",
+    "users_associated_groups" => "Gruppi associati",
+    "users_associated_groups_name" => "Nome",
+    "users_associated_groups_no_groups" => "Nessun gruppo associato",
+    "users_associated_groups_associate_group" => "Associa gruppo",
+    "users_associated_groups_actions" => "Azioni",
+    "groups_save" => "Salva",
 ];
