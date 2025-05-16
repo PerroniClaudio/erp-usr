@@ -1,7 +1,7 @@
 <x-layouts.app>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <a href="{{ route('attendances.index') }}" class="card bg-base-200 shadow-xl hover:shadow-2xl">
+        <a href="{{ route('admin.attendances.index') }}" class="card bg-base-200 shadow-xl hover:shadow-2xl">
             <div class="card-body">
                 <x-lucide-calendar class="h-6 w-6 text-primary" />
                 <h2 class="card-title">{{ __('navbar.attendances') }}</h2>

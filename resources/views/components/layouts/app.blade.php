@@ -80,7 +80,7 @@
                         </details>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="{{ route('admin.attendances.index') }}">
                             <x-lucide-calendar class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.attendances') }}</span>
                         </a>

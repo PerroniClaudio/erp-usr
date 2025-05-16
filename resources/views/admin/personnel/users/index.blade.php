@@ -36,7 +36,9 @@
                             <!-- Modal -->
                             <div id="modal-{{ $user->id }}" class="modal">
                                 <div class="modal-box">
-                                    <h2 class="text-xl mb-4">Scegli mese ed anno</h2>
+                                    <h1 class="text-3xl mb-4">Esporta cedolino paghe</h1>
+                                    <hr>
+
                                     <form method="GET" action="{{ route('users.export-cedolino', $user->id) }}">
 
                                         <fieldset class="fieldset">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
@@ -58,4 +59,11 @@ Route::group([
     Route::post('/{time_off_request}/approve', [TimeOffRequestController::class, 'approveTimeOffRequest'])->name('admin.time-off.approve');
     Route::post('/{time_off_request}/deny', [TimeOffRequestController::class, 'denyTimeOffRequest'])->name('admin.time-off.deny');
     Route::delete('/{time_off_request}', [TimeOffRequestController::class, 'deleteTimeOffRequest'])->name('admin.time-off.delete');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:admin'],
+    'prefix' => 'admin/attendance',
+], function () {
+    Route::get('/', [AttendanceController::class, 'adminIndex'])->name('admin.attendances.index');
 });

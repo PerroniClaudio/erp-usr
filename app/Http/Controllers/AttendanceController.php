@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\AttendanceType;
 use App\Models\TimeOffRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -206,5 +207,51 @@ class AttendanceController extends Controller {
     public function types() {
         $types = AttendanceType::all();
         return view('attendances.types', compact('types'));
+    }
+
+    /** Admin */
+
+    public function adminIndex() {
+
+        $users = User::all();
+
+        $today = date('Y-m-d');
+        $usersStatus = [];
+
+        foreach ($users as $user) {
+            $attendanceToday = Attendance::where('user_id', $user->id)
+                ->where('date', $today)
+                ->exists();
+
+            if ($attendanceToday) {
+                $usersStatus[] = [
+                    'user' => $user,
+                    'status' => 'registered',
+                ];
+                continue;
+            }
+
+            $timeOffToday = TimeOffRequest::where('user_id', $user->id)
+                ->where('date_from', '<=', $today)
+                ->where('date_to', '>=', $today)
+                ->exists();
+
+            if ($timeOffToday) {
+                $usersStatus[] = [
+                    'user' => $user,
+                    'status' => 'time_off',
+                ];
+                continue;
+            }
+
+            $usersStatus[] = [
+                'user' => $user,
+                'status' => 'not_registered',
+            ];
+        }
+
+        return view('admin.attendances.index', [
+            'usersStatus' => $usersStatus,
+        ]);
     }
 }
