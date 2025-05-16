@@ -18,4 +18,27 @@ return [
     "submit" => "Invia",
     "edit_request" => "Modifica Richiesta",
     "selected_days" => "Giorni Selezionati",
+
+    "filter" => "Filtra",
+    "filter_by_company" => "Filtra per Azienda",
+    "all_companies" => "Tutte le Aziende",
+    "filter_by_group" => "Filtra per Gruppo",
+    "all_groups" => "Tutti i Gruppi",
+    "filter_by_time_off_type" => "Filtra per Tipo di Richiesta",
+    "all_time_off_types" => "Tutti i Tipi di Richiesta",
+
+    "approve" => "Approva",
+    "approve_request_title" => "Approva Richiesta di Ferie/Permesso",
+    "approve_request_text" => "Sei sicuro di voler approvare questa richiesta di ferie/permesso?",
+
+    "deny" => "Rifiuta",
+    "deny_request_title" => "Rifiuta Richiesta di Ferie/Permesso",
+    "deny_request_text" => "Sei sicuro di voler rifiutare questa richiesta di ferie/permesso?",
+
+    "delete" => "Elimina",
+    "delete_request_title" => "Elimina Richiesta di Ferie/Permesso",
+    "delete_request_text" => "Sei sicuro di voler eliminare questa richiesta di ferie/permesso?",
+
+    "been_approved" => "La richiesta è stata approvata",
+    "been_denied" => "La richiesta è stata rifiutata",
 ];

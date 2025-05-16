@@ -86,13 +86,13 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="{{ route('business-trips.index') }}">
                             <x-lucide-car class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.business_trips') }}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="{{ route('admin.time-off.index') }}">
                             <x-lucide-sun class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.time_off_requests') }}</span>
                         </a>

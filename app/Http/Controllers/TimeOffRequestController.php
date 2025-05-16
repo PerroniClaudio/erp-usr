@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
+use App\Models\Group;
 use App\Models\TimeOffRequest;
 use App\Models\TimeOffType;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Container\Attributes\Auth;
 use  Illuminate\Support\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class TimeOffRequestController extends Controller {
@@ -102,6 +106,7 @@ class TimeOffRequestController extends Controller {
             $requests = TimeOffRequest::with(['type', 'user'])
                 ->where('status', '<>', '4')
                 ->where('date_from', '>=', $startDate)
+                ->where('date_to', '<=', $endDate)
                 ->orderBy('id', 'asc')
                 ->get();
         } else {
@@ -115,7 +120,7 @@ class TimeOffRequestController extends Controller {
         $events = [];
 
         foreach ($requests as $req) {
-            $color = $req->user_id != $user->id ? "#437f97" : "#e73028";
+            $color = $req->getColorForRequest($user->id);
 
             $events[] = [
                 'id' => $req->id,
@@ -123,6 +128,7 @@ class TimeOffRequestController extends Controller {
                 'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
                 'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
                 'color' => $color,
+                'status' => $req->status,
                 'display' => 'block',
                 'groupId' => $req->batch_id
             ];
@@ -476,5 +482,154 @@ class TimeOffRequestController extends Controller {
     private function calculateEasterMonday($year) {
         $easterDay = $this->calculateEasterDay($year);
         return $easterDay->modify('+1 day');
+    }
+
+
+    /** Funzioni per admin */
+
+    public function adminIndex() {
+        return view('admin.time_off_requests.index', [
+            'groups' => Group::all(),
+            'companies' => Company::all(),
+            'users' => User::all(),
+            'timeOffTypes' => TimeOffType::all(),
+        ]);
+    }
+
+    public function listTimeOffRequests(Request $request) {
+
+        // Filtri opzionali
+        $companyId = $request->input('company_id') != null ? $request->input('company_id') : null;
+        $groupId = $request->input('group_id') != null ? $request->input('group_id') : null;
+        $time_off_type_id = $request->input('type_id') != null ? $request->input('type_id') : null;
+        $startDate = $request->input('start');
+        $endDate = date('Y-m-d', strtotime($request->input('end') . ' +3 days'));
+
+        // Costruisci la query utenti solo se necessario
+
+        $company_user_ids = [];
+        if ($companyId) {
+            $company  = Company::find($companyId);
+            $company_users = $company->users()->get();
+
+            $company_user_ids = $company_users->pluck('id');
+        }
+
+        $group_user_ids = [];
+        if ($groupId) {
+            $group = Group::find($groupId);
+            $group_user_ids = $group->users()->get();
+
+            $group_user_ids = $group_user_ids->pluck('id');
+        }
+
+        if ($companyId && $groupId) {
+            // Intersezione tra utenti della company e del gruppo
+            $userIds = collect($company_user_ids)->intersect($group_user_ids)->values();
+        } elseif ($companyId) {
+            $userIds = collect($company_user_ids)->values();
+        } elseif ($groupId) {
+            $userIds = collect($group_user_ids)->values();
+        } else {
+            $userIds = User::pluck('id'); // Prendi tutti gli utenti se non ci sono filtri
+        }
+
+
+        // Query richieste permesso
+        $requests = TimeOffRequest::with(['type', 'user'])
+            ->where('status', '<>', '4')
+            ->where('date_from', '>=', $startDate)
+            ->where('date_to', '<=', $endDate)
+            ->when($time_off_type_id, function ($query, $time_off_type_id) {
+                return $query->where('time_off_type_id', $time_off_type_id);
+            })
+            ->whereIn('user_id', $userIds)
+
+            ->orderBy('id', 'asc')
+            ->get();
+
+
+        $events = [];
+
+        foreach ($requests as $req) {
+
+            $color = $req->getColorForRequest(0);
+
+            $events[] = [
+                'id' => $req->id,
+                'user' => $req->user,
+                'title' => $req->user->name . " - " . $req->type->name,
+                'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
+                'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
+                'status' => $req->status,
+                'color' => $color,
+                'display' => 'block',
+                'groupId' => $req->batch_id
+            ];
+        }
+
+        $groupedEventsWithMeta = $this->groupConsecutiveEventsWithMetadata($events);
+
+        $event_result = [];
+
+        foreach ($groupedEventsWithMeta as $group) {
+
+            $events = collect($group['events']);
+            $firstEvent = $events->first();
+
+            $event_result[] = collect([
+                'id' => $firstEvent['id'],
+                'title' => $firstEvent['title'],
+                'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
+                'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
+                'user' => $firstEvent['user'],
+                'status' => $firstEvent['status'],
+                'start' => Carbon::parse($group['metadata']['startDate'])->format('Y-m-d'),
+                'end' => Carbon::parse($group['metadata']['endDate'])->addDay()->format('Y-m-d'),
+                'color' => $firstEvent['color'],
+
+                'groupId' => $group['metadata']['groupId'],
+            ]);
+        }
+
+        return response()->json([
+            'events' => $event_result,
+        ]);
+    }
+
+    public function viewTimeOffRequest(TimeOffRequest $timeOffRequest) {
+
+        $types = TimeOffType::all();
+
+        $requests = TimeOffRequest::with(['type', 'user'])->where('batch_id', $timeOffRequest->batch_id)->orderBy('id', 'asc')->get();
+
+        return view('admin.time_off_requests.edit', [
+            'requests' => $requests,
+            'types' => $types,
+            'batch_id' => $timeOffRequest->batch_id
+        ]);
+    }
+
+    public function approveTimeOffRequest(TimeOffRequest $timeOffRequest) {
+
+
+        // Approva tutte le richieste con lo stesso batch_id
+        TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->update(['status' => '2']);
+
+        return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso approvata con successo');
+    }
+
+    public function denyTimeOffRequest(TimeOffRequest $timeOffRequest) {
+        // Rifiuta tutte le richieste con lo stesso batch_id
+        TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->update(['status' => '3']);
+
+        return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso rifiutata con successo');
+    }
+
+    public function deleteTimeOffRequest(TimeOffRequest $timeOffRequest) {
+        // Elimina tutte le richieste con lo stesso batch_id
+        TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->delete();
+
+        return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso eliminata con successo');
     }
 }
