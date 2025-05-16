@@ -38,6 +38,7 @@ Route::group([
     Route::get('/users', [UsersController::class, 'index'])->name('users.index');
     Route::get('/users/{user}', [UsersController::class, 'edit'])->name('users.edit');
     Route::get('/users/{user}/export-cedolino', [UsersController::class, 'exportPdf'])->name('users.export-cedolino');
+    Route::get('/users/{user}/export-presenze', [UsersController::class, 'exportPresenzePdf'])->name('users.export-presenze');
     Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
     Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
     Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');

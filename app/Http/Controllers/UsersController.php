@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Company;
+use App\Models\TimeOffRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Vehicle;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -97,6 +100,217 @@ class UsersController extends Controller {
 
         return $pdf->download('cedolino_' . $user->name . '_' . $mese . '_' . $anno . '.pdf');
     }
+
+    public function exportPresenzePdf(User $user, Request $request) {
+        $request->validate([
+            'mese' => 'required|string',
+            'anno' => 'required|integer',
+        ]);
+
+        $mese = $request->mese;
+        $anno = $request->anno;
+
+        // Otteniamo i dati per il PDF
+        $mesiMap = [
+            'Gennaio' => 1,
+            'Febbraio' => 2,
+            'Marzo' => 3,
+            'Aprile' => 4,
+            'Maggio' => 5,
+            'Giugno' => 6,
+            'Luglio' => 7,
+            'Agosto' => 8,
+            'Settembre' => 9,
+            'Ottobre' => 10,
+            'Novembre' => 11,
+            'Dicembre' => 12
+        ];
+
+        $meseNumero = $mesiMap[$mese];
+        $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
+        $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
+
+        // Otteniamo le presenze dell'utente per il mese specificato
+        $attendances = Attendance::where('user_id', $user->id)
+            ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get();
+
+        // Otteniamo le richieste di ferie/permessi dell'utente per il mese specificato
+        $timeOffRequests = TimeOffRequest::where('user_id', $user->id)
+            ->where('status', '2')
+            ->whereBetween('date_from', [$primoGiorno, $ultimoGiorno])
+            ->orderBy('start_date')
+            ->get();
+
+        // Prepariamo i dati delle presenze per il PDF
+        $presenze = $this->preparePresenzeData($attendances, $timeOffRequests, $user, $primoGiorno, $ultimoGiorno);
+
+        // Calcoliamo il riepilogo
+        $riepilogo = $this->calcolaRiepilogo($attendances, $timeOffRequests);
+
+        // Calcoliamo i buoni pasto (un buono per ogni giorno lavorato in sede)
+        $buoni_pasto = $presenze->filter(function ($presenza) {
+            return $presenza->tipologia == 'Lavoro in sede' && !$presenza->annullata;
+        })->groupBy('data')->count();
+
+        // Generiamo il PDF
+        $pdf = PDF::loadView('cedolini.presenze_pdf', [
+            'user' => $user,
+            'mese' => $mese,
+            'anno' => $anno,
+            'presenze' => $presenze,
+            'riepilogo' => $riepilogo,
+            'buoni_pasto' => $buoni_pasto,
+            'pagina' => 1,
+            'totale_pagine' => ceil($presenze->count() / 30) // Assumiamo circa 30 righe per pagina
+        ]);
+
+        // Impostiamo le opzioni del PDF
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOptions([
+            'dpi' => 150,
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true
+        ]);
+
+        return $pdf->download('presenze_' . $user->name . '_' . $mese . '_' . $anno . '.pdf');
+    }
+
+    private function preparePresenzeData($attendances, $timeOffRequests, $user, $primoGiorno, $ultimoGiorno) {
+        $presenze = new Collection();
+
+
+        // Aggiungiamo le presenze
+        foreach ($attendances as $attendance) {
+            $data = Carbon::parse($attendance->date);
+            $giorno_settimana = $this->getGiornoSettimanaItaliano($data->format('D'));
+
+            $tipologia = $attendance->attendanceType->name;
+
+            $presenze->push((object)[
+                'id' => $attendance->id,
+                'persona' => $user->name,
+                'azienda' => $attendance->company->name ?? 'IFORTECH S.R.L.',
+                'tipologia' => $tipologia,
+                'data' => $data,
+                'data_formattata' => $data->format('d-m-Y') . ' ' . $giorno_settimana,
+                'ora_inizio' => Carbon::parse($attendance->time_in)->format('H:i'),
+                'ora_fine' => Carbon::parse($attendance->time_out)->format('H:i'),
+                'ore' => number_format(Carbon::parse($attendance->time_in)->diffInMinutes(Carbon::parse($attendance->time_out)) / 60, 2),
+                'annullata' => false,
+                'giornata' => null
+            ]);
+        }
+
+        // Aggiungiamo le ferie e i permessi
+        foreach ($timeOffRequests as $request) {
+            $presenze->push((object)[
+                'id' => $request->id,
+                'persona' => $user->name,
+                'azienda' => 'IFORTECH S.R.L.',
+                'tipologia' => $request->type->name,
+                'data' => $data,
+                'data_formattata' => Carbon::parse($request->date_from)->format('d-m-Y'),
+                'ora_inizio' => Carbon::parse($request->date_from)->format('H:i'),
+                'ora_fine' => Carbon::parse($request->date_to)->format('H:i'),
+                'ore' => number_format(Carbon::parse($request->date_from)->diffInMinutes(Carbon::parse($request->date_to)) / 60, 2),
+                'annullata' => false,
+                'giornata' => null
+            ]);
+        }
+
+        // Ordiniamo le presenze per data e ora
+        return $presenze->sortBy([
+            ['data', 'asc'],
+            ['ora_inizio', 'asc']
+        ]);
+    }
+
+    private function calcolaRiepilogo($presenze, $permessi) {
+        $riepilogo = [
+            'lavorato' => ['ore' => 0, 'giorni' => 0],
+            'straordinario' => ['ore' => 0, 'giorni' => 0],
+            'straordinario_notturno' => ['ore' => 0, 'giorni' => 0],
+            'straordinario_festivo' => ['ore' => 0, 'giorni' => 0],
+            'ferie' => ['ore' => 0, 'giorni' => 0],
+            'corso_intra' => ['ore' => 0, 'giorni' => 0],
+            'corso_extra' => ['ore' => 0, 'giorni' => 0],
+            'rol' => ['ore' => 0, 'giorni' => 0]
+        ];
+
+        foreach ($presenze as $presenza) {
+
+            switch ($presenza->attendanceType->name) {
+                case 'Lavoro in sede':
+                case 'Smartworking':
+                    $key = 'lavorato';
+                    break;
+                case 'Straordinario':
+                    $key = 'straordinario';
+                    break;
+                case 'Straordinario Notturno':
+                    $key = 'straordinario_notturno';
+                    break;
+                case 'Straordinario Festivo':
+                    $key = 'straordinario_festivo';
+                    break;
+                case 'Corso intra-lavorativo':
+                    $key = 'corso_intra';
+                    break;
+                case 'Corso extra-lavorativo':
+                    $key = 'corso_extra';
+                    break;
+            }
+
+            $ore = number_format(Carbon::parse($presenza->time_in)->diffInMinutes(Carbon::parse($presenza->time_out)) / 60, 2);
+
+            $riepilogo[$key]['ore'] += floatval(str_replace(',', '.', $ore));
+            $riepilogo[$key]['giorni'] += floatval(str_replace(',', '.', $ore)) / 8; // Consideriamo 8 ore come un giorno lavorativo
+
+        }
+
+        foreach ($permessi as $permesso) {
+
+            switch ($permesso->type->name) {
+                case 'Ferie':
+                    $key = 'ferie';
+                    break;
+                case 'Rol':
+                    $key = 'rol';
+                    break;
+            }
+
+            $start_date = Carbon::parse($permesso->date_from);
+            $end_date = Carbon::parse($permesso->date_to);
+            $ore = number_format($start_date->diffInMinutes($end_date) / 60, 2);
+
+
+            $riepilogo[$key]['ore'] += floatval(str_replace(',', '.', $ore));
+            $riepilogo[$key]['giorni'] += floatval(str_replace(',', '.', $ore)) / 8; // Consideriamo 8 ore come un giorno lavorativo
+        }
+
+
+
+        return $riepilogo;
+    }
+
+    private function getGiornoSettimanaItaliano($giornoEn) {
+        $giorni = [
+            'Mon' => 'Lun',
+            'Tue' => 'Mar',
+            'Wed' => 'Mer',
+            'Thu' => 'Gio',
+            'Fri' => 'Ven',
+            'Sat' => 'Sab',
+            'Sun' => 'Dom'
+        ];
+
+        return $giorni[$giornoEn] ?? $giornoEn;
+    }
+
 
     public function updateData(Request $request, User $user) {
         $request->validate([

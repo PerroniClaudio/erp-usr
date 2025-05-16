@@ -25,6 +25,11 @@
                         <td>
                             <button class="btn btn-primary" onclick="openModal({{ $user->id }})">
                                 <x-lucide-file-text class="w-4 h-4" />
+                                Cedolino paghe
+                            </button>
+                            <button class="btn btn-primary" onclick="openPresenzeModal({{ $user->id }})">
+                                <x-lucide-file-text class="w-4 h-4" />
+                                Presenze
                             </button>
                             <a href="{{ route('users.edit', [
                                 'user' => $user,
@@ -34,7 +39,7 @@
                             </a>
 
                             <!-- Modal -->
-                            <div id="modal-{{ $user->id }}" class="modal">
+                            <dialog id="modal-{{ $user->id }}" class="modal">
                                 <div class="modal-box">
                                     <h1 class="text-3xl mb-4">Esporta cedolino paghe</h1>
                                     <hr>
@@ -72,22 +77,71 @@
                                         </div>
                                     </form>
                                 </div>
-                            </div>
+                            </dialog>
 
-                            <script>
-                                function openModal(userId) {
-                                    document.getElementById(`modal-${userId}`).classList.add('modal-open');
-                                }
+                            <dialog id="modal-presenze-{{ $user->id }}" class="modal">
+                                <div class="modal-box">
+                                    <h1 class="text-3xl mb-4">Esporta cedolino presenze</h1>
+                                    <hr>
 
-                                function closeModal(userId) {
-                                    document.getElementById(`modal-${userId}`).classList.remove('modal-open');
-                                }
-                            </script>
+                                    <form method="GET" action="{{ route('users.export-presenze', $user->id) }}">
+
+                                        <fieldset class="fieldset">
+                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}
+                                            </legend>
+                                            <select id="month-{{ $user->id }}" name="mese"
+                                                class="select select-bordered">
+                                                @foreach (range(1, 12) as $month)
+                                                    <option
+                                                        value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}">
+                                                        {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </fieldset>
+                                        <fieldset class="fieldset mb-4">
+                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}
+                                            </legend>
+                                            <select id="year-{{ $user->id }}" name="anno"
+                                                class="select select-bordered">
+                                                @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
+                                                    <option value="{{ $year }}">{{ $year }}</option>
+                                                @endforeach
+                                            </select>
+                                        </fieldset>
+                                        <div class="modal-action">
+                                            <button type="button" class="btn btn-secondary"
+                                                onclick="closeModal({{ $user->id }})">{{ __('personnel.users_cedolino_cancel') }}</button>
+                                            <button type="submit"
+                                                class="btn btn-primary">{{ __('personnel.users_cedolino_export') }}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </dialog>
+
                         </td>
 
                     </tr>
                 @endforeach
             </tbody>
         </table>
+
+        <script>
+            function openModal(userId) {
+                document.getElementById('modal-' + userId).showModal();
+            }
+
+            function closeModal(userId) {
+                document.getElementById('modal-' + userId).close();
+            }
+
+            function openPresenzeModal(userId) {
+                document.getElementById('modal-presenze-' + userId).showModal();
+            }
+
+            function closePresenzeModal(userId) {
+                document.getElementById('modal-presenze-' + userId).close();
+            }
+        </script>
 
 </x-layouts.app>
