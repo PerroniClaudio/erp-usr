@@ -20,14 +20,16 @@ echo "Preparazione directory vendor per composer..."
 sudo mkdir -p vendor
 sudo chown -R $CURRENT_USER:$CURRENT_USER vendor
 
-# Aggiornamento delle dipendenze
-echo "Installazione dipendenze Composer..."
-composer install --no-interaction --prefer-dist --optimize-autoloader
-
 # Impostazione permessi per le directory con necessità di scrittura
 echo "Impostazione permessi di scrittura per directories critiche..."
 sudo chmod -R 775 storage bootstrap/cache
 sudo chown -R $WEB_USER:$WEB_GROUP storage bootstrap/cache
+
+# Aggiornamento delle dipendenze
+echo "Installazione dipendenze Composer..."
+composer install --no-interaction --prefer-dist --optimize-autoloader
+
+
 
 # Aggiornamento del database
 echo "Esecuzione delle migrazioni database..."
