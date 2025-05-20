@@ -28,7 +28,7 @@ jobs:
 
       - name: Configure critical directories
         run: |
-          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="sudo find /var/www/erp-usr/storage -type d -exec chmod 775 {} \; && sudo find /var/www/erp-usr/bootstrap/cache -type d -exec chmod 775 {} \;"
+          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="sudo find /var/www/erp-usr/storage -type d -exec chmod 775 {} \; && sudo find /var/www/erp-usr/bootstrap/cache -type d -exec chmod 775 {} \; && sudo find /var/www/erp-usr/vendor -type d -exec chmod 775 {} \;"
 
       - name: Run deployment script
         run: |
