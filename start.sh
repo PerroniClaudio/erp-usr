@@ -7,6 +7,7 @@ echo "Iniziando lo script di post-deploy per Laravel 12..."
 PROJECT_DIR="/var/www/erp-usr"
 WEB_USER="www-data"
 WEB_GROUP="www-data"
+CURRENT_USER=$(whoami)
 
 cd $PROJECT_DIR
 
@@ -14,13 +15,19 @@ cd $PROJECT_DIR
 echo "Configurazione sicurezza Git..."
 sudo git config --global --add safe.directory $PROJECT_DIR
 
-# Preparazione per installazione pacchetti (con sudo)
-echo "Impostazione permessi temporanei per l'installazione..."
-sudo chmod -R 775 storage bootstrap/cache
+# Prima di composer: assegna temporaneamente la proprietà della cartella vendor all'utente corrente
+echo "Preparazione directory vendor per composer..."
+sudo mkdir -p vendor
+sudo chown -R $CURRENT_USER:$CURRENT_USER vendor
 
 # Aggiornamento delle dipendenze
 echo "Installazione dipendenze Composer..."
 composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Impostazione permessi per le directory con necessità di scrittura
+echo "Impostazione permessi di scrittura per directories critiche..."
+sudo chmod -R 775 storage bootstrap/cache
+sudo chown -R $WEB_USER:$WEB_GROUP storage bootstrap/cache
 
 # Aggiornamento del database
 echo "Esecuzione delle migrazioni database..."
@@ -42,16 +49,23 @@ php artisan view:cache
 echo "Riavvio delle code di lavoro..."
 php artisan queue:restart
 
+# Preparazione directory node_modules per npm
+echo "Preparazione directory node_modules per npm..."
+sudo mkdir -p node_modules
+sudo chown -R $CURRENT_USER:$CURRENT_USER node_modules
+
 # Compilazione degli asset
 echo "Compilazione degli asset frontend..."
 npm ci
 npm run build
 
-# Impostazione dei permessi finali (con sudo)
-echo "Impostazione permessi finali..."
+# Impostazione dei permessi finali
+echo "Ripristino permessi finali..."
 sudo chown -R $WEB_USER:$WEB_GROUP .
-sudo find . -type d -not -path "./node_modules/*" -not -path "./vendor/*" -exec chmod 755 {} \;
-sudo find . -type f -not -path "./node_modules/*" -not -path "./vendor/*" -exec chmod 644 {} \;
+
+# Imposta permessi standard per files e directory
+sudo find . -type d -exec chmod 755 {} \;
+sudo find . -type f -exec chmod 644 {} \;
 
 # Permessi speciali per directory che richiedono scrittura
 sudo chmod -R 775 storage bootstrap/cache
