@@ -13,7 +13,6 @@
                     <th>{{ __('personnel.users_name') }}</th>
                     <th>{{ __('personnel.users_email') }}</th>
                     <th>{{ __('personnel.users_actions') }}</th>
-
                 </tr>
             </thead>
             <tbody>
@@ -23,125 +22,118 @@
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>
-                            <button class="btn btn-primary" onclick="openModal({{ $user->id }})">
+                            <button class="btn btn-primary"
+                                onclick="openModal('cedolino', {{ $user->id }}, '{{ $user->name }}')">
                                 <x-lucide-file-text class="w-4 h-4" />
                                 Cedolino paghe
                             </button>
-                            <button class="btn btn-primary" onclick="openPresenzeModal({{ $user->id }})">
+                            <button class="btn btn-primary"
+                                onclick="openModal('presenze', {{ $user->id }}, '{{ $user->name }}')">
                                 <x-lucide-file-text class="w-4 h-4" />
                                 Presenze
                             </button>
-                            <a href="{{ route('users.edit', [
-                                'user' => $user,
-                            ]) }}"
-                                class="btn btn-primary">
+                            <a href="{{ route('users.edit', ['user' => $user]) }}" class="btn btn-primary">
                                 <x-lucide-pencil class="w-4 h-4" />
                             </a>
-
-                            <!-- Modal -->
-                            <dialog id="modal-{{ $user->id }}" class="modal">
-                                <div class="modal-box">
-                                    <h1 class="text-3xl mb-4">Esporta cedolino paghe</h1>
-                                    <hr>
-
-                                    <form method="GET" action="{{ route('users.export-cedolino', $user->id) }}">
-
-                                        <fieldset class="fieldset">
-                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}
-                                            </legend>
-                                            <select id="month-{{ $user->id }}" name="mese"
-                                                class="select select-bordered">
-                                                @foreach (range(1, 12) as $month)
-                                                    <option
-                                                        value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}">
-                                                        {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </fieldset>
-                                        <fieldset class="fieldset mb-4">
-                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}
-                                            </legend>
-                                            <select id="year-{{ $user->id }}" name="anno"
-                                                class="select select-bordered">
-                                                @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
-                                                    <option value="{{ $year }}">{{ $year }}</option>
-                                                @endforeach
-                                            </select>
-                                        </fieldset>
-                                        <div class="modal-action">
-                                            <button type="button" class="btn btn-secondary"
-                                                onclick="closeModal({{ $user->id }})">{{ __('personnel.users_cedolino_cancel') }}</button>
-                                            <button type="submit"
-                                                class="btn btn-primary">{{ __('personnel.users_cedolino_export') }}</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </dialog>
-
-                            <dialog id="modal-presenze-{{ $user->id }}" class="modal">
-                                <div class="modal-box">
-                                    <h1 class="text-3xl mb-4">Esporta cedolino presenze</h1>
-                                    <hr>
-
-                                    <form method="GET" action="{{ route('users.export-presenze', $user->id) }}">
-
-                                        <fieldset class="fieldset">
-                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}
-                                            </legend>
-                                            <select id="month-{{ $user->id }}" name="mese"
-                                                class="select select-bordered">
-                                                @foreach (range(1, 12) as $month)
-                                                    <option
-                                                        value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}">
-                                                        {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </fieldset>
-                                        <fieldset class="fieldset mb-4">
-                                            <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}
-                                            </legend>
-                                            <select id="year-{{ $user->id }}" name="anno"
-                                                class="select select-bordered">
-                                                @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
-                                                    <option value="{{ $year }}">{{ $year }}</option>
-                                                @endforeach
-                                            </select>
-                                        </fieldset>
-                                        <div class="modal-action">
-                                            <button type="button" class="btn btn-secondary"
-                                                onclick="closeModal({{ $user->id }})">{{ __('personnel.users_cedolino_cancel') }}</button>
-                                            <button type="submit"
-                                                class="btn btn-primary">{{ __('personnel.users_cedolino_export') }}</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </dialog>
-
                         </td>
-
                     </tr>
                 @endforeach
             </tbody>
         </table>
 
+        <!-- Cedolino Modal (single instance) -->
+        <dialog id="modal-cedolino" class="modal">
+            <div class="modal-box">
+                <h1 class="text-3xl mb-4">Esporta cedolino paghe</h1>
+                <hr>
+                <form id="form-cedolino" method="GET">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}</legend>
+                        <select id="cedolino-month" name="mese" class="select select-bordered">
+                            @foreach (range(1, 12) as $month)
+                                <option
+                                    value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}">
+                                    {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </fieldset>
+                    <fieldset class="fieldset mb-4">
+                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
+                        <select id="cedolino-year" name="anno" class="select select-bordered">
+                            @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </fieldset>
+                    <div class="modal-action">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('cedolino')">
+                            {{ __('personnel.users_cedolino_cancel') }}
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            {{ __('personnel.users_cedolino_export') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
+        <!-- Presenze Modal (single instance) -->
+        <dialog id="modal-presenze" class="modal">
+            <div class="modal-box">
+                <h1 class="text-3xl mb-4">Esporta cedolino presenze</h1>
+                <hr>
+                <form id="form-presenze" method="GET">
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}</legend>
+                        <select id="presenze-month" name="mese" class="select select-bordered">
+                            @foreach (range(1, 12) as $month)
+                                <option
+                                    value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}">
+                                    {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </fieldset>
+                    <fieldset class="fieldset mb-4">
+                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
+                        <select id="presenze-year" name="anno" class="select select-bordered">
+                            @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </fieldset>
+                    <div class="modal-action">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('presenze')">
+                            {{ __('personnel.users_cedolino_cancel') }}
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            {{ __('personnel.users_cedolino_export') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+
         <script>
-            function openModal(userId) {
-                document.getElementById('modal-' + userId).showModal();
+            function openModal(type, userId, userName) {
+                if (type === 'cedolino') {
+                    const form = document.getElementById('form-cedolino');
+                    form.action = "{{ route('users.export-cedolino', ':id') }}".replace(':id', userId);
+                    document.getElementById('modal-cedolino').showModal();
+                } else if (type === 'presenze') {
+                    const form = document.getElementById('form-presenze');
+                    form.action = "{{ route('users.export-presenze', ':id') }}".replace(':id', userId);
+                    document.getElementById('modal-presenze').showModal();
+                }
             }
 
-            function closeModal(userId) {
-                document.getElementById('modal-' + userId).close();
-            }
-
-            function openPresenzeModal(userId) {
-                document.getElementById('modal-presenze-' + userId).showModal();
-            }
-
-            function closePresenzeModal(userId) {
-                document.getElementById('modal-presenze-' + userId).close();
+            function closeModal(type) {
+                if (type === 'cedolino') {
+                    document.getElementById('modal-cedolino').close();
+                } else if (type === 'presenze') {
+                    document.getElementById('modal-presenze').close();
+                }
             }
         </script>
-
 </x-layouts.app>

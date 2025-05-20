@@ -31,14 +31,11 @@
         }
 
         .legend {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+
+            margin-top: 20px;
         }
 
-        .legend-column {
-            width: 48%;
-        }
+
 
         table {
             width: 100%;
@@ -74,27 +71,7 @@
     <div class="title">Cedolino - Mese {{ $mese }} {{ $anno }}</div>
     <p>Nominativo: {{ $user->name }}</p>
 
-    <table>
-        <tbody>
-            <tr>
-                <td style="width: 50%;border: 2px solid #000;padding: 5px">
-                    <p>LAVORATIVO => LA</p>
-                    <p>FERIE => FE</p>
-                    <p>MALATTIA => MA</p>
-                    <p>ROL => ROL</p>
-                    <p>LICENZA MATRIMONIO => LM</p>
-                    <p>SMART WORKING => SW</p>
-                </td>
-                <td style="width: 50%;border: 2px solid #000;padding: 5px">
-                    <p>STRAORDINARIO => ST</p>
-                    <p>STRAORDINARIO NOTTURNO => STN</p>
-                    <p>STRAORDINARIO FESTIVO => STF</p>
-                    <p>STRAORDINARIO NOTTURNO/FESTIVO => STNF</p>
-                    <p>ORE VIAGGIO => OV</p>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+
 
     <table id="days-table">
         <thead>
@@ -218,6 +195,46 @@
             @endforeach
         </tbody>
     </table>
+
+    <div
+        style="border: 1px solid #d4d4d8; margin-top: 20px; padding: 16px; background: #f8fafc; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+        <table style="width: 100%; border-collapse: separate; border-spacing: 0 0;">
+            <tr>
+                <td style="width: 20%">
+                    <ul style="list-style: none; padding-left: 0; margin: 0;">
+                        <li><strong>LS</strong> - LAVORO IN SEDE</li>
+                        <li><strong>SW</strong> - SMART WORKING</li>
+                    </ul>
+                </td>
+                <td style="width: 20%">
+                    <ul style="list-style: none; padding-left: 0; margin: 0;">
+                        <li><strong>ROL</strong> - ROL</li>
+                        <li><strong>FE</strong> - FERIE</li>
+                    </ul>
+                </td>
+                <td style="width: 20%">
+                    <ul style="list-style: none; padding-left: 0; margin: 0;">
+                        <li><strong>MA</strong> - MALATTIA</li>
+                        <li><strong>LM</strong> - LICENZA MATRIMONIO</li>
+
+                    </ul>
+                </td>
+                <td style="width: 20%">
+                    <ul style="list-style: none; padding-left: 0; margin: 0;">
+                        <li><strong>ST</strong> - STRAORDINARIO</li>
+                        <li><strong>STN</strong> - STRAORDINARIO NOTTURNO</li>
+                    </ul>
+                </td>
+                <td style="width: 20%">
+                    <ul style="list-style: none; padding-left: 0; margin: 0;">
+                        <li><strong>STF</strong> - STRAORDINARIO FESTIVO</li>
+                        <li><strong>STNF</strong> - STRAORDINARIO NOTTURNO/FESTIVO</li>
+                        <li><strong>OV</strong> - ORE VIAGGIO</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
 
 </html>
