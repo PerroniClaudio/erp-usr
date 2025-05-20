@@ -15,21 +15,27 @@ cd $PROJECT_DIR
 echo "Configurazione sicurezza Git..."
 sudo git config --global --add safe.directory $PROJECT_DIR
 
+# Gestione specifica dei permessi per i logs prima di tutto
+echo "Configurazione directory logs..."
+sudo mkdir -p storage/logs
+sudo touch storage/logs/laravel.log
+sudo chown -R $WEB_USER:$WEB_GROUP storage
+sudo chmod -R 775 storage
+sudo chmod 664 storage/logs/laravel.log
+
 # Prima di composer: assegna temporaneamente la proprietà della cartella vendor all'utente corrente
 echo "Preparazione directory vendor per composer..."
 sudo mkdir -p vendor
 sudo chown -R $CURRENT_USER:$CURRENT_USER vendor
 
-# Impostazione permessi per le directory con necessità di scrittura
-echo "Impostazione permessi di scrittura per directories critiche..."
-sudo chmod -R 775 storage bootstrap/cache
-sudo chown -R $WEB_USER:$WEB_GROUP storage bootstrap/cache
-
 # Aggiornamento delle dipendenze
 echo "Installazione dipendenze Composer..."
 composer install --no-interaction --prefer-dist --optimize-autoloader
 
-
+# Impostazione permessi per le directory con necessità di scrittura
+echo "Impostazione permessi di scrittura per directories critiche..."
+sudo chmod -R 775 bootstrap/cache
+sudo chown -R $WEB_USER:$WEB_GROUP bootstrap/cache
 
 # Aggiornamento del database
 echo "Esecuzione delle migrazioni database..."
@@ -72,5 +78,12 @@ sudo find . -type f -exec chmod 644 {} \;
 # Permessi speciali per directory che richiedono scrittura
 sudo chmod -R 775 storage bootstrap/cache
 sudo chmod -R 775 vendor
+sudo chmod 664 storage/logs/laravel.log  # Assicura che il file di log abbia i permessi corretti
+
+# Verifica finale per i logs
+echo "Verifica finale permessi logs..."
+sudo ls -la storage/logs/
+sudo chmod -R 775 storage/logs
+sudo chown -R $WEB_USER:$WEB_GROUP storage/logs
 
 echo "Post-deploy completato con successo!"
