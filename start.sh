@@ -10,13 +10,13 @@ WEB_GROUP="www-data"
 
 cd $PROJECT_DIR
 
-# Configurazione Git e permessi iniziali
+# Configurazione Git
 echo "Configurazione sicurezza Git..."
-git config --global --add safe.directory $PROJECT_DIR
+sudo git config --global --add safe.directory $PROJECT_DIR
 
-# Preparazione per installazione pacchetti
+# Preparazione per installazione pacchetti (con sudo)
 echo "Impostazione permessi temporanei per l'installazione..."
-chmod -R 775 storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
 
 # Aggiornamento delle dipendenze
 echo "Installazione dipendenze Composer..."
@@ -44,17 +44,17 @@ php artisan queue:restart
 
 # Compilazione degli asset
 echo "Compilazione degli asset frontend..."
-npm ci  # Usa npm ci invece di npm install per maggiore consistenza
+npm ci
 npm run build
 
-# Impostazione dei permessi finali
+# Impostazione dei permessi finali (con sudo)
 echo "Impostazione permessi finali..."
-chown -R $WEB_USER:$WEB_GROUP .
-find . -type d -not -path "./node_modules/*" -not -path "./vendor/*" -exec chmod 755 {} \;
-find . -type f -not -path "./node_modules/*" -not -path "./vendor/*" -exec chmod 644 {} \;
+sudo chown -R $WEB_USER:$WEB_GROUP .
+sudo find . -type d -not -path "./node_modules/*" -not -path "./vendor/*" -exec chmod 755 {} \;
+sudo find . -type f -not -path "./node_modules/*" -not -path "./vendor/*" -exec chmod 644 {} \;
 
 # Permessi speciali per directory che richiedono scrittura
-chmod -R 775 storage bootstrap/cache
-chmod -R 775 vendor
+sudo chmod -R 775 storage bootstrap/cache
+sudo chmod -R 775 vendor
 
 echo "Post-deploy completato con successo!"
