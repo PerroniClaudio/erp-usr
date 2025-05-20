@@ -45,9 +45,6 @@ php artisan view:cache
 echo "Riavvio delle code di lavoro..."
 php artisan queue:restart
 
-# Compilazione degli asset
-echo "Compilazione degli asset frontend..."
-npm run build
 
 # Ripristino permessi a 775 su tutti i file e cartelle
 echo "Ripristino permessi a 775 su tutti i file e cartelle..."
