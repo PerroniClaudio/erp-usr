@@ -32,7 +32,7 @@ jobs:
 
       - name: Run deployment script
         run: |
-          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="cd /var/www/erp-usr && sudo -u www-data bash start.sh"
+          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="cd /var/www/erp-usr && sh start.sh"
 
       - name: Verify deployment status
         run: |
