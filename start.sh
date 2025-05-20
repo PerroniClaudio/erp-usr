@@ -48,6 +48,6 @@ php artisan queue:restart
 
 # Ripristino permessi a 775 su tutti i file e cartelle
 echo "Ripristino permessi a 775 su tutti i file e cartelle..."
-sudo chmod -R 775 $PROJECT_DIR
+sudo chmod -R 755 $PROJECT_DIR
 
 echo "Post-deploy completato con successo!"
