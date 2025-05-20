@@ -15,6 +15,7 @@
         "guzzlehttp/guzzle": "^7.9",
         "http-interop/http-factory-guzzle": "^1.0",
         "laravel/framework": "^12.0",
+        "laravel/horizon": "^5.32",
         "laravel/scout": "^10.14",
         "laravel/socialite": "^5.19",
         "laravel/tinker": "^2.10.1",

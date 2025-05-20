@@ -9,9 +9,12 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
+use Laravel\Scout\Scout;
 
 class ImportVehiclesData implements ShouldQueue {
     use Queueable;
+
+    public $timeout = 60000;
 
     private $files = [
         "Autocaravan.xlsx",
@@ -40,26 +43,28 @@ class ImportVehiclesData implements ShouldQueue {
         $currentYear = date('Y');
         $url_prefix = "https://aci.gov.it/app/uploads/2024/12/";
 
-        foreach ($this->files as $file) {
-            $url = ($file == "Gasolio-IN.xlsx")
-                ? "https://aci.gov.it/app/uploads/2025/01/Gasolio-IN.xlsx"
-                : $url_prefix . $file;
+        Vehicle::withoutSyncingToSearch(function () use ($url_prefix) {
+            foreach ($this->files as $file) {
+                $url = ($file == "Gasolio-IN.xlsx")
+                    ? "https://aci.gov.it/app/uploads/2025/01/Gasolio-IN.xlsx"
+                    : $url_prefix . $file;
 
-            // Scarica il file solo se non esiste
-            if (!Storage::exists($file)) {
-                Log::info('Downloading file', ['file' => $file, 'url' => $url]);
-                $fileContents = file_get_contents($url);
-                Storage::put($file, $fileContents);
+                // Scarica il file solo se non esiste
+                if (!Storage::exists($file)) {
+                    Log::info('Downloading file', ['file' => $file, 'url' => $url]);
+                    $fileContents = file_get_contents($url);
+                    Storage::put($file, $fileContents);
+                }
+
+                // Elabora il file con chunking
+                $filePath = storage_path('app/private/' . $file);
+                Excel::import(new VehicleImport, $filePath);
+
+                // Elimina il file dopo l'elaborazione
+                if (Storage::exists($file)) {
+                    Storage::delete($file);
+                }
             }
-
-            // Elabora il file con chunking
-            $filePath = storage_path('app/private/' . $file);
-            Excel::import(new VehicleImport, $filePath);
-
-            // Elimina il file dopo l'elaborazione
-            if (Storage::exists($file)) {
-                Storage::delete($file);
-            }
-        }
+        });
     }
 }

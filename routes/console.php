@@ -9,5 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('vehicles:import', function () {
-    ImportVehiclesData::dispatch();
+    ImportVehiclesData::dispatch()->onQueue('default');
 })->purpose('Import vehicle data from Excel files');
