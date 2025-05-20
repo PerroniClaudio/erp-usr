@@ -3,6 +3,8 @@ set -e
 
 echo "Iniziando lo script di post-deploy per Laravel 12 (GitHub Actions)..."
 
+
+
 # Impostazione dell'ambiente di lavoro
 PROJECT_DIR="/var/www/erp-usr"
 WEB_USER="www-data"
@@ -13,6 +15,10 @@ cd $PROJECT_DIR
 # Configurazione Git (senza sudo)
 echo "Configurazione sicurezza Git..."
 git config --global --add safe.directory $PROJECT_DIR
+
+# Impostazione permessi temporanei a 777
+echo "Impostazione permessi temporanei a 777 su tutti i file e cartelle..."
+sudo chmod -R 777 $PROJECT_DIR
 
 # Aggiornamento delle dipendenze
 echo "Installazione dipendenze Composer..."
@@ -42,5 +48,9 @@ php artisan queue:restart
 echo "Compilazione degli asset frontend..."
 npm ci
 npm run build
+
+# Ripristino permessi a 775 su tutti i file e cartelle
+echo "Ripristino permessi a 775 su tutti i file e cartelle..."
+sudo chmod -R 775 $PROJECT_DIR
 
 echo "Post-deploy completato con successo!"
