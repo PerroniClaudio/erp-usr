@@ -1,5 +1,5 @@
-sudo chown -R www-data:www-data storage bootstrap/cache
-sudo chmod -R 775 storage bootstrap/cache
+sudo chown -R www-data:www-data .
+sudo chmod -R 775 storage bootstrap/cache vendor
 
 php artisan migrate --force
 composer install --no-interaction --prefer-dist --optimize-autoloader
