@@ -18,7 +18,7 @@ git config --global --add safe.directory $PROJECT_DIR
 
 # Impostazione permessi temporanei a 777
 echo "Impostazione permessi temporanei a 777 su tutti i file e cartelle..."
-sudo chmod -R 777 $PROJECT_DIR
+
 
 
 # Aggiornamento delle dipendenze
@@ -48,6 +48,8 @@ php artisan queue:restart
 
 # Ripristino permessi a 775 su tutti i file e cartelle
 echo "Ripristino permessi a 775 su tutti i file e cartelle..."
-sudo chmod -R 755 $PROJECT_DIR
+sudo chmod -R 775 storage/logs
+sudo chmod -R 775 storage/framework
+sudo chmod -R 775 bootstrap/cache
 
 echo "Post-deploy completato con successo!"
