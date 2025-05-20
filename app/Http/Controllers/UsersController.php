@@ -424,6 +424,7 @@ class UsersController extends Controller {
     public function editUserVehicle(User $user, Vehicle $vehicle) {
 
         $joinedVehicle = $user->vehicles()->where('vehicles.id', $vehicle->id)->first();
+        $mileageUpdates = $vehicle->mileageUpdates()->where('user_id', $user->id)->orderBy('update_date', 'desc')->get();
 
 
         return view('admin.personnel.users.vehicles.edit', [
@@ -433,6 +434,7 @@ class UsersController extends Controller {
             'vehicleTypes' => $this->vehicleTypes,
             'ownershipTypes' => $this->ownershipTypes,
             'purchaseTypes' => $this->purchaseTypes,
+            'mileageUpdates' => $mileageUpdates
         ]);
     }
 
@@ -448,6 +450,22 @@ class UsersController extends Controller {
             'mileage' => 'nullable|numeric',
             'mileage_update_date' => 'nullable|date'
         ]);
+
+
+
+        $vehicle = Vehicle::find($request->vehicle_id);
+        $pivot = $user->vehicles()->where('vehicles.id', $vehicle->id)->first();
+
+        if ($pivot && isset($request->mileage) && $request->mileage !== null) {
+            $previousMileage = $pivot->pivot->mileage;
+            if ($previousMileage != $request->mileage) {
+                $vehicle->mileageUpdates()->create([
+                    'user_id' => $user->id,
+                    'mileage' => $request->mileage,
+                    'update_date' => $request->mileage_update_date ?? now(),
+                ]);
+            }
+        }
 
         $user->vehicles()->updateExistingPivot($request->vehicle_id, [
             'vehicle_type' => $request->vehicle_type,

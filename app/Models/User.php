@@ -95,4 +95,8 @@ class User extends Authenticatable {
                 'mileage_update_date'
             ]);
     }
+
+    public function mileageUpdates() {
+        return $this->hasMany(MileageUpdate::class);
+    }
 }

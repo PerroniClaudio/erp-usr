@@ -8,16 +8,22 @@
 
     <hr>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="flex flex-col gap-4">
         <div class="card bg-base-300 ">
             <form class="card-body" method="POST" action="{{ route('users.update', $user) }}">
                 @csrf
                 @method('PUT')
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg">{{ __('personnel.users_personal_data') }}</h2>
-                    <div class="btn btn-primary"
-                        onclick="document.getElementById('submit-button-personal-data').click()">
-                        <x-lucide-save class="h-4 w-4" />
+
+                    <div class="flex items-center gap-1">
+                        <div class="btn btn-primary" id="enable-edit-personal-data">
+                            <x-lucide-pencil class="h-4 w-4" />
+                        </div>
+                        <div class="btn btn-primary"
+                            onclick="document.getElementById('submit-button-personal-data').click()">
+                            <x-lucide-save class="h-4 w-4" />
+                        </div>
                     </div>
                 </div>
 
@@ -26,7 +32,7 @@
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_title') }}</legend>
-                        <input type="text" name="title" class="input w-full"
+                        <input type="text" name="title" class="input w-full form-input-activable" disabled
                             value="{{ old('title', $user->title) }}" placeholder="{{ __('personnel.users_title') }}" />
                     </fieldset>
 
@@ -45,27 +51,27 @@
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_cfp') }}</legend>
-                        <input type="text" name="cfp" class="input w-full" value="{{ old('cfp', $user->cfp) }}"
-                            placeholder="{{ __('personnel.users_cfp') }}" />
+                        <input type="text" name="cfp" class="input w-full form-input-activable" disabled
+                            value="{{ old('cfp', $user->cfp) }}" placeholder="{{ __('personnel.users_cfp') }}" />
                     </fieldset>
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_birth_date') }}</legend>
-                        <input type="date" name="birth_date" class="input w-full"
+                        <input type="date" name="birth_date" class="input w-full form-input-activable" disabled
                             value="{{ old('birth_date', $user->birth_date) }}"
                             placeholder="{{ __('personnel.users_birth_date') }}" />
                     </fieldset>
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_company_name') }}</legend>
-                        <input type="text" name="company_name" class="input w-full"
+                        <input type="text" name="company_name" class="input w-full form-input-activable" disabled
                             value="{{ old('company_name', $user->company_name) }}"
                             placeholder="{{ __('personnel.users_company_name') }}" />
                     </fieldset>
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_vat_number') }}</legend>
-                        <input type="text" name="vat_number" class="input w-full"
+                        <input type="text" name="vat_number" class="input w-full form-input-activable" disabled
                             value="{{ old('vat_number', $user->vat_number) }}"
                             placeholder="{{ __('personnel.users_vat_number') }}" />
                     </fieldset>
@@ -73,28 +79,28 @@
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_mobile_number') }}</legend>
-                        <input type="text" name="mobile_number" class="input w-full"
+                        <input type="text" name="mobile_number" class="input w-full form-input-activable" disabled
                             value="{{ old('mobile_number', $user->mobile_number) }}"
                             placeholder="{{ __('personnel.users_mobile_number') }}" />
                     </fieldset>
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_phone_number') }}</legend>
-                        <input type="text" name="phone_number" class="input w-full"
+                        <input type="text" name="phone_number" class="input w-full form-input-activable" disabled
                             value="{{ old('phone_number', $user->phone_number) }}"
                             placeholder="{{ __('personnel.users_phone_number') }}" />
                     </fieldset>
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_weekly_hours') }}</legend>
-                        <input type="number" name="weekly_hours" class="input w-full"
+                        <input type="number" name="weekly_hours" class="input w-full form-input-activable" disabled
                             value="{{ old('weekly_hours', $user->weekly_hours) }}"
                             placeholder="{{ __('personnel.users_weekly_hours') }}" />
                     </fieldset>
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_category') }}</legend>
-                        <select name="category" class="select w-full">
+                        <select name="category" class="select w-full form-input-activable" disabled>
                             <option value="Dipendente"
                                 {{ old('category', $user->category) == 'Dipendente' ? 'selected' : '' }}>
                                 {{ __('personnel.users_category_employee') }}
@@ -113,14 +119,14 @@
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_badge_code') }}</legend>
-                        <input type="text" name="badge_code" class="input w-full"
+                        <input type="text" name="badge_code" class="input w-full form-input-activable" disabled
                             value="{{ old('badge_code', $user->badge_code) }}"
                             placeholder="{{ __('personnel.users_badge_code') }}" />
                     </fieldset>
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_employee_code') }}</legend>
-                        <input type="text" name="employee_code" class="input w-full"
+                        <input type="text" name="employee_code" class="input w-full form-input-activable" disabled
                             value="{{ old('employee_code', $user->employee_code) }}"
                             placeholder="{{ __('personnel.users_employee_code') }}" />
                     </fieldset>

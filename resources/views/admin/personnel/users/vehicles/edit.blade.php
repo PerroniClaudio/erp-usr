@@ -133,6 +133,43 @@
         </div>
     </div>
 
+    <div class="card bg-base-300">
+        <div class="card-body">
+
+            <h2 class="card-title">{{ __('personnel.users_vehicles_mileage_history') }}</h2>
+
+
+            <hr>
+
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>{{ __('personnel.users_vehicles_mileage_history_date') }}</th>
+                        <th>{{ __('personnel.users_vehicles_mileage_history_mileage') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="mileage-history">
+                    @unless ($joinedVehicle->mileageUpdates->count())
+                        <tr>
+                            <td colspan="2" class="text-center">
+                                {{ __('personnel.users_vehicles_mileage_history_no_updates') }}
+                            </td>
+                        </tr>
+                    @endunless
+                    @foreach ($mileageUpdates as $history)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($history->update_date)->format('d/m/Y') }}</td>
+                            <td>{{ $history->mileage }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+
     @push('scripts')
         @vite('resources/js/vehicles.js')
     @endpush

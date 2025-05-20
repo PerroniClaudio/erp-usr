@@ -45,4 +45,8 @@ class Vehicle extends Model {
             'mileage_update_date'
         ]);
     }
+
+    public function mileageUpdates() {
+        return $this->hasMany(MileageUpdate::class);
+    }
 }

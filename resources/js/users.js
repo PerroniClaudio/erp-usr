@@ -188,3 +188,25 @@ submitButtonLocation.addEventListener("click", (event) => {
             console.error("Error:", error);
         });
 });
+
+// Abilita e disabilita i campi del form dati personali
+const personalDataActivator = document.querySelector(
+    "#enable-edit-personal-data"
+);
+
+personalDataActivator.addEventListener("click", (event) => {
+    const personalDataFields = document.querySelectorAll(
+        ".form-input-activable"
+    );
+
+    personalDataFields.forEach((field) => {
+        if (field.hasAttribute("disabled")) {
+            field.removeAttribute("disabled");
+        } else {
+            field.setAttribute("disabled", "disabled");
+        }
+    });
+
+    personalDataActivator.classList.toggle("btn-primary");
+    personalDataActivator.classList.toggle("btn-secondary");
+});
