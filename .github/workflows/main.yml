@@ -1,17 +1,14 @@
-name: Auto Pull to GCP VM
+name: Deploy to GCP VM
 
 on:
   push:
-    branches: [main] # Modifica questo se usi un branch diverso
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Configure Git safe directory
-        run: git config --global --add safe.directory /var/www/erp-usr
+      - uses: actions/checkout@v3
 
       - id: "auth"
         uses: "google-github-actions/auth@v2"
@@ -21,6 +18,41 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Connect to VM and pull changes
+      - name: Deploy to VM
         run: |
-          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="sudo git config --global --add safe.directory /var/www/erp-usr && cd /var/www/erp-usr && sudo git pull origin main && sh /var/www/erp-usr/start.sh"
+          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="bash -s" << 'ENDSSH'
+            # Impostazione variabili di ambiente
+            DEPLOY_DIR="/var/www/erp-usr"
+            WEB_USER="www-data"
+            WEB_GROUP="www-data"
+            
+            echo "Iniziando il processo di deployment in $DEPLOY_DIR..."
+            
+            # Verifica dei permessi iniziali
+            echo "Verifica permessi iniziali..."
+            current_owner=$(stat -c '%U:%G' "$DEPLOY_DIR")
+            current_perms=$(stat -c '%a' "$DEPLOY_DIR")
+            echo "Permessi attuali: $current_perms, Proprietario: $current_owner"
+            
+            # Esegui git pull preservando proprietà www-data
+            cd "$DEPLOY_DIR"
+            echo "Esecuzione git pull..."
+            sudo -u "$WEB_USER" git config --global --add safe.directory "$DEPLOY_DIR"
+            sudo -u "$WEB_USER" git pull origin main --quiet
+            
+            # Setup temporaneo per storage e cache 
+            echo "Configurazione permessi directory critiche..."
+            sudo find "$DEPLOY_DIR/storage" -type d -exec chmod 775 {} \;
+            sudo find "$DEPLOY_DIR/bootstrap/cache" -type d -exec chmod 775 {} \;
+            
+            # Esecuzione dello script di post-deploy come www-data
+            echo "Esecuzione script di deploy..."
+            sudo -u "$WEB_USER" bash "$DEPLOY_DIR/start.sh"
+            
+            # Verifica finale dei permessi
+            echo "Verifica permessi finali..."
+            final_owner=$(stat -c '%U:%G' "$DEPLOY_DIR")
+            echo "Proprietario finale: $final_owner"
+            
+            echo "Deployment completato con successo!"
+          ENDSSH
