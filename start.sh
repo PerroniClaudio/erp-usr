@@ -3,8 +3,6 @@ set -e
 
 echo "Iniziando lo script di post-deploy per Laravel 12 (GitHub Actions)..."
 
-
-
 # Impostazione dell'ambiente di lavoro
 PROJECT_DIR="/var/www/erp-usr"
 WEB_USER="www-data"

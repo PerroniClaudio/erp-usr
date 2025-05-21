@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\AttendanceType;
+use App\Models\Company;
+use App\Models\Group;
 use App\Models\TimeOffRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -252,6 +254,127 @@ class AttendanceController extends Controller {
 
         return view('admin.attendances.index', [
             'usersStatus' => $usersStatus,
+            'groups' => Group::all(),
+            'companies' => Company::all(),
         ]);
+    }
+
+    public function listAttendances(Request $request) {
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $companyId = $request->input('company_id') != null ? $request->input('company_id') : null;
+        $groupId = $request->input('group_id') != null ? $request->input('group_id') : null;
+        $userId = $request->input('user_id') != null ? $request->input('user_id') : null;
+
+        // Costruisci la query utenti solo se necessario
+
+        $company_user_ids = [];
+        if ($companyId) {
+            $company  = Company::find($companyId);
+            $company_users = $company->users()->get();
+
+            $company_user_ids = $company_users->pluck('id');
+        }
+
+        $group_user_ids = [];
+        if ($groupId) {
+            $group = Group::find($groupId);
+            $group_user_ids = $group->users()->get();
+
+            $group_user_ids = $group_user_ids->pluck('id');
+        }
+
+        if ($companyId && $groupId) {
+            // Intersezione tra utenti della company e del gruppo
+            $userIds = collect($company_user_ids)->intersect($group_user_ids)->values();
+        } elseif ($companyId) {
+            $userIds = collect($company_user_ids)->values();
+        } elseif ($groupId) {
+            $userIds = collect($group_user_ids)->values();
+        } else {
+            $userIds = User::pluck('id'); // Prendi tutti gli utenti se non ci sono filtri
+        }
+
+        $attendances = Attendance::where('date', '>=', $startDate)
+            ->where('date', '<=', $endDate)
+            ->whereIn('user_id', $userIds)
+            ->with(['user', 'attendanceType'])
+            ->get();
+
+
+
+        $attendances = $attendances->sortBy(function ($attendance) {
+            return $attendance->user_id . '-' . $attendance->date . '-' . $attendance->time_in;
+        })->values();
+
+        $attendances = collect($this->mergeAttendances($attendances));
+
+        $events = [];
+
+        foreach ($attendances as $attendanceList) {
+            foreach ($attendanceList as $attendance) {
+
+
+                if ($attendance['user']->color === "") {
+                    $attendance['user']->assignColorToUser();
+                }
+
+                $events[] = [
+                    'id' => $attendance['id'],
+                    'title' => $attendance['user']->name . " " . $attendance['attendanceType']->acronym . " (" . $attendance['time_in'] . " - " . $attendance['time_out'] . ")",
+                    'date' => $attendance['date'],
+                    'description' => $attendance['attendanceType']->description,
+                    'color' => $attendance['user']->color,
+                ];
+            }
+        };
+
+        return response()->json([
+            'events' => $events,
+        ]);
+    }
+
+    public function mergeAttendances($attendances) {
+
+        // Group attendances by user_id
+        $grouped = [];
+        foreach ($attendances as $attendance) {
+            $userId = $attendance->user_id;
+            if (!isset($grouped[$userId])) {
+                $grouped[$userId] = [];
+            }
+            $grouped[$userId][] = $attendance;
+        }
+
+        // For each user, merge attendances on same day and same attendance_type_id
+        $result = [];
+        foreach ($grouped as $userId => $userAttendances) {
+            // Group by date and attendance_type_id
+            $merged = [];
+            foreach ($userAttendances as $attendance) {
+                $key = $attendance->date . '_' . $attendance->attendance_type_id;
+                if (!isset($merged[$key])) {
+                    $merged[$key] = clone $attendance;
+                } else {
+                    // Merge time_in and time_out
+                    $merged[$key]->time_in = min($merged[$key]->time_in, $attendance->time_in);
+                    $merged[$key]->time_out = max($merged[$key]->time_out, $attendance->time_out);
+                    // Optionally, sum hours if needed
+                    if (isset($merged[$key]->hours) && isset($attendance->hours)) {
+                        $merged[$key]->hours += $attendance->hours;
+                    }
+                }
+            }
+            // Store merged attendances for this user
+            $result[$userId] = array_values($merged);
+        }
+
+
+
+        return $result;
+    }
+
+    public function viewAttendance(Attendance $attendance) {
     }
 }

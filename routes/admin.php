@@ -67,4 +67,6 @@ Route::group([
     'prefix' => 'admin/attendance',
 ], function () {
     Route::get('/', [AttendanceController::class, 'adminIndex'])->name('admin.attendances.index');
+    Route::get('/list', [AttendanceController::class, 'listAttendances'])->name('admin.attendances.list');
+    Route::get('/{attendance}/edit', [AttendanceController::class, 'viewAttendance'])->name('admin.attendances.edit');
 });

@@ -13,4 +13,12 @@ return [
     'registered' => 'Presenza registrata',
     'time_off' => 'In ferie/Permesso',
     'not_registered' => 'Non registrata',
+
+    "filter" => "Filtra",
+    "filter_by_company" => "Filtra per azienda",
+    "all_companies" => "Tutte le aziende",
+    "filter_by_group" => "Filtra per gruppo",
+    "all_groups" => "Tutti i gruppi",
+    "filter_by_user" => "Filtra per utente",
+    "all_users" => "Tutti gli utenti",
 ];

@@ -9,6 +9,7 @@ use App\Models\TimeOffType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ImportPresenzeJob implements ShouldQueue {
     use Queueable;
@@ -49,8 +50,19 @@ class ImportPresenzeJob implements ShouldQueue {
                 // Giorno di ferie o rol
                 $timeOffType = TimeOffType::where('name', $row->voce)->first();
 
+                if (!$timeOffType) {
+                    return;
+                }
+
+
                 $date_from = $row->data_inizio . ' ' . $row->ora_inizio;
                 $date_to = $row->data_inizio . ' ' . $row->ora_fine;
+
+                if ((!\Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_from)) || (!\Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_to))) {
+                    continue; // Skip if date format is invalid
+                }
+
+
 
                 $ferie[] = [
                     'user_id' => $this->userId,

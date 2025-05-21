@@ -3,8 +3,27 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import itLocale from "@fullcalendar/core/locales/it";
 
 let calendarEl = document.getElementById("calendar");
+const companyFilter = document.getElementById("company_filter");
+const groupsFilter = document.getElementById("groups_filter");
+
+const onFilterChange = () => {
+    console.log("Filter changed");
+    if (calendarEl) {
+        renderCalendar();
+    }
+};
+
+[companyFilter, groupsFilter].forEach((filter) => {
+    if (filter) {
+        filter.addEventListener("change", onFilterChange);
+    }
+});
 
 if (calendarEl) {
+    renderCalendar();
+}
+
+function renderCalendar() {
     let calendar = new Calendar(calendarEl, {
         plugins: [dayGridPlugin],
         initialView: "dayGridMonth",
@@ -14,9 +33,16 @@ if (calendarEl) {
         handleWindowResize: true,
         events: function (fetchInfo, successCallback, failureCallback) {
             let page = new Date(fetchInfo.start).getMonth() + 1; // Use the month as the page number
-            fetch(
-                `/standard/attendances/user?page=${page}&start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`
-            )
+
+            let params = new URLSearchParams({
+                page: page,
+                start_date: fetchInfo.startStr,
+                end_date: fetchInfo.endStr,
+                group_id: groupsFilter ? groupsFilter.value : "",
+                company_id: companyFilter ? companyFilter.value : "",
+            });
+
+            fetch(`/admin/attendance/list?${params}`)
                 .then((response) => response.json())
                 .then((data) => {
                     successCallback(data.events); // Assuming the API returns an `events` array
@@ -26,7 +52,7 @@ if (calendarEl) {
                 });
         },
         eventClick: function (info) {
-            window.location.href = `/standard/attendances/${info.event.id}/edit`;
+            window.location.href = `/admin/attendances/${info.event.id}/edit`;
         },
     });
     calendar.render();

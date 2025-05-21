@@ -71,6 +71,10 @@ class AttendanceTypeSeeder extends Seeder {
                 'name' => 'Smartworking',
                 'acronym' => 'SW',
             ],
+            [
+                'name' => 'Malattia',
+                'acronym' => 'MA',
+            ],
         ];
 
         foreach ($attendanceTypes as $attendanceType) {

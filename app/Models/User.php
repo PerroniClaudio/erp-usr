@@ -46,7 +46,22 @@ class User extends Authenticatable {
         'location_province',
         'location_latitude',
         'location_longitude',
+        'color',
     ];
+
+    private $colorBank = [
+        '#7C9EB2',
+        '#9E788F',
+        '#F39C6B',
+        '#35B293',
+        '#7CEA9C',
+        '#BC427F',
+    ];
+
+    public function assignColorToUser() {
+        $this->color = $this->colorBank[array_rand($this->colorBank)];
+        $this->save();
+    }
 
     /**
      * The attributes that should be hidden for serialization.
