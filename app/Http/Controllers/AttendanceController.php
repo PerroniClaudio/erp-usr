@@ -308,6 +308,8 @@ class AttendanceController extends Controller {
             return $attendance->user_id . '-' . $attendance->date . '-' . $attendance->time_in;
         })->values();
 
+        /*
+
         $attendances = collect($this->mergeAttendances($attendances));
 
         $events = [];
@@ -329,6 +331,22 @@ class AttendanceController extends Controller {
                 ];
             }
         };
+
+        */
+
+        $events = $attendances->map(function ($attendance) {
+            if ($attendance->user->color === "") {
+                $attendance->user->assignColorToUser();
+            }
+
+            return [
+                'id' => $attendance->id,
+                'title' => $attendance->user->name . " " . $attendance->attendanceType->acronym . " (" . $attendance->time_in . " - " . $attendance->time_out . ")",
+                'date' => $attendance->date,
+                'description' => $attendance->attendanceType->description,
+                'color' => $attendance->user->color,
+            ];
+        });
 
         return response()->json([
             'events' => $events,
@@ -376,5 +394,17 @@ class AttendanceController extends Controller {
     }
 
     public function viewAttendance(Attendance $attendance) {
+
+        $attendanceTypes = AttendanceType::all();
+        return view('standard.attendances.edit', [
+            'attendance' => $attendance,
+            'attendanceTypes' => $attendanceTypes,
+            'companies' => Auth::user()->companies,
+        ])->with([
+            'success' => session('success'),
+            'error' => session('error'),
+            'message' => session('message'),
+            'errors' => session('errors'),
+        ]);
     }
 }

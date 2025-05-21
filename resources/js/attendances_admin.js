@@ -52,7 +52,7 @@ function renderCalendar() {
                 });
         },
         eventClick: function (info) {
-            window.location.href = `/admin/attendances/${info.event.id}/edit`;
+            window.location.href = `/admin/attendance/${info.event.id}/edit`;
         },
     });
     calendar.render();
