@@ -94,13 +94,18 @@ class TimeOffRequestController extends Controller {
         return redirect()->route('time-off-requests.index')->with('success', 'Richieste di permesso create con successo');
     }
 
+    private function normalizeDate(string $dateString): string {
+        // Se la stringa contiene uno spazio seguito da due cifre (timezone), sostituisci con +hh:mm
+        return preg_replace('/ (\d{2}):(\d{2})$/', '+$1:$2', $dateString);
+    }
+
     public function getUserRequests(Request $request) {
         $user = $request->user();
 
         // Request will have a start and an end date
 
-        $startDate = $request->input('start');
-        $endDate = date('Y-m-d', strtotime($request->input('end') . ' +3 days'));
+        $startDate = $this->normalizeDate($request->input('start'));
+        $endDate = $this->normalizeDate($request->input('end'));
 
         if ($startDate && $endDate) {
             $requests = TimeOffRequest::with(['type', 'user'])

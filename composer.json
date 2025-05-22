@@ -23,6 +23,7 @@
         "mallardduck/blade-lucide-icons": "^1.23",
         "meilisearch/meilisearch-php": "^1.14",
         "opcodesio/log-viewer": "^3.15",
+        "predis/predis": "^3.0",
         "socialiteproviders/microsoft": "^4.6",
         "spatie/laravel-permission": "^6.16"
     },
