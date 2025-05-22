@@ -25,15 +25,3 @@ jobs:
       - name: Pull latest changes
         run: |
           gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="cd /var/www/erp-usr && sudo -u www-data git pull origin main --quiet"
-
-      - name: Configure critical directories
-        run: |
-          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="sudo find /var/www/erp-usr/storage -type d -exec chmod 775 {} \; && sudo find /var/www/erp-usr/bootstrap/cache -type d -exec chmod 775 {} \; && sudo find /var/www/erp-usr/vendor -type d -exec chmod 775 {} \;"
-
-      - name: Run deployment script
-        run: |
-          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="cd /var/www/erp-usr && sh start.sh"
-
-      - name: Verify deployment status
-        run: |
-          gcloud compute ssh ${{ secrets.VM_INSTANCE_NAME }} --zone ${{ secrets.VM_ZONE }} --command="echo 'Deployment completato!' && stat -c 'Proprietario: %U:%G, Permessi: %a' /var/www/erp-usr"
