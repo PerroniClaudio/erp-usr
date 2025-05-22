@@ -58,7 +58,18 @@ class ImportPresenzeJob implements ShouldQueue {
                 $date_from = $row->data_inizio . ' ' . $row->ora_inizio;
                 $date_to = $row->data_inizio . ' ' . $row->ora_fine;
 
-                if ((!\Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_from)) || (!\Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_to))) {
+                try {
+                    $fromCarbon = \Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_from);
+                    $toCarbon = \Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_to);
+                    $fromErrors = \Carbon\Carbon::getLastErrors();
+                    $toErrors = \Carbon\Carbon::getLastErrors();
+                    if (
+                        $fromErrors['error_count'] > 0 || $fromErrors['warning_count'] > 0 ||
+                        $toErrors['error_count'] > 0 || $toErrors['warning_count'] > 0
+                    ) {
+                        continue; // Skip if date format is invalid
+                    }
+                } catch (\Exception $e) {
                     continue; // Skip if date format is invalid
                 }
 
