@@ -40,7 +40,8 @@ function clearErrorMessages() {
 }
 
 function populateAddressFields(content) {
-    const { address_details, latitude, longitude } = content;
+    let { address_details, latitude, longitude } = content;
+    address_details.house_number = address_details.house_number !== undefined ? address_details.house_number : "";
 
     document.querySelector(
         "#address"

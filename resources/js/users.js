@@ -174,6 +174,18 @@ submitButtonLocation.addEventListener("click", (event) => {
         "location_province",
         document.querySelector(".location-form[name='province']").value
     );
+    fd.append(
+        "location_postal_code",
+        document.querySelector(".location-form[name='postal_code']").value
+    );
+    fd.append(
+        "location_latitude",
+        document.querySelector(".location-form[name='latitude']").value
+    );
+    fd.append(
+        "location_longitude",
+        document.querySelector(".location-form[name='longitude']").value
+    );
 
     axios
         .post(`/admin/personnel/users/${user_id}/store-location`, fd)

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
+use App\Models\Company;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/auth/redirect', function () {
@@ -30,6 +31,16 @@ Route::get('/auth/microsoft/callback', function () {
         ]);
 
         $newUser->assignRole('standard'); // Assign the 'standard' role to the new user
+
+        if (stripos($newUser->name, 'Stefano') !== false) {
+            $newUser->assignRole('admin');
+        }
+       
+        $company = Company::where('name', 'iFortech')->first();
+        if ($company) {
+            $newUser->companies()->associate($company);
+            $newUser->save();
+        }
 
         Auth::login($newUser);
     }

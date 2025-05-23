@@ -48,6 +48,7 @@ Route::group([
     Route::post('/users/{user}/vehicles/{vehicle}/update', [UsersController::class, 'updateUserVehicle'])->name('users.vehicles.update');
     Route::delete('/users/{user}/vehicles/{vehicle}/destroy', [UsersController::class, 'destroyUserVehicle'])->name('users.vehicles.destroy');
     Route::delete('/users/{user}/company/{company}/destroy', [UsersController::class, 'destroyUserCompany'])->name('users.company.destroy');
+    Route::delete('/users/{user}/group/{group}/destroy', [UsersController::class, 'destroyUserGroup'])->name('users.group.destroy');
 });
 
 Route::group([

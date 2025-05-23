@@ -134,14 +134,14 @@ class UsersController extends Controller {
         $attendances = Attendance::where('user_id', $user->id)
             ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
             ->orderBy('date')
-            ->orderBy('start_time')
+            ->orderBy('time_in')
             ->get();
 
         // Otteniamo le richieste di ferie/permessi dell'utente per il mese specificato
         $timeOffRequests = TimeOffRequest::where('user_id', $user->id)
             ->where('status', '2')
             ->whereBetween('date_from', [$primoGiorno, $ultimoGiorno])
-            ->orderBy('start_date')
+            ->orderBy('date_from')
             ->get();
 
         // Prepariamo i dati delle presenze per il PDF
@@ -485,6 +485,12 @@ class UsersController extends Controller {
         $user->companies()->detach($company->id);
 
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_company_deleted'));
+    }
+
+    public function destroyUserGroup(Request $request, User $user, Group $group) {
+        $user->groups()->detach($group->id);
+
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_group_deleted'));
     }
 
 

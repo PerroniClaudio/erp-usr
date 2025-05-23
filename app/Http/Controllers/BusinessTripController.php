@@ -102,7 +102,6 @@ class BusinessTripController extends Controller {
             'date_from' => 'required|string',
             'date_to' => 'required|string',
             'status' => 'required|integer',
-            'expense_type' => 'required|integer',
         ]);
 
         $businessTrip->update($fields);

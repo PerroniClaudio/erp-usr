@@ -15,7 +15,7 @@
                 <x-lucide-car class="h-6 w-6 text-primary" />
                 <h2 class="card-title">{{ __('navbar.business_trips') }}</h2>
                 <p>
-                    {{ __('navbar.business_trips_description') }}
+                    {{ __('navbar.business_trips_description') }}a
                 </p>
             </div>
         </a>

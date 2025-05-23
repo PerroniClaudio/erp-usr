@@ -155,4 +155,15 @@ class GroupController extends Controller {
             "groups" => $availableGroups
         ]);
     }
+
+    public function associateGroups(Request $request, User $user) {
+        $groups = json_decode($request->input('groups'), true);
+
+        $user->groups()->syncWithoutDetaching($groups);
+
+        return response()->json([
+            'message' => 'Gruppi associati all\'utente con successo.',
+            'groups' => $user->groups()->get(),
+        ]);
+    }
 }
