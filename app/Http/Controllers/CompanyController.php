@@ -110,12 +110,11 @@ class CompanyController extends Controller {
 
     public function dissociateUsers(Company $company, User $user) {
         //
+
         $company->users()->detach($user->id);
 
-        return response()->json([
-            'message' => 'Utente dissociato con successo dall\'azienda.',
-            'users' => $company->users()->get(),
-        ]);
+        return redirect()->route('companies.edit', $company->id)
+            ->with('success', 'Utente dissociato con successo dall\'azienda.');
     }
     public function getUsers(Company $company) {
         //

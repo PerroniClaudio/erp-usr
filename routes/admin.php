@@ -23,7 +23,7 @@ Route::group([
     Route::resource('/groups', GroupController::class);
     Route::get('/groups/{group}/available-users', [GroupController::class, 'availableUsers'])->name('groups.available-users');
     Route::post('/groups/{group}/associate-users', [GroupController::class, 'associateUsers'])->name('groups.users.associate');
-    Route::delete('/groups/{group}/dissociate-users', [GroupController::class, 'dissociateUsers'])->name('groups.users.dissociate');
+    Route::delete('/groups/{group}/dissociate-users/{user}', [GroupController::class, 'dissociateUsers'])->name('groups.users.dissociate');
     Route::get('/groups/users/available/{user}', [GroupController::class, 'availableForUser'])->name('groups.available-for-user');
     Route::post('/groups/users/{user}/associate-groups', [GroupController::class, 'associateGroups'])->name('groups.associate-groups');
 
@@ -32,7 +32,7 @@ Route::group([
     Route::post('/companies/users/{user}/associate-companies', [CompanyController::class, 'associateCompanies'])->name('companies.associate-companies');
     Route::get('/companies/{company}/available-users', [CompanyController::class, 'availableUsers'])->name('companies.available-users');
     Route::post('/companies/{company}/associate-users', [CompanyController::class, 'associateUsers'])->name('companies.users.associate');
-    Route::delete('/companies/{company}/dissociate-users', [CompanyController::class, 'dissociateUsers'])->name('companies.users.dissociate');
+    Route::delete('/companies/{company}/dissociate-users/{user}', [CompanyController::class, 'dissociateUsers'])->name('companies.users.dissociate');
 
     Route::get('users/search-address', [UsersController::class, 'searchAddress'])->name('users.search-address');
     Route::get('/users', [UsersController::class, 'index'])->name('users.index');
