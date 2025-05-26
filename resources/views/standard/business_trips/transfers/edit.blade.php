@@ -46,6 +46,18 @@
                 </fieldset>
 
                 <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Automezzo</legend>
+                    <select class="select" name="vehicle_id" value="{{ $transfer->vehicle_id }}">
+                        @foreach ($userVehicles as $vehicle)
+                            <option value="{{ $vehicle['id'] }}"
+                                {{ $transfer->vehicle_id == $vehicle['id'] ? 'selected' : '' }}>
+                                {{ $vehicle['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </fieldset>
+
+                <fieldset class="fieldset">
                     <legend class="fieldset-legend">Data</legend>
                     <input type="datetime-local" name="date" class="input" value="{{ $transfer->date }}" />
                 </fieldset>

@@ -16,7 +16,8 @@ class BusinessTripTransfer extends Model {
         'province',
         'zip_code',
         'latitude',
-        'longitude'
+        'longitude',
+        'vehicle_id',
     ];
 
     public function businessTrip() {
@@ -25,5 +26,9 @@ class BusinessTripTransfer extends Model {
 
     public function company() {
         return $this->belongsTo(Company::class);
+    }
+
+    public function vehicle() {
+        return $this->belongsTo(Vehicle::class);
     }
 }

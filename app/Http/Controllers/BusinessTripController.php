@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class BusinessTripController extends Controller {
     /**
@@ -222,20 +223,37 @@ class BusinessTripController extends Controller {
 
     public function createTransfer(BusinessTrip $businessTrip) {
         $companies = Auth::user()->companies;
+        $userVehicles = Auth::user()->vehicles;
+        $userVehicles = $userVehicles->map(function ($vehicle) {
+            return [
+                'id' => $vehicle->id,
+                'name' => $vehicle->brand . ' ' . $vehicle->model . ' - ' . $vehicle->pivot->plate_number,
+            ];
+        });
+
 
         return view('standard.business_trips.transfers.create', [
             'businessTrip' => $businessTrip,
             'companies' => $companies,
+            'userVehicles' => $userVehicles,
         ]);
     }
 
     public function editTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer) {
         $companies = Auth::user()->companies;
+        $userVehicles = Auth::user()->vehicles;
+        $userVehicles = $userVehicles->map(function ($vehicle) {
+            return [
+                'id' => $vehicle->id,
+                'name' => $vehicle->brand . ' ' . $vehicle->model . ' - ' . $vehicle->pivot->plate_number,
+            ];
+        });
 
         return view('standard.business_trips.transfers.edit', [
             'businessTrip' => $businessTrip,
             'transfer' => $transfer,
             'companies' => $companies,
+            'userVehicles' => $userVehicles,
         ]);
     }
 
@@ -258,6 +276,7 @@ class BusinessTripController extends Controller {
             'zip_code' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'vehicle_id' => 'nullable|integer',
         ]);
 
         $transfer = BusinessTripTransfer::create([
@@ -270,6 +289,7 @@ class BusinessTripController extends Controller {
             'zip_code' => $request->zip_code,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'vehicle_id' => $request->vehicle_id,
         ]);
 
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento aggiunto con successo');
@@ -286,6 +306,7 @@ class BusinessTripController extends Controller {
             'zip_code' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'vehicle_id' => 'nullable|integer',
         ]);
 
         $transfer->update($fields);
@@ -298,6 +319,131 @@ class BusinessTripController extends Controller {
         $transfer->delete();
 
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento eliminato con successo');
+    }
+
+    public function generatePdf(BusinessTrip $businessTrip) {
+
+        $transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
+        $vehicle_id = $transfers[0]->vehicle_id;
+        $user_vehicles = Auth::user()->vehicles;
+
+        $user_vehicle = null;
+        foreach ($user_vehicles as $vehicle) {
+            if ($vehicle->id == $vehicle_id) {
+                $user_vehicle = $vehicle;
+                break;
+            }
+        }
+
+        $transferPairs = $this->generateTransfers($transfers);
+
+        $pdf = PDF::loadView('cedolini.business_trips_pdf', [
+            'businessTrip' => $businessTrip,
+            'expenses' => BusinessTripExpense::where('business_trip_id', $businessTrip->id)->with(['company'])->get(),
+            'transfers' => $transferPairs,
+            'document_date' => date('Y-m-d'),
+            'user_vehicle' => $user_vehicle,
+        ]);
+
+        return $pdf->download('trasferta_' . $businessTrip->code . '.pdf');
+    }
+
+    public function generateMonthlyPdf(Request $request) {
+        $fields = $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:1900',
+        ]);
+
+        $start_of_month = date('Y-m-d', strtotime($fields['year'] . '-' . $fields['month'] . '-01'));
+        $end_of_month = date('Y-m-t', strtotime($fields['year'] . '-' . $fields['month'] . '-01'));
+
+        $user = $request->user();
+
+        $businessTrips = BusinessTrip::where('user_id', $user->id)
+            ->whereBetween('date_from', [$start_of_month, $end_of_month])
+            ->with(['user'])
+            ->orderBy('date_from', 'asc')
+            ->get();
+
+        $allTripsData = [];
+        $user_vehicle = null;
+
+
+
+        foreach ($businessTrips as $businessTrip) {
+            $transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
+
+            if ($user_vehicle == null) {
+                $vehicle_id = $transfers->count() > 0 ? $transfers[0]->vehicle_id : null;
+                $user_vehicles = $user->vehicles;
+
+                foreach ($user_vehicles as $vehicle) {
+                    if ($vehicle->id == $vehicle_id) {
+                        $user_vehicle = $vehicle;
+                        break;
+                    }
+                }
+            }
+
+            $transferPairs = $this->generateTransfers($transfers);
+
+            $allTripsData[] = [
+                'businessTrip' => $businessTrip,
+                'expenses' => BusinessTripExpense::where('business_trip_id', $businessTrip->id)->with(['company'])->get(),
+                'transfers' => $transferPairs,
+                'user_vehicle' => $user_vehicle,
+            ];
+        }
+
+
+        $pdf = PDF::loadView('cedolini.business_trips_batch', [
+            'allTripsData' => $allTripsData,
+            'month' => $fields['month'],
+            'year' => $fields['year'],
+            'document_date' => date('Y-m-d'),
+            'user_vehicle' => $user_vehicle,
+            'user' => $user,
+        ]);
+
+        return $pdf->download('trasferte_' . $fields['year'] . '_' . str_pad($fields['month'], 2, '0', STR_PAD_LEFT) . '.pdf');
+    }
+
+    private function generateTransfers($transfers) {
+
+        $pairs = [];
+        for ($i = 0; $i < count($transfers) - 1; $i++) {
+            $pairs[] = [
+                'from' => $transfers[$i],
+                'to' => $transfers[$i + 1],
+            ];
+        }
+
+        $result = [];
+
+        foreach ($pairs as $pair) {
+            $result[] = [
+                'from' => $pair['from'],
+                'to' => $pair['to'],
+                'azienda' => $pair['to']->company->name,
+                'ekm' => round($pair['from']->vehicle->price_per_km, 2),
+                'distance' => round($this->haversine(
+                    $pair['from']->latitude,
+                    $pair['from']->longitude,
+                    $pair['to']->latitude,
+                    $pair['to']->longitude
+                ), 2),
+                'total' => round(
+                    $this->haversine(
+                        $pair['from']->latitude,
+                        $pair['from']->longitude,
+                        $pair['to']->latitude,
+                        $pair['to']->longitude
+                    ) * $pair['from']->vehicle->price_per_km,
+                    2
+                ),
+            ];
+        }
+        return $result;
     }
 
     /**
@@ -391,5 +537,19 @@ class BusinessTripController extends Controller {
                 'details' => $e->getMessage()
             ], 500); // Codice di stato 500 Internal Server Error
         }
+    }
+
+    public function haversine($lat1, $lon1, $lat2, $lon2) {
+        $earthRadius = 6371; // Raggio della Terra in km
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c; // Distanza in km
     }
 }

@@ -44,6 +44,19 @@
                 </fieldset>
 
 
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Automezzo</legend>
+                    <select class="select" name="vehicle_id" value="{{ old('vehicle_id') }}">
+                        @foreach ($userVehicles as $vehicle)
+                            <option value="{{ $vehicle['id'] }}"
+                                {{ old('vehicle_id') == $vehicle['id'] ? 'selected' : '' }}>
+                                {{ $vehicle['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </fieldset>
+
+
 
                 <fieldset class="fieldset">
                     <legend class="fieldset-legend">Data</legend>

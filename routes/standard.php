@@ -30,6 +30,8 @@ Route::group([
     Route::put('/{businessTrip}', [BusinessTripController::class, 'update'])->name('business-trips.update');
     Route::delete('/{businessTrip}', [BusinessTripController::class, 'destroy'])->name('business-trips.destroy');
     Route::get('/validate-address', [BusinessTripController::class, 'validateAddress'])->name('business-trips.validate-address');
+    Route::get('/{businessTrip}/pdf', [BusinessTripController::class, 'generatePdf'])->name('business-trips.pdf');
+    Route::get('/pdf-batch', [BusinessTripController::class, 'generateMonthlyPdf'])->name('business-trips.pdf-batch');
 
     /** Spese */
     Route::get('/{businessTrip}/expenses', [BusinessTripController::class, 'expenses'])->name('business-trips.expenses');

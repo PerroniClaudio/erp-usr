@@ -7,8 +7,8 @@
     <hr>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div class="col-span-1 lg:col-span-1">
-            <div class="card bg-base-300 w-full">
+        <div class="col-span-1 lg:col-span-1 flex flex-col gap-4">
+            <div class="card bg-base-300 w-full ">
                 <form class="card-body" method="POST"
                     action="{{ route('business-trips.update', ['businessTrip' => $businessTrip->id]) }}">
                     @csrf
@@ -58,6 +58,14 @@
                     <button id="submit-button" type="submit" class="hidden"> {{ __('business_trips.save') }}</button>
                 </form>
             </div>
+
+            <a href="{{ route('business-trips.pdf', [
+                'businessTrip' => $businessTrip->id,
+            ]) }}"
+                class="btn btn-primary w-full">
+
+                Genera nota spese
+            </a>
         </div>
 
         <div class="col-span-1 lg:col-span-3">

@@ -49,4 +49,8 @@ class Vehicle extends Model {
     public function mileageUpdates() {
         return $this->hasMany(MileageUpdate::class);
     }
+
+    public function businessTripsTransfers() {
+        return $this->belongsToMany(BusinessTripTransfer::class);
+    }
 }
