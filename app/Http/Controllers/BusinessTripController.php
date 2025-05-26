@@ -364,6 +364,10 @@ class BusinessTripController extends Controller {
             ->orderBy('date_from', 'asc')
             ->get();
 
+        if ($businessTrips->isEmpty()) {
+            return redirect()->back()->with('error', 'Nessuna trasferta trovata per il mese e anno specificati.');
+        }
+
         $allTripsData = [];
         $user_vehicle = null;
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Company;
+use App\Models\Group;
 use App\Models\TimeOffRequest;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -59,6 +60,8 @@ class UsersController extends Controller {
         $mese = $request->mese;
         $anno = $request->anno;
 
+
+
         // Otteniamo i dati per il PDF
         $mesiMap = [
             'Gennaio' => 1,
@@ -78,6 +81,14 @@ class UsersController extends Controller {
         $meseNumero = $mesiMap[$mese];
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
+
+        $attendances = Attendance::where('user_id', $user->id)
+            ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
+            ->get();
+
+        if ($attendances->isEmpty()) {
+            return redirect()->back()->with('error', 'Nessuna presenza trovata per l\'utente selezionato nel mese e anno specificati.');
+        }
 
         // Generiamo il PDF dalla vista
         $pdf = PDF::loadView('cedolini.pdf', [
@@ -130,12 +141,18 @@ class UsersController extends Controller {
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
 
+
+
         // Otteniamo le presenze dell'utente per il mese specificato
         $attendances = Attendance::where('user_id', $user->id)
             ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
             ->orderBy('date')
             ->orderBy('time_in')
             ->get();
+
+        if ($attendances->isEmpty()) {
+            return redirect()->back()->with('error', 'Nessuna presenza trovata per l\'utente selezionato nel mese e anno specificati.');
+        }
 
         // Otteniamo le richieste di ferie/permessi dell'utente per il mese specificato
         $timeOffRequests = TimeOffRequest::where('user_id', $user->id)
