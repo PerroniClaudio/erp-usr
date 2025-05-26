@@ -9,6 +9,7 @@ class BusinessTrip extends Model {
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'user_id',
         'date_from',
         'date_to',

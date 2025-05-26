@@ -2,6 +2,7 @@
 
 use App\Models\Attendance;
 use App\Models\AttendanceType;
+use App\Models\BusinessTrip;
 use App\Models\Company;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
@@ -50,7 +51,108 @@ Route::get('/test-time-off', function () {
     });
 });
 
+Route::get('/test-trasferte', function () {
+
+    DB::transaction(function () {
+        $peid = 1;
+        $userId = 2;
+        $startDate = "2025-01-01";
+        $endDate = "2025-05-31";
+
+        $user_vehicle = User::find($userId)->vehicles->first();
+
+        $data = DB::connection('legacy_mysql')->table('trasferte_usr')
+            ->join('trasferte_usr_itinerari', 'trasferte_usr.trpid', '=', 'trasferte_usr_itinerari.trpid')
+            ->where('trasferte_usr.peid', $peid)
+            ->whereBetween(DB::raw("STR_TO_DATE(trasferte_usr.data_inizio, '%d-%m-%Y')"), [$startDate, $endDate])
+            ->orderBy(DB::raw("STR_TO_DATE(trasferte_usr.data_inizio, '%d-%m-%Y')"), 'ASC')
+            ->select('trasferte_usr.*', 'trasferte_usr_itinerari.*')
+            ->get();
+
+        $trasferte = [];
+
+        foreach ($data as $row) {
+            // Raggruppa gli itinerari per nome
+            if (!isset($trasferte[$row->nome])) {
+
+                $coordinate_da = $row->coordda ? explode(',', $row->coordda) : null;
+
+                if ($coordinate_da === null) {
+                    Log::error("Coordinate not found for transfer: " . $row->nome . " on date: " . $row->data);
+                    continue;
+                }
+
+                $trasferte[$row->nome] = [
+                    'user_id' => $userId,
+                    'date_from' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data_inizio)->format('Y-m-d'),
+                    'date_to' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data_fine)->format('Y-m-d'),
+                    'status' => $row->incorso,
+                    'code' => $row->nome,
+                    'trasferimenti' => [
+                        [
+                            'date' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data)->format('Y-m-d H:i:s'),
+                            'address' => 'N/A',
+                            'province' => 'N/A',
+                            'city' => $row->da,
+                            'zip_code' => 'N/A',
+                            'latitude' => $coordinate_da ? $coordinate_da[0] : null,
+                            'longitude' => $coordinate_da ? $coordinate_da[1] : null,
+                        ]
+                    ],
+                ];
+            }
+
+            $coordinate = $row->coorda ? explode(',', $row->coorda) : null;
+
+            if ($coordinate === null) {
+                Log::error("Coordinate not found for transfer: " . $row->nome . " on date: " . $row->data);
+                continue;
+            }
+
+            $trasferte[$row->nome]['trasferimenti'][] = [
+                'date' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data)->format('Y-m-d H:i:s'),
+                'address' => 'N/A',
+                'province' => 'N/A',
+                'city' => $row->a,
+                'zip_code' => 'N/A',
+                'latitude' => $coordinate ? $coordinate[0] : null,
+                'longitude' => $coordinate ? $coordinate[1] : null,
+            ];
+        }
+
+        foreach ($trasferte as $code => $trasferta) {
+
+            $businessTrip = BusinessTrip::create([
+                'company_id' => 1,
+                'user_id' => $trasferta['user_id'],
+                'date_from' => $trasferta['date_from'],
+                'date_to' => $trasferta['date_to'],
+                'status' => $trasferta['status'],
+                'expense_type' => 1,
+                'code' => $code,
+            ]);
+
+            foreach ($trasferta['trasferimenti'] as $transfer) {
+                $businessTrip->transfers()->create([
+                    'business_trip_id' => $businessTrip->id,
+                    'company_id' => 1,
+                    'date' => $transfer['date'],
+                    'address' => $transfer['address'],
+                    'city' => $transfer['city'],
+                    'province' => $transfer['province'],
+                    'zip_code' => $transfer['zip_code'],
+                    'latitude' => $transfer['latitude'],
+                    'longitude' => $transfer['longitude'],
+                    'vehicle_id' => $user_vehicle ? $user_vehicle->id : null,
+                ]);
+            }
+        }
+    });
+});
+
 Route::get('/test-legacy-db', function () {
+    return;
+
     echo "Starting legacy DB import...\n";
 
     $peid = 13;

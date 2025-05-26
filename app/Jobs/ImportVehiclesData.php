@@ -17,22 +17,22 @@ class ImportVehiclesData implements ShouldQueue {
     public $timeout = 60000;
 
     private $files = [
-        "Autocaravan.xlsx",
-        "Benzina-IN.xlsx",
-        "Elettrico-IN.xlsx",
-        "Gasolio-IN.xlsx",
-        "GPL-IN.xlsx",
-        "Ibr-Benzina-IN.xlsx",
-        "Ibr-Gasolio-IN.xlsx",
-        "Plug-in-IN.xlsx",
-        "Benzina-OUT.xlsx",
-        "Elettrico-OUT.xlsx",
-        "Gasolio-OUT.xlsx",
-        "GPL-Metano-OUT.xlsx",
-        "Ibr-Benzina-OUT.xlsx",
-        "Ibr-Gasolio-OUT.xlsx",
-        "Plug-in-OUT.xlsx",
-        "Motoveicoli.xlsx",
+        // "Autocaravan.xlsx",
+        // "Benzina-IN.xlsx",
+        // "Elettrico-IN.xlsx",
+        // "Gasolio-IN.xlsx",
+        // "GPL-IN.xlsx",
+        // "Ibr-Benzina-IN.xlsx",
+        // "Ibr-Gasolio-IN.xlsx",
+        // "Plug-in-IN.xlsx",
+        // "Benzina-OUT.xlsx",
+        // "Elettrico-OUT.xlsx",
+        // "Gasolio-OUT.xlsx",
+        // "GPL-Metano-OUT.xlsx",
+        // "Ibr-Benzina-OUT.xlsx",
+        // "Ibr-Gasolio-OUT.xlsx",
+        // "Plug-in-OUT.xlsx",
+        // "Motoveicoli.xlsx",
     ];
 
     public function __construct() {
