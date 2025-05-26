@@ -245,6 +245,7 @@ class UsersController extends Controller {
 
             switch ($presenza->attendanceType->name) {
                 case 'Lavoro in sede':
+                case 'Lavoro c/o cliente':
                 case 'Smartworking':
                     $key = 'lavorato';
                     break;
