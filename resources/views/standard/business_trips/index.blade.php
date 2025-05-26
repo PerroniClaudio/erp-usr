@@ -2,15 +2,22 @@
 
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('business_trips.business_trips') }}</h1>
-        <a href="{{ route('business-trips.create') }}" class="btn btn-primary">
-            {{ __('business_trips.business_trip_create') }}
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('business-trips.create') }}" class="btn btn-primary">
+                {{ __('business_trips.business_trip_create') }}
+            </a>
+            <button class="btn btn-primary" onclick="export_nota_spese.showModal()">
+                <x-lucide-file-text class="w-4 h-4" />
+                {{ __('business_trips.export_nota_spese') }}
+            </button>
+        </div>
     </div>
+
+
 
     <hr>
 
     <div>
-
         <div class="overflow-x-auto">
             <table class="table">
                 <thead>
@@ -65,10 +72,47 @@
             </table>
             {{ $businessTrips->links() }}
         </div>
+    </div>
 
+    <dialog id="export_nota_spese" class="modal">
+        <div class="modal-box">
+            <div class="flex flex-row-reverse items-end">
+                <form method="dialog">
+                    <!-- if there is a button in form, it will close the modal -->
+                    <button class="btn btn-ghost">
+                        <x-lucide-x class="w-4 h-4" />
+                    </button>
+                </form>
+            </div>
+            <h1 class="text-3xl mb-4">{{ __('business_trips.export_nota_spese') }}</h1>
+            <hr>
+            <form action="{{ route('business-trips.pdf-batch') }}" method="GET">
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}</legend>
+                    <select id="month" name="month" class="select select-bordered">
+                        @foreach (range(1, 12) as $month)
+                            <option value="{{ $month }}"
+                                {{ $month == \Carbon\Carbon::now()->month ? 'selected' : '' }}>
+                                {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </fieldset>
+                <fieldset class="fieldset mb-4">
+                    <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
+                    <select id="year" name="year" class="select select-bordered">
+                        @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
+                            <option value="{{ $year }}">{{ $year }}</option>
+                        @endforeach
+                    </select>
+                </fieldset>
 
-        @push('scripts')
-            @vite('resources/js/businessTrips.js')
-        @endpush
+                <button type="submit" class="btn btn-primary">
+                    {{ __('business_trips.export_nota_spese') }}
+                </button>
+
+            </form>
+        </div>
+    </dialog>
 
 </x-layouts.app>

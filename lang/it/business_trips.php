@@ -32,4 +32,5 @@ return [
     'no_transfers' => 'Nessun trasferimento trovato',
     'status_0' => 'Aperto',
     'status_1' => 'Chiuso',
+    'export_nota_spese' => 'Esporta Nota Spese',
 ];

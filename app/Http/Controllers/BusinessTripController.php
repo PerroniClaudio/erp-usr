@@ -18,7 +18,6 @@ class BusinessTripController extends Controller {
     public function index(Request $request) {
         $user = $request->user();
         $businessTrips = BusinessTrip::where('user_id', $user->id)
-            ->where('status', 0)
             ->with(['user'])
             ->orderBy('id', 'desc')
             ->paginate(10);
