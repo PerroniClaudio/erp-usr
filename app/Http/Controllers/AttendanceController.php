@@ -195,14 +195,22 @@ class AttendanceController extends Controller {
             'attendance_type_id' => $fields['attendance_type_id'],
         ]);
 
+        if ($user->hasRole('admin')) {
+            return redirect()->route('admin.attendances.index')->with('success', 'Presenza modificata con successo');
+        }
         return redirect()->route('attendances.index')->with('success', 'Presenza modificata con successo');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Attendance $attendance) {
+    public function destroy(Request $request, Attendance $attendance) {
+        $user = $request->user();
         $attendance->delete();
+
+        if ($user->hasRole('admin')) {
+            return redirect()->route('admin.attendances.index')->with('success', 'Presenza eliminata con successo');
+        }
         return redirect()->route('attendances.index')->with('success', 'Presenza eliminata con successo');
     }
 
