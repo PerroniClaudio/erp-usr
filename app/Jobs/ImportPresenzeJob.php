@@ -38,8 +38,6 @@ class ImportPresenzeJob implements ShouldQueue {
      */
     public function handle(): void {
 
-        Log::info("Starting legacy DB import for PEID: {$this->peid}, User ID: {$this->userId}, Start Date: {$this->startDate}, End Date: {$this->endDate}");
-
         $data = DB::connection('legacy_mysql')->table('presenze')
             ->join('combo_personale_tipologia', 'presenze.cptid', '=', 'combo_personale_tipologia.cptid')
             ->where('peid', $this->peid)
@@ -49,8 +47,6 @@ class ImportPresenzeJob implements ShouldQueue {
             ->get();
 
         $ferie = [];
-
-        Log::info('Total records fetched from legacy DB', ['count' => $data->count()]);
 
         foreach ($data as $row) {
 
