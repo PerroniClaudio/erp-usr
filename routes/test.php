@@ -51,29 +51,65 @@ Route::get('/test-time-off', function () {
 });
 
 Route::get('/test-legacy-db', function () {
-
-    return;
-
     echo "Starting legacy DB import...\n";
 
     $peid = 13;
     $userId = 8;
     $startDate = \Carbon\Carbon::createFromFormat('d-m-Y', '01-01-2025');
     $endDate = \Carbon\Carbon::createFromFormat('d-m-Y', '31-05-2025');
+    $cachedCompanies = [];
+    $companyCache = [];
 
     $data = DB::connection('legacy_mysql')->table('presenze')
         ->join('combo_personale_tipologia', 'presenze.cptid', '=', 'combo_personale_tipologia.cptid')
         ->where('peid', $peid)
         ->whereBetween(DB::raw("STR_TO_DATE(data_inizio, '%d-%m-%Y')"), [$startDate, $endDate])
         ->orderBy(DB::raw("STR_TO_DATE(data_inizio, '%d-%m-%Y')"), 'ASC')
-        ->select('aid', 'voce', 'presenze.data_inizio', 'presenze.ora_inizio', 'presenze.ora_fine')
+        ->select('voce', 'presenze.data_inizio', 'presenze.ora_inizio', 'presenze.ora_fine', 'presenze.aid')
         ->get();
-
-
 
     $ferie = [];
 
     foreach ($data as $row) {
+        Log::info('Processing attendance record', [
+            'aid' => $row->aid,
+            'voce' => $row->voce,
+            'data_inizio' => $row->data_inizio,
+            'ora_inizio' => $row->ora_inizio,
+            'ora_fine' => $row->ora_fine,
+        ]);
+
+        if (!in_array($row->aid, $cachedCompanies)) {
+            $cachedCompanies[] = $row->aid;
+
+
+            $azienda = DB::connection('legacy_mysql')->table('aziende')
+                ->where('aid', $row->aid ?? null)
+                ->first();
+
+            if (!$azienda) {
+                Log::error("Azienda with aid " . ($row->aid ?? 'N/A') . " not found.");
+                continue;
+            }
+
+            if ($azienda->name == 'IFORTECH S.R.L.') {
+
+                $company = Company::find(1)->get();
+            } else {
+                $company = Company::where('name', $azienda->name)->first();
+            }
+
+
+            if (!$company) {
+                $company = Company::create([
+                    'name' => $azienda->name
+                ]);
+            }
+
+            $companyCache[$row->aid] = $company;
+        } else {
+            $company = $companyCache[$row->aid];
+        }
 
         $attendance_type = AttendanceType::where('name', $row->voce)->first();
 
@@ -114,32 +150,17 @@ Route::get('/test-legacy-db', function () {
         } else {
             // Presenza
 
-            $azienda = DB::connection('legacy_mysql')->table('aziende')
-                ->where('aid', $row->aid ?? null)
-                ->first();
 
-            if (!$azienda) {
-                Log::error("Azienda with aid " . ($row->aid ?? 'N/A') . " not found.");
-                continue;
-            }
 
-            $company = Company::where('name', $azienda->name)->first();
-
-            if (!$company) {
-                $company = Company::create([
-                    'name' => $azienda->name
-                ]);
-            }
-
-            // Attendance::create([
-            //     'user_id' => $userId,
-            //     'company_id' => 1,
-            //     'date' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data_inizio)->format('Y-m-d'),
-            //     'time_in' => $row->ora_inizio,
-            //     'time_out' => $row->ora_fine,
-            //     'hours' => (strtotime($row->ora_fine) - strtotime($row->ora_inizio)) / 3600,
-            //     'attendance_type_id' => $attendance_type->id,
-            // ]);
+            Attendance::create([
+                'user_id' => $userId,
+                'company_id' => 1,
+                'date' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data_inizio)->format('Y-m-d'),
+                'time_in' => $row->ora_inizio,
+                'time_out' => $row->ora_fine,
+                'hours' => (strtotime($row->ora_fine) - strtotime($row->ora_inizio)) / 3600,
+                'attendance_type_id' => $attendance_type->id,
+            ]);
         }
     }
 });
