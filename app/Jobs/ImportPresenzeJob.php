@@ -153,7 +153,7 @@ class ImportPresenzeJob implements ShouldQueue {
             }
         }
 
-        return;
+
 
         $groupedFerie = [];
 
