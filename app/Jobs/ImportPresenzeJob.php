@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Attendance;
 use App\Models\AttendanceType;
+use App\Models\Company;
 use App\Models\TimeOffRequest;
 use App\Models\TimeOffType;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,6 +19,9 @@ class ImportPresenzeJob implements ShouldQueue {
     protected $userId;
     protected $startDate;
     protected $endDate;
+
+    protected $cachedCompanies = [];
+    protected $companyCache = [];
 
     /**
      * Create a new job instance.
@@ -38,7 +42,7 @@ class ImportPresenzeJob implements ShouldQueue {
             ->where('peid', $this->peid)
             ->whereBetween(DB::raw("STR_TO_DATE(data_inizio, '%d-%m-%Y')"), [$this->startDate, $this->endDate])
             ->orderBy(DB::raw("STR_TO_DATE(data_inizio, '%d-%m-%Y')"), 'ASC')
-            ->select('voce', 'presenze.data_inizio', 'presenze.ora_inizio', 'presenze.ora_fine')
+            ->select('aid', 'voce', 'presenze.data_inizio', 'presenze.ora_inizio', 'presenze.ora_fine')
             ->get();
 
         $ferie = [];
@@ -53,7 +57,6 @@ class ImportPresenzeJob implements ShouldQueue {
                 if (!$timeOffType) {
                     return;
                 }
-
 
                 $date_from = $row->data_inizio . ' ' . $row->ora_inizio;
                 $date_to = $row->data_inizio . ' ' . $row->ora_fine;
@@ -73,8 +76,6 @@ class ImportPresenzeJob implements ShouldQueue {
                     continue; // Skip if date format is invalid
                 }
 
-
-
                 $ferie[] = [
                     'user_id' => $this->userId,
                     'company_id' => 1,
@@ -84,10 +85,39 @@ class ImportPresenzeJob implements ShouldQueue {
                     'date_to' => \Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_to)->format('Y-m-d H:i'),
                 ];
             } else {
+
+                if (!in_array($row->aid, $this->cachedCompanies)) {
+                    $this->cachedCompanies[] = $row->aid;
+
+
+                    $azienda = DB::connection('legacy_mysql')->table('aziende')
+                        ->where('aid', $row->aid ?? null)
+                        ->first();
+
+                    if (!$azienda) {
+                        Log::error("Azienda with aid " . ($row->aid ?? 'N/A') . " not found.");
+                        continue;
+                    }
+
+                    $company = Company::where('name', $azienda->name)->first();
+
+                    if (!$company) {
+                        $company = Company::create([
+                            'name' => $azienda->name
+                        ]);
+                    }
+
+                    $this->companyCache[$row->aid] = $company;
+                } else {
+                    $company = $this->companyCache[$row->aid];
+                }
+
+
+
                 // Presenza
                 Attendance::create([
                     'user_id' => $this->userId,
-                    'company_id' => 1,
+                    'company_id' => $company->id,
                     'date' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data_inizio)->format('Y-m-d'),
                     'time_in' => $row->ora_inizio,
                     'time_out' => $row->ora_fine,

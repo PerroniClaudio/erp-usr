@@ -2,6 +2,7 @@
 
 use App\Models\Attendance;
 use App\Models\AttendanceType;
+use App\Models\Company;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\TimeOffRequest;
@@ -53,13 +54,22 @@ Route::get('/test-legacy-db', function () {
 
     return;
 
+    echo "Starting legacy DB import...\n";
+
+    $peid = 13;
+    $userId = 8;
+    $startDate = \Carbon\Carbon::createFromFormat('d-m-Y', '01-01-2025');
+    $endDate = \Carbon\Carbon::createFromFormat('d-m-Y', '31-05-2025');
+
     $data = DB::connection('legacy_mysql')->table('presenze')
         ->join('combo_personale_tipologia', 'presenze.cptid', '=', 'combo_personale_tipologia.cptid')
-        ->where('peid', 22)
-        ->whereBetween(DB::raw("STR_TO_DATE(data_inizio, '%d-%m-%Y')"), ['2025-04-01', '2025-05-01'])
+        ->where('peid', $peid)
+        ->whereBetween(DB::raw("STR_TO_DATE(data_inizio, '%d-%m-%Y')"), [$startDate, $endDate])
         ->orderBy(DB::raw("STR_TO_DATE(data_inizio, '%d-%m-%Y')"), 'ASC')
-        ->select('voce', 'presenze.data_inizio', 'presenze.ora_inizio', 'presenze.ora_fine')
+        ->select('aid', 'voce', 'presenze.data_inizio', 'presenze.ora_inizio', 'presenze.ora_fine')
         ->get();
+
+
 
     $ferie = [];
 
@@ -68,16 +78,33 @@ Route::get('/test-legacy-db', function () {
         $attendance_type = AttendanceType::where('name', $row->voce)->first();
 
         if (!$attendance_type) {
-
             // Giorno di ferie o rol
-
             $timeOffType = TimeOffType::where('name', $row->voce)->first();
+
+            if (!$timeOffType) {
+                continue;
+            }
 
             $date_from = $row->data_inizio . ' ' . $row->ora_inizio;
             $date_to = $row->data_inizio . ' ' . $row->ora_fine;
 
+            try {
+                $fromCarbon = \Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_from);
+                $toCarbon = \Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_to);
+                $fromErrors = \Carbon\Carbon::getLastErrors();
+                $toErrors = \Carbon\Carbon::getLastErrors();
+                if (
+                    $fromErrors['error_count'] > 0 || $fromErrors['warning_count'] > 0 ||
+                    $toErrors['error_count'] > 0 || $toErrors['warning_count'] > 0
+                ) {
+                    continue; // Skip if date format is invalid
+                }
+            } catch (\Exception $e) {
+                continue; // Skip if date format is invalid
+            }
+
             $ferie[] = [
-                'user_id' => 1,
+                'user_id' => $userId,
                 'company_id' => 1,
                 'time_off_type_id' => $timeOffType->id,
                 'status' => 2,
@@ -85,45 +112,35 @@ Route::get('/test-legacy-db', function () {
                 'date_to' => \Carbon\Carbon::createFromFormat('d-m-Y H:i', $date_to)->format('Y-m-d H:i'),
             ];
         } else {
-
             // Presenza
 
+            $azienda = DB::connection('legacy_mysql')->table('aziende')
+                ->where('aid', $row->aid ?? null)
+                ->first();
 
-            Attendance::create([
-                'user_id' => 1,
-                'company_id' => 1,
-                'date' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data_inizio)->format('Y-m-d'),
-                'time_in' => $row->ora_inizio,
-                'time_out' => $row->ora_fine,
-                'hours' => (strtotime($row->ora_fine) - strtotime($row->ora_inizio)) / 3600,
-                'attendance_type_id' => $attendance_type->id,
-            ]);
+            if (!$azienda) {
+                Log::error("Azienda with aid " . ($row->aid ?? 'N/A') . " not found.");
+                continue;
+            }
+
+            $company = Company::where('name', $azienda->name)->first();
+
+            if (!$company) {
+                $company = Company::create([
+                    'name' => $azienda->name
+                ]);
+            }
+
+            // Attendance::create([
+            //     'user_id' => $userId,
+            //     'company_id' => 1,
+            //     'date' => \Carbon\Carbon::createFromFormat('d-m-Y', $row->data_inizio)->format('Y-m-d'),
+            //     'time_in' => $row->ora_inizio,
+            //     'time_out' => $row->ora_fine,
+            //     'hours' => (strtotime($row->ora_fine) - strtotime($row->ora_inizio)) / 3600,
+            //     'attendance_type_id' => $attendance_type->id,
+            // ]);
         }
-    }
-
-    $groupedFerie = [];
-
-    foreach ($ferie as $ferieItem) {
-        $dateFrom = \Carbon\Carbon::parse($ferieItem['date_from'])->format('Y-m-d');
-        if (!isset($groupedFerie[$dateFrom])) {
-            $groupedFerie[$dateFrom] = [];
-        }
-        $groupedFerie[$dateFrom][] = $ferieItem;
-    }
-
-    $formattedFerie = [];
-
-    foreach ($groupedFerie as $date => $items) {
-        $batchId = uniqid();
-        foreach ($items as $item) {
-            $item['batch_id'] = $batchId;
-
-            $formattedFerie[] = $item;
-        }
-    }
-
-    foreach ($formattedFerie as $ferieItem) {
-        TimeOffRequest::create($ferieItem);
     }
 });
 
