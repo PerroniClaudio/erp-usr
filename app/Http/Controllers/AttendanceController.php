@@ -233,7 +233,9 @@ class AttendanceController extends Controller {
     }
 
     public static function getAttendancesDataToday() {
-        $users = User::all();
+        $users = User::where('name', 'not like', 'Stefano%')
+            ->where('name', 'not like', 'Pierantonio%')
+            ->get();
 
         $today = date('Y-m-d');
         $usersStatus = [];
