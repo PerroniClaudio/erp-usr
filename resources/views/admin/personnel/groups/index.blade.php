@@ -42,5 +42,7 @@
                 @endforeach
             </tbody>
         </table>
+        {{ $companies->links() }}
+    </div>
 
 </x-layouts.app>

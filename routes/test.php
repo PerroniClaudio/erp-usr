@@ -11,6 +11,7 @@ use App\Models\TimeOffType;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -363,5 +364,43 @@ Route::get('/test-autoveicoli', function () {
         $data = Excel::toArray([], $filePath);
 
         echo $file;
+    }
+});
+
+Route::get('/test-reverse-address', function () {
+
+    $businessTrip = BusinessTrip::where('code', '2017TRA7185')->first();
+
+    foreach ($businessTrip->transfers as $transfer) {
+
+        $latitude = $transfer->latitude;
+        $longitude = $transfer->longitude;
+
+        if ($latitude && $longitude) {
+            $response = Http::withHeaders([
+                'User-Agent' => 'IFT/1.0' // Sostituisci con un nome significativo e la tua email
+            ])->get('https://nominatim.openstreetmap.org/reverse', [
+                'lat' => $latitude,
+                'lon' => $longitude,
+                'format' => 'json',
+                'addressdetails' => 1,
+            ]);
+
+
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                $address = $data['address']['road'];
+                $province = $data['address']['county'];
+                $zip_code = $data['address']['postcode'];
+
+                Log::info("Address for transfer on {$transfer->date}: " . json_encode($data));
+            } else {
+                Log::error("Failed to fetch address for transfer on {$transfer->date}");
+            }
+        } else {
+            Log::warning("Transfer on {$transfer->date} has no coordinates.");
+        }
     }
 });

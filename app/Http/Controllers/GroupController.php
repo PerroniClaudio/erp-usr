@@ -13,7 +13,8 @@ class GroupController extends Controller {
     public function index() {
         //
 
-        $allGroups = Group::all();
+        $allGroups = Group::paginate(15);
+
 
         return view('admin.personnel.groups.index', [
             'groups' => $allGroups,

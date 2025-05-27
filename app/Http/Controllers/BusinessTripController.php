@@ -83,13 +83,81 @@ class BusinessTripController extends Controller {
         //
 
         $companies = Auth::user()->companies;
+        $raw_transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
+
+        $has_na_address = $raw_transfers->contains(function ($transfer) {
+            return $transfer->address === 'N/A';
+        });
+
+        if ($has_na_address) {
+            $transfers = $this->cleanupTransfers(
+                $raw_transfers
+            );
+        } else {
+            $transfers = $raw_transfers;
+        }
+
 
         return view('standard.business_trips.edit', [
             'businessTrip' => $businessTrip,
             'companies' => $companies,
             'expenses' => BusinessTripExpense::where('business_trip_id', $businessTrip->id)->with(['company'])->get(),
-            'transfers' => BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get(),
+            'transfers' => $transfers,
         ]);
+    }
+
+    private function cleanupTransfers($transfers) {
+
+        foreach ($transfers as $transfer) {
+            if ($transfer->address == "N/A") {
+
+                $address_details = $this->resolveAddressFromCoordinates(
+                    $transfer->latitude,
+                    $transfer->longitude
+                );
+                $transfer->address = $address_details['address'];
+                $transfer->city = $address_details['city'];
+                $transfer->province = $address_details['province'];
+                $transfer->zip_code = $address_details['zip_code'];
+                $transfer->save();
+            }
+        }
+
+        return $transfers;
+    }
+
+
+    private function resolveAddressFromCoordinates($latitude, $longitude) {
+        // Utilizza l'API di Nominatim per risolvere l'indirizzo
+        $response = Http::withHeaders([
+            'User-Agent' => 'IFT/1.0' // Sostituisci con un nome significativo e la tua email
+        ])->get('https://nominatim.openstreetmap.org/reverse', [
+            'lat' => $latitude,
+            'lon' => $longitude,
+            'format' => 'json',
+            'addressdetails' => 1,
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+
+
+            return [
+                'address' => $data['address']['road'] ?? 'N/A',
+                'city' => $data['address']['city'] ?? $data['address']['town'] ?? $data['address']['village'] ?? 'N/A',
+                'province' => $data['address']['county'] ?? 'N/A',
+                'zip_code' => $data['address']['postcode'] ?? 'N/A',
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ];
+        } else {
+            return [
+                'address' => null,
+                'city' => null,
+                'province' => null,
+                'zip_code' => null,
+            ];
+        }
     }
 
     /**

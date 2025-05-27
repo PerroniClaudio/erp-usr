@@ -22,3 +22,9 @@ Artisan::command('attendance:import {peid} {userId} {startDate} {endDate}', func
 Artisan::command('businesstrip:import {peid} {userId} {startDate} {endDate}', function ($peid, $userId, $startDate, $endDate) {
     ImportTrasferte::dispatch($peid, $userId, $startDate, $endDate)->onQueue('default');
 })->purpose('Import business trip data from legacy system');
+
+Artisan::command('permission:give {userId} {permission}', function ($userId, $permission) {
+    $user = \App\Models\User::findOrFail($userId);
+    $user->assignRole($permission);
+    $this->info("Permission '{$permission}' given to user with ID {$userId}.");
+})->purpose('Give a permission to a user');
