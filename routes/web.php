@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Vehicle;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -8,6 +9,13 @@ Route::get('/', function () {
 });
 
 Route::get('/home', function () {
+
+    $user = Auth::user();
+
+    if ($user->hasRole('admin')) {
+        return redirect()->route('admin.home');
+    }
+
     return view('home');
 })->middleware(['auth'])->name('home');
 

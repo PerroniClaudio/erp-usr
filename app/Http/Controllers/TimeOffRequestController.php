@@ -71,7 +71,7 @@ class TimeOffRequestController extends Controller {
             ];
 
             $fields['user_id'] = $user->id;
-            $fields['company_id'] = 1;
+            $fields['company_id'] = Company::where('name', 'iFortech')->first()->id;
             $fields['batch_id'] = $batch_id;
 
             $existingRequest = TimeOffRequest::where('user_id', $user->id)
@@ -636,5 +636,55 @@ class TimeOffRequestController extends Controller {
         TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->delete();
 
         return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso eliminata con successo');
+    }
+
+    public function getPendingTimeOffRequests() {
+        $pendingRequests = TimeOffRequest::with(['type', 'user'])
+            ->where('status', '0') // Stato "In attesa"
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $events = [];
+
+        foreach ($pendingRequests as $req) {
+
+            $color = $req->getColorForRequest(0);
+
+            $events[] = [
+                'id' => $req->id,
+                'user' => $req->user,
+                'title' => $req->user->name,
+                'type' => $req->type->name,
+                'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
+                'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
+                'status' => $req->status,
+                'color' => $color,
+                'display' => 'block',
+                'groupId' => $req->batch_id
+            ];
+        }
+
+        $groupedEventsWithMeta = $this->groupConsecutiveEventsWithMetadata($events);
+
+        $event_result = [];
+
+        foreach ($groupedEventsWithMeta as $group) {
+
+            $events = collect($group['events']);
+            $firstEvent = $events->first();
+
+            $start_formatted = \Carbon\Carbon::parse($req->date_from)->format('d/m/Y');
+            $end_formatted = \Carbon\Carbon::parse($req->date_to)->format('d/m/Y');
+
+            $event_result[] = collect([
+                'id' => $firstEvent['id'],
+                'title' => $firstEvent['title'],
+                'type' => $firstEvent['type'],
+                'start_end' => $start_formatted . ' - ' . $end_formatted,
+                'batch' => $group['metadata']['groupId'],
+            ]);
+        }
+
+        return collect($event_result);
     }
 }

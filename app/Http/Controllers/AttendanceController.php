@@ -223,6 +223,16 @@ class AttendanceController extends Controller {
 
     public function adminIndex() {
 
+        $usersStatus = $this->getAttendancesDataToday();
+
+        return view('admin.attendances.index', [
+            'usersStatus' => $usersStatus,
+            'groups' => Group::all(),
+            'companies' => Company::all(),
+        ]);
+    }
+
+    public static function getAttendancesDataToday() {
         $users = User::all();
 
         $today = date('Y-m-d');
@@ -260,11 +270,7 @@ class AttendanceController extends Controller {
             ];
         }
 
-        return view('admin.attendances.index', [
-            'usersStatus' => $usersStatus,
-            'groups' => Group::all(),
-            'companies' => Company::all(),
-        ]);
+        return $usersStatus;
     }
 
     public function listAttendances(Request $request) {

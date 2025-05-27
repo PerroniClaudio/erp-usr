@@ -329,7 +329,6 @@ class UsersController extends Controller {
         return $giorni[$giornoEn] ?? $giornoEn;
     }
 
-
     public function updateData(Request $request, User $user) {
         $request->validate([
             'title' => 'required|string|max:50',

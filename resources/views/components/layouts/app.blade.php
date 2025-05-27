@@ -35,7 +35,6 @@
             <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
             <ul class="menu bg-base-300 text-base-content min-h-full w-80 p-4 ">
                 <!-- Sidebar content here -->
-
                 @if (auth()->user()->hasRole('admin'))
                     <li>
                         <a href="{{ route('admin.home') }}">
@@ -48,14 +47,14 @@
                     <li>
                         <details>
                             <summary>
-                                <x-lucide-user class="h-6 w-6 text-primary" />
+                                <x-lucide-contact class="h-6 w-6 text-primary" />
                                 <span class="ml-2">{{ __('navbar.personnel') }}</span>
                             </summary>
                             <ul>
                                 <li>
                                     <a href="{{ route('users.index') }}">
                                         <div class="flex items-center">
-                                            <x-lucide-contact class="h-4 w-4 text-primary" />
+                                            <x-lucide-circle-user class="h-4 w-4 text-primary" />
                                             <span class="ml-2">{{ __('navbar.personnel_users') }}</span>
                                         </div>
                                     </a>
@@ -96,6 +95,34 @@
                             <x-lucide-sun class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.time_off_requests') }}</span>
                         </a>
+                    </li>
+
+                    <li>
+                        <details>
+                            <summary>
+                                <x-lucide-user class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.personnel_functions') }}</span>
+                            </summary>
+                            <ul>
+                                <li>
+                                    <a href="{{ route('attendances.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-calendar class="h-6 w-6 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.attendances') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="{{ route('time-off-requests.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-sun class="h-6 w-6 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.time_off') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
                     </li>
                 @else
                     <li>

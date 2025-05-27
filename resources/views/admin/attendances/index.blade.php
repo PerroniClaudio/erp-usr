@@ -9,8 +9,8 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Status</th>
+                        <th>Nome</th>
+                        <th>Presenza registrata</th>
                     </tr>
                 </thead>
                 <tbody>

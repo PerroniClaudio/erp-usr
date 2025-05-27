@@ -41,4 +41,8 @@ return [
 
     "been_approved" => "La richiesta è stata approvata",
     "been_denied" => "La richiesta è stata rifiutata",
+
+    "pending_requests" => "Richieste di Ferie/Permesso in sospeso",
+    "no_pending_requests" => "Non ci sono richieste di ferie/permesso in sospeso al momento.",
+    'handle' => "Gestisci"
 ];

@@ -12,7 +12,15 @@ Route::group([
     'prefix' => 'admin',
 ], function () {
     Route::get('/home', function () {
-        return view('admin.home');
+
+        $usersStatus = AttendanceController::getAttendancesDataToday();
+        $timeOffController = new TimeOffRequestController();
+        $pendingTimeOffRequests = $timeOffController->getPendingTimeOffRequests();
+
+        return view('admin.home', [
+            'usersStatus' => $usersStatus,
+            'pendingTimeOffRequests' => $pendingTimeOffRequests,
+        ]);
     })->name('admin.home');
 });
 
