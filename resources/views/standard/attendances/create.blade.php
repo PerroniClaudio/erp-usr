@@ -25,7 +25,8 @@
 
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">Data presenza</legend>
-                <input type="date" name="date" class="input" value="{{ old('date') }}"
+                <input type="date" name="date" class="input"
+                    value="{{ old('date', \Carbon\Carbon::today()->toDateString()) }}"
                     placeholder="{{ \Carbon\Carbon::today()->toDateString() }}" />
 
             </fieldset>

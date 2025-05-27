@@ -164,7 +164,7 @@
         </div>
     </div>
 
-    <div class="fixed top-4 right-4 z-50">
+    <div class="fixed bottom-4 right-4 z-50">
         @if (session('success'))
             <div class="alert alert-success shadow-lg cursor-pointer">
                 <div class="flex items-center gap-1">

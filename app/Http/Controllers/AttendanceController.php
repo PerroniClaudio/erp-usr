@@ -94,8 +94,10 @@ class AttendanceController extends Controller {
                 return back()->withErrors(['message' => 'Non è possibile creare presenze nel futuro']);
             }
 
-            if (strtotime($fields['date']) < strtotime(date('Y-m-d'))) {
-                return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
+            if ((strtotime(date('Y-m-d')) > strtotime('2025-06-07'))) {
+                if (strtotime($fields['date']) < strtotime(date('Y-m-d'))) {
+                    return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
+                }
             }
         }
 
@@ -234,7 +236,6 @@ class AttendanceController extends Controller {
 
     public static function getAttendancesDataToday() {
         $users = User::where('name', 'not like', 'Stefano%')
-            ->where('name', 'not like', 'Pierantonio%')
             ->get();
 
         $today = date('Y-m-d');
