@@ -189,7 +189,7 @@ class AttendanceController extends Controller {
         }
 
         $attendance->update([
-            'user_id' => $user->id,
+            'user_id' => $user->hasRole('admin') ? $attendance->user_id : $user->id,
             'company_id' => $fields['company_id'],
             'date' => $fields['date'],
             'time_in' => $fields['time_in'],
