@@ -148,10 +148,16 @@
 
                             switch ($request->type->name) {
                                 case 'Rol':
-                                    $datiGiorni['ROL'][$giorno] = $difference;
+                                    if (is_null($datiGiorni['ROL'][$giorno])) {
+                                        $datiGiorni['ROL'][$giorno] = 0;
+                                    }
+                                    $datiGiorni['ROL'][$giorno] += $difference;
                                     break;
                                 case 'Ferie':
-                                    $datiGiorni['FE'][$giorno] = $difference;
+                                    if (is_null($datiGiorni['FE'][$giorno])) {
+                                        $datiGiorni['FE'][$giorno] = 0;
+                                    }
+                                    $datiGiorni['FE'][$giorno] += $difference;
                                     break;
                             }
                         }
@@ -189,8 +195,9 @@
                             }
                             $data = \Carbon\Carbon::createFromDate($anno, $meseNumero, $i);
                             $isWeekend = $data->isSaturday() || $data->isSunday();
+                            $isFestive = in_array($data->format('m-d'), $festive);
                         @endphp
-                        <td class="{{ $isWeekend ? 'bg-gray' : '' }}">{{ $ore }}</td>
+                        <td class="{{ $isWeekend || $isFestive ? 'bg-gray' : '' }}">{{ $ore }}</td>
                     @endfor
 
                     <td>{{ $totOre }}</td>

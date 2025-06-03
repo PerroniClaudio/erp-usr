@@ -47,22 +47,24 @@
                 <h1 class="text-3xl mb-4">Esporta cedolino paghe</h1>
                 <hr>
                 <form id="form-cedolino" method="GET">
+                    <fieldset class="fieldset mb-4">
+                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
+                        <select id="cedolino-year" name="anno" class="select select-bordered">
+                            @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
+                                <option value="{{ $year }}" @if ($year == \Carbon\Carbon::now()->year) selected @endif>
+                                    {{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </fieldset>
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}</legend>
                         <select id="cedolino-month" name="mese" class="select select-bordered">
                             @foreach (range(1, 12) as $month)
                                 <option
-                                    value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}">
+                                    value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}"
+                                    @if ($month == \Carbon\Carbon::now()->subMonth()->month) selected @endif>
                                     {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
                                 </option>
-                            @endforeach
-                        </select>
-                    </fieldset>
-                    <fieldset class="fieldset mb-4">
-                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
-                        <select id="cedolino-year" name="anno" class="select select-bordered">
-                            @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
-                                <option value="{{ $year }}">{{ $year }}</option>
                             @endforeach
                         </select>
                     </fieldset>
@@ -84,22 +86,24 @@
                 <h1 class="text-3xl mb-4">Esporta cedolino presenze</h1>
                 <hr>
                 <form id="form-presenze" method="GET">
+                    <fieldset class="fieldset mb-4">
+                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
+                        <select id="presenze-year" name="anno" class="select select-bordered">
+                            @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
+                                <option value="{{ $year }}" @if ($year == \Carbon\Carbon::now()->year) selected @endif>
+                                    {{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </fieldset>
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}</legend>
                         <select id="presenze-month" name="mese" class="select select-bordered">
                             @foreach (range(1, 12) as $month)
                                 <option
-                                    value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}">
+                                    value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}"
+                                    @if ($month == \Carbon\Carbon::now()->subMonth()->month) selected @endif>
                                     {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
                                 </option>
-                            @endforeach
-                        </select>
-                    </fieldset>
-                    <fieldset class="fieldset mb-4">
-                        <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
-                        <select id="presenze-year" name="anno" class="select select-bordered">
-                            @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
-                                <option value="{{ $year }}">{{ $year }}</option>
                             @endforeach
                         </select>
                     </fieldset>

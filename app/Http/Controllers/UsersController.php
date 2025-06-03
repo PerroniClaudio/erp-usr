@@ -97,7 +97,8 @@ class UsersController extends Controller {
             'anno' => $anno,
             'meseNumero' => $meseNumero,
             'primoGiorno' => $primoGiorno,
-            'ultimoGiorno' => $ultimoGiorno
+            'ultimoGiorno' => $ultimoGiorno,
+            'festive' => $this->getFestiveDays(),
         ]);
 
         // Impostiamo le opzioni del PDF
@@ -596,5 +597,59 @@ class UsersController extends Controller {
                 'details' => $e->getMessage()
             ], 500); // Codice di stato 500 Internal Server Error
         }
+    }
+
+
+    private function getFestiveDays() {
+
+        $currentDate = \Carbon\Carbon::today();
+
+        $easterDay = $this->calculateEasterDay($currentDate->year);
+        $easterDay = $easterDay ? $easterDay->format('m-d') : null;
+        $easterMonday = $this->calculateEasterMonday($currentDate->year)->format('m-d');;
+
+        // List of known vacation days
+        $knownHolidays = [
+            '01-01', // New Year's Day
+            '12-25', // Christmas
+            '12-26', // Boxing Day
+            '01-06', // Epiphany
+            '04-25', // Liberation Day
+            '05-01', // Labor Day
+            '06-02', // Republic Day
+            '08-15', // Assumption Day
+            '11-01', // All Saints' Day
+            '11-02', // All Souls' Day
+            '12-08', // Immaculate Conception
+            $easterDay, // Easter
+            $easterMonday, // Easter Monday
+        ];
+
+
+
+        return $knownHolidays;
+    }
+
+
+    private function calculateEasterDay($year) {
+        $a = $year % 19;
+        $b = (int)($year / 100);
+        $c = $year % 100;
+        $d = (int)($b / 4);
+        $e = $b % 4;
+        $f = (int)(($b + 8) / 25);
+        $g = (int)(($b - $f + 1) / 16);
+        $h = (int)((19 * $a + $b - $d - $g + 15) % 30);
+        $i = (int)($c / 16);
+        $k = (int)($c % 16);
+        $l = (int)((32 + 2 * $e + 2 * $i - $h - $k) % 7);
+        $m = (int)(($a + 11 * $h + 22 * $l) / 451);
+
+        return \Carbon\Carbon::createFromDate($year, (int)(($h + $l - 7 * $m + 114) / 31), ($h + $l - 7 * $m + 114) % 31 + 1);
+    }
+
+    private function calculateEasterMonday($year) {
+        $easterDay = $this->calculateEasterDay($year);
+        return $easterDay->modify('+1 day');
     }
 }
