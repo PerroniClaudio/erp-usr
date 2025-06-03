@@ -3,9 +3,10 @@
 use App\Jobs\ImportPresenzeJob;
 use App\Jobs\ImportTrasferte;
 use App\Jobs\ImportVehiclesData;
-use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -32,5 +33,5 @@ Artisan::command('permission:give {userId} {permission}', function ($userId, $pe
 
 
 Schedule::call(function () {
-    \Illuminate\Support\Facades\Mail::to(env('ADMIN_MAIL'))->send(new \App\Mail\FailedAttendance());
+    Mail::to(env('ADMIN_MAIL'))->send(new \App\Mail\FailedAttendance());
 })->daily()->at('12:00')->name('daily_failed_attendance_email')->weekdays();
