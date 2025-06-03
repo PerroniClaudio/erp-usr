@@ -54,6 +54,8 @@ Route::get('/test-time-off', function () {
 
 Route::get('/test-trasferte', function () {
 
+    return;
+
     DB::transaction(function () {
         $peid = 1;
         $userId = 2;
@@ -320,6 +322,8 @@ Route::get('/test-cedolino', function () {
 
 Route::get('/test-autoveicoli', function () {
 
+    return;
+
     $files = [
         "Autocaravan.xlsx",
         "Benzina-IN.xlsx",
@@ -369,6 +373,8 @@ Route::get('/test-autoveicoli', function () {
 
 Route::get('/test-reverse-address', function () {
 
+    return;
+
     $businessTrip = BusinessTrip::where('code', '2017TRA7185')->first();
 
     foreach ($businessTrip->transfers as $transfer) {
@@ -403,4 +409,18 @@ Route::get('/test-reverse-address', function () {
             Log::warning("Transfer on {$transfer->date} has no coordinates.");
         }
     }
+});
+
+Route::get('/test-email', function () {
+
+    $user = User::find(2);
+    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\FailedAttendance());
+
+
+    // $user = User::find(2);
+
+    // // Invia un'email di prova
+    // \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\TimeOffRequest("683560a66c7a5", $user, false));
+
+    // echo "Email inviata a " . $user->email;
 });
