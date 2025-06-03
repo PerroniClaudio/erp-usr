@@ -59,7 +59,13 @@ const setupAddressSearch = (inputId, buttonId, formClass) => {
         );
         setFieldValue(
             `.${formClass}[name="city"]`,
-            address_details.town || address_details.city
+            address_details.city !== undefined
+                ? address_details.city
+                : address_details.town !== undefined
+                ? address_details.town
+                : address_details.village !== undefined
+                ? address_details.village
+                : ""
         );
         setFieldValue(`.${formClass}[name="province"]`, address_details.county);
         setFieldValue(

@@ -23,6 +23,8 @@ validateButton.addEventListener("click", async () => {
             toggleIcons(true);
             showSubmitButton();
             removeAlertInfo();
+
+            document.querySelector("#error-message").classList.add("hidden");
         } else {
             displayErrorMessage(response.data.message);
             toggleIcons(false);
@@ -41,12 +43,22 @@ function clearErrorMessages() {
 
 function populateAddressFields(content) {
     let { address_details, latitude, longitude } = content;
-    address_details.house_number = address_details.house_number !== undefined ? address_details.house_number : "";
+    address_details.house_number =
+        address_details.house_number !== undefined
+            ? address_details.house_number
+            : "";
 
     document.querySelector(
         "#address"
     ).value = `${address_details.road} ${address_details.house_number}`;
-    document.querySelector("#city").value = address_details.town;
+    document.querySelector("#city").value =
+        address_details.city !== undefined
+            ? address_details.city
+            : address_details.town !== undefined
+            ? address_details.town
+            : address_details.village !== undefined
+            ? address_details.village
+            : "";
     document.querySelector("#province").value = address_details.county;
     document.querySelector("#zip_code").value = address_details.postcode;
     document.querySelector("#latitude").value = latitude;

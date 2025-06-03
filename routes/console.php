@@ -34,4 +34,5 @@ Artisan::command('permission:give {userId} {permission}', function ($userId, $pe
 
 Schedule::call(function () {
     Mail::to(env('ADMIN_MAIL'))->send(new \App\Mail\FailedAttendance());
+    Mail::to('c.perroni@ifortech.com')->send(new \App\Mail\FailedAttendance());
 })->daily()->at('12:00')->name('daily_failed_attendance_email')->weekdays();

@@ -497,14 +497,14 @@ class BusinessTripController extends Controller {
                 'to' => $pair['to'],
                 'azienda' => $pair['to']->company->name,
                 'ekm' => round($pair['from']->vehicle->price_per_km, 2),
-                'distance' => round($this->haversine(
+                'distance' => round($this->routeDistanceGoogle(
                     $pair['from']->latitude,
                     $pair['from']->longitude,
                     $pair['to']->latitude,
                     $pair['to']->longitude
                 ), 2),
                 'total' => round(
-                    $this->haversine(
+                    $this->routeDistanceGoogle(
                         $pair['from']->latitude,
                         $pair['from']->longitude,
                         $pair['to']->latitude,
@@ -610,17 +610,59 @@ class BusinessTripController extends Controller {
         }
     }
 
-    public function haversine($lat1, $lon1, $lat2, $lon2) {
-        $earthRadius = 6371; // Raggio della Terra in km
+    // Calcola la distanza stradale in auto tra due coordinate usando Google Routes API (nuova)
+    // Restituisce la distanza in km (float) oppure null in caso di errore
+    public function routeDistanceGoogle($lat1, $lon1, $lat2, $lon2) {
+        $apiKey = env('GOOGLE_MAPS_API_KEY'); // Inserisci la tua API key in .env come GOOGLE_MAPS_API_KEY
+        if (!$apiKey) {
+            Log::error('Google Maps API key mancante.');
+            return null;
+        }
 
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
+        $url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+        $body = [
+            'origin' => [
+                'location' => [
+                    'latLng' => [
+                        'latitude' => (float)$lat1,
+                        'longitude' => (float)$lon1
+                    ]
+                ]
+            ],
+            'destination' => [
+                'location' => [
+                    'latLng' => [
+                        'latitude' => (float)$lat2,
+                        'longitude' => (float)$lon2
+                    ]
+                ]
+            ],
+            'travelMode' => 'DRIVE',
+            'routingPreference' => 'TRAFFIC_UNAWARE',
+            'units' => 'METRIC',
+        ];
 
-        $a = sin($dLat / 2) * sin($dLat / 2) +
-            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-            sin($dLon / 2) * sin($dLon / 2);
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-Goog-Api-Key' => $apiKey,
+                'X-Goog-FieldMask' => 'routes.distanceMeters',
+            ])->post($url, $body);
 
-        return $earthRadius * $c; // Distanza in km
+            if ($response->successful()) {
+                $data = $response->json();
+                if (isset($data['routes'][0]['distanceMeters'])) {
+                    $distanceKm = $data['routes'][0]['distanceMeters'] / 1000;
+                    return round($distanceKm, 2);
+                } else {
+                    Log::error('Risposta Routes API senza distanza valida: ' . json_encode($data));
+                }
+            } else {
+                Log::error('Errore Google Routes API: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Eccezione Google Routes API: ' . $e->getMessage());
+        }
+        return null;
     }
 }

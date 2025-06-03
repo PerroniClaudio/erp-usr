@@ -3,6 +3,7 @@
 use App\Models\Attendance;
 use App\Models\AttendanceType;
 use App\Models\BusinessTrip;
+use App\Models\BusinessTripTransfer;
 use App\Models\Company;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
