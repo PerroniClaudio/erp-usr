@@ -56,6 +56,10 @@
         .bg-gray {
             background-color: #d4d4d8;
         }
+
+        .bg-gray-darker {
+            background-color: #a1a1aa;
+        }
     </style>
 </head>
 
@@ -85,9 +89,14 @@
                     @php
                         $data = \Carbon\Carbon::createFromDate($anno, $meseNumero, $i);
                         $dayLetter = strtoupper(substr($data->locale('it')->dayName, 0, 1));
+                        $isWeekend = $data->isSaturday() || $data->isSunday();
+                        $isFestive = in_array($data->format('m-d'), $festive);
                     @endphp
-                    <th>{{ $dayLetter }}<br>{{ $i }}</th>
+                    <th class="{{ $isFestive ? 'bg-gray-darker' : ($isWeekend ? 'bg-gray' : '') }}">
+                        {{ $dayLetter }}<br>{{ $i }}
+                    </th>
                 @endfor
+
                 <th>TOT ORE</th>
                 <th>TOT GIORNI</th>
             </tr>
@@ -197,7 +206,8 @@
                             $isWeekend = $data->isSaturday() || $data->isSunday();
                             $isFestive = in_array($data->format('m-d'), $festive);
                         @endphp
-                        <td class="{{ $isWeekend || $isFestive ? 'bg-gray' : '' }}">{{ $ore }}</td>
+                        <td class="{{ $isFestive ? 'bg-gray-darker' : ($isWeekend ? 'bg-gray' : '') }}">
+                            {{ $ore }}</td>
                     @endfor
 
                     <td>{{ $totOre }}</td>

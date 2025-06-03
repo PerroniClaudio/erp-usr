@@ -28,7 +28,7 @@ class TimeOffRequest extends Model {
     protected $colors = [
         0 => '#F5A7A3', // In pending ma dell'utente attivo
         1 => '#71AAC1', // In pending ma di un altro utente
-        2 => '#e73028', // Approvato ma dell'utente attivo
+        2 => '#22c55e', // Approvato ma dell'utente attivo
         3 => '#437f97', // Approvato ma di un altro utente
         4 => '#f0ad4e', // Rifiutato ma dell'utente attivo
     ];
@@ -47,7 +47,7 @@ class TimeOffRequest extends Model {
             // richiesta di un admin, ritorna il colore principale 
 
             if ($this->status == 0 || $this->status == 1) {
-                return $this->colors[0]; // Pending for active user
+                return $this->user->color; // Pending for active user
             } elseif ($this->status == 2) {
                 return $this->colors[2]; // Approved for active user
             } elseif ($this->status == 3) {
@@ -65,7 +65,7 @@ class TimeOffRequest extends Model {
             }
         } else {
             if ($this->status == 0 || $this->status == 1) {
-                return $this->colors[1]; // Pending for another user
+                return $this->user->color;
             } elseif ($this->status == 2) {
                 return $this->colors[3]; // Approved for another user
             }
@@ -73,5 +73,15 @@ class TimeOffRequest extends Model {
 
         return "#000"; // Default color if none match
 
+    }
+
+    public function formattedUserName() {
+
+        $name_parts = explode(' ', $this->user->name);
+
+        $name = str_split($name_parts[0])[0] . '.';
+        $lastName = $name_parts[1] ?? '';
+
+        return $name . ' ' . $lastName;
     }
 }

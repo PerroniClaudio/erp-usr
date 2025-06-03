@@ -566,7 +566,7 @@ class TimeOffRequestController extends Controller {
             $events[] = [
                 'id' => $req->id,
                 'user' => $req->user,
-                'title' => $req->user->name . " - " . $req->type->name,
+                'title' => $req->formattedUserName() . " - " . $req->type->name,
                 'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
                 'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
                 'status' => $req->status,
@@ -585,11 +585,22 @@ class TimeOffRequestController extends Controller {
             $events = collect($group['events']);
             $firstEvent = $events->first();
 
+            if ($group['metadata']['durationInDays'] ==  1) {
+                $event = TimeOffRequest::find($firstEvent['id']);
+                $start_parsed = \Carbon\Carbon::parse($event->date_from);
+                $end_parsed = \Carbon\Carbon::parse($event->date_to);
+
+                $title = $firstEvent['title'] . ' (' . $start_parsed->format('H:i') . ' - ' . $end_parsed->format('H:i') . ')';
+            } else {
+                $start_parsed = \Carbon\Carbon::parse($group['metadata']['startDate']);
+                $end_parsed = \Carbon\Carbon::parse($group['metadata']['endDate']);
+
+                $title = $start_parsed->format('d/m/Y') . ' - ' . $end_parsed->format('d/m/Y') . ' ' . $firstEvent['title'];
+            }
+
             $event_result[] = collect([
                 'id' => $firstEvent['id'],
-                'title' => $firstEvent['title'],
-                'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
-                'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
+                'title' =>  $title,
                 'user' => $firstEvent['user'],
                 'status' => $firstEvent['status'],
                 'start' => Carbon::parse($group['metadata']['startDate'])->format('Y-m-d'),
@@ -656,7 +667,7 @@ class TimeOffRequestController extends Controller {
             $events[] = [
                 'id' => $req->id,
                 'user' => $req->user,
-                'title' => $req->user->name,
+                'title' => $req->formattedUserName(),
                 'type' => $req->type->name,
                 'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
                 'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
