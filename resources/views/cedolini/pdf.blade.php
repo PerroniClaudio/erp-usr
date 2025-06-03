@@ -96,6 +96,7 @@
             @php
                 $tipiAttivita = [
                     'LS' => 'LAVORO IN SEDE',
+                    'LC' => 'Lavoro c/o cliente',
                     'SW' => 'SMART WORKING',
                     'FE' => 'FERIE',
                     'MA' => 'MALATTIA',
@@ -127,7 +128,10 @@
 
                 foreach ($attendances as $attendance) {
                     $giorno = \Carbon\Carbon::parse($attendance->date)->day;
-                    $datiGiorni[$attendance->attendanceType->acronym][$giorno] = $attendance->hours;
+                    if (is_null($datiGiorni[$attendance->attendanceType->acronym][$giorno])) {
+                        $datiGiorni[$attendance->attendanceType->acronym][$giorno] = 0;
+                    }
+                    $datiGiorni[$attendance->attendanceType->acronym][$giorno] += $attendance->hours;
                 }
 
                 foreach ($timeOffRequests as $request) {
@@ -203,6 +207,7 @@
                 <td style="width: 20%">
                     <ul style="list-style: none; padding-left: 0; margin: 0;">
                         <li><strong>LS</strong> - LAVORO IN SEDE</li>
+                        <li><strong>LC</strong> - LAVORO C/O CLIENTE</li>
                         <li><strong>SW</strong> - SMART WORKING</li>
                     </ul>
                 </td>
