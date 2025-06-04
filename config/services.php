@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
@@ -39,7 +38,10 @@ return [
         'client_id' => env('MICROSOFT_CLIENT_ID'),
         'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
         'redirect' => env('MICROSOFT_REDIRECT_URI'),
-        'tenant' => env('MICROSOFT_TENANT')
+        'tenant' => env('MICROSOFT_TENANT'),
     ],
 
+    'google_maps' => [
+        'api_key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
 ];

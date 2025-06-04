@@ -613,7 +613,7 @@ class BusinessTripController extends Controller {
     // Calcola la distanza stradale in auto tra due coordinate usando Google Routes API (nuova)
     // Restituisce la distanza in km (float) oppure null in caso di errore
     public function routeDistanceGoogle($lat1, $lon1, $lat2, $lon2) {
-        $apiKey = env('GOOGLE_MAPS_API_KEY'); // Inserisci la tua API key in .env come GOOGLE_MAPS_API_KEY
+        $apiKey = config('services.google_maps.api_key'); // Usa la configurazione invece di env()
         if (!$apiKey) {
             Log::error('Google Maps API key mancante.');
             return null;
