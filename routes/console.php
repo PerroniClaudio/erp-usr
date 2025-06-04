@@ -38,10 +38,10 @@ Artisan::command("attendance:check", function () {
 
 
 Schedule::call(function () {
-    if (env('APP_ENV') === 'production') {
-        Mail::to(env('ADMIN_MAIL'))->send(new \App\Mail\FailedAttendance());
-    } elseif (env('APP_ENV') === 'local') {
-        Mail::to(env('DEV_EMAIL'))->send(new \App\Mail\FailedAttendance());
+    if (config('app.env') === 'production') {
+        Mail::to(config('mail.admin_mail'))->send(new \App\Mail\FailedAttendance());
+    } elseif (config('app.env') === 'local') {
+        Mail::to(config('mail.dev_email'))->send(new \App\Mail\FailedAttendance());
     }
 })->daily()->at('13:12')->name('daily_failed_attendance_email')->weekdays();
 
