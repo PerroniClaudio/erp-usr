@@ -114,4 +114,8 @@ class User extends Authenticatable {
     public function mileageUpdates() {
         return $this->hasMany(MileageUpdate::class);
     }
+
+    public function failedAttendances() {
+        return $this->hasMany(FailedAttendance::class);
+    }
 }

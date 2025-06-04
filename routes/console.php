@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\CheckAttendances;
 use App\Jobs\ImportPresenzeJob;
 use App\Jobs\ImportTrasferte;
 use App\Jobs\ImportVehiclesData;
@@ -31,8 +32,20 @@ Artisan::command('permission:give {userId} {permission}', function ($userId, $pe
     $this->info("Permission '{$permission}' given to user with ID {$userId}.");
 })->purpose('Give a permission to a user');
 
+Artisan::command("attendance:check", function () {
+    \App\Jobs\CheckAttendances::dispatch()->onQueue('default');
+})->purpose('Check attendances and send notifications if needed');
+
 
 Schedule::call(function () {
-    Mail::to(env('ADMIN_MAIL'))->send(new \App\Mail\FailedAttendance());
-    Mail::to('c.perroni@ifortech.com')->send(new \App\Mail\FailedAttendance());
-})->daily()->at('12:00')->name('daily_failed_attendance_email')->weekdays();
+    if (env('APP_ENV') === 'production') {
+        Mail::to(env('ADMIN_MAIL'))->send(new \App\Mail\FailedAttendance());
+    } elseif (env('APP_ENV') === 'local') {
+        Mail::to(env('DEV_EMAIL'))->send(new \App\Mail\FailedAttendance());
+    }
+})->daily()->at('13:12')->name('daily_failed_attendance_email')->weekdays();
+
+
+Schedule::call(function () {
+    CheckAttendances::dispatch()->onQueue('default');
+})->daily()->at('18:00')->name('daily_anomaly_attendance_email')->weekdays();

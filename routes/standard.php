@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BusinessTripController;
+use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\TimeOffRequestController;
 
 Route::group([
@@ -63,4 +64,12 @@ Route::group([
     Route::get('/{batch_id}/edit', [TimeOffRequestController::class, 'edit'])->name('time-off-requests.edit');
     Route::post('/{batch_id}', [TimeOffRequestController::class, 'updateBatch'])->name('time-off-requests.update');
     Route::delete('/{timeOffRequest}', [TimeOffRequestController::class, 'destroy'])->name('time-off-requests.destroy');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:standard'],
+    'prefix' => 'standard',
+], function () {
+    Route::get('/{failed_attendance}/justify-attendance', [FailedAttendanceController::class, 'justify'])->name('failed-attendances.justify');
+    Route::post('/{failed_attendance}/send-justification', [FailedAttendanceController::class, 'sendJustification'])->name('failed-attendances.send-justification');
 });

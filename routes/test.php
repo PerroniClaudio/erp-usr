@@ -414,6 +414,8 @@ Route::get('/test-reverse-address', function () {
 
 Route::get('/test-email', function () {
 
+    exit();
+
     $user = User::find(2);
     \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\FailedAttendance());
 

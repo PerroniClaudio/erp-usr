@@ -31,4 +31,14 @@ class Attendance extends Model {
     public function attendanceType() {
         return $this->belongsTo(AttendanceType::class);
     }
+
+    public function formattedUserName() {
+
+        $name_parts = explode(' ', $this->user->name);
+
+        $name = str_split($name_parts[0])[0] . '.';
+        $lastName = $name_parts[1] ?? '';
+
+        return $name . ' ' . $lastName;
+    }
 }

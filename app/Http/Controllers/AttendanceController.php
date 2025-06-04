@@ -358,7 +358,7 @@ class AttendanceController extends Controller {
 
             return [
                 'id' => $attendance->id,
-                'title' => $attendance->user->name . " " . $attendance->attendanceType->acronym . " (" . $attendance->time_in . " - " . $attendance->time_out . ")",
+                'title' => $attendance->formattedUserName() . " - " . $attendance->attendanceType->acronym . " (" . $attendance->time_in . " - " . $attendance->time_out . ")",
                 'date' => $attendance->date,
                 'description' => $attendance->attendanceType->description,
                 'color' => $attendance->user->color,

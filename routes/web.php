@@ -12,11 +12,13 @@ Route::get('/home', function () {
 
     $user = Auth::user();
 
-    if ($user->hasRole('admin')) {
-        return redirect()->route('admin.home');
-    }
+    // if ($user->hasRole('admin')) {
+    //     return redirect()->route('admin.home');
+    // }
 
-    return view('home');
+    return view('home', [
+        'failedAttendances' => $user->failedAttendances()->where('status', 0)->get(),
+    ]);
 })->middleware(['auth'])->name('home');
 
 Route::get('/vehicles/search', function () {

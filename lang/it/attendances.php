@@ -21,4 +21,13 @@ return [
     "all_groups" => "Tutti i gruppi",
     "filter_by_user" => "Filtra per utente",
     "all_users" => "Tutti gli utenti",
+
+    'failed_attendances' => 'Presenze non registrate',
+    'justify' => 'Giustifica',
+    'failed_attendance' => 'Presenza non registrata',
+    'submit_justification' => 'Invia giustificazione',
+    'failed_explanation' => 'Non è stata registrata la tua presenza per il giorno :date. Per favore, fornisci una spiegazione per questa mancanza e richiedi ferie o rol se necessario.',
+    'justification' => 'Giustificazione',
+    'type' => 'Tipo',
+    "lacking_hours" => "Ore mancanti",
 ];

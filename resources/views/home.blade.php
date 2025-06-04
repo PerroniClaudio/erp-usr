@@ -29,6 +29,37 @@
                 </p>
             </div>
         </a>
+
+        @unless ($failedAttendances->isEmpty())
+            <div class="card bg-base-200 shadow-xl hover:shadow-2xl md:col-span-3">
+                <div class="card-body">
+                    <h3 class="card-title">{{ __('attendances.failed_attendances') }}</h3>
+                    <hr>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($failedAttendances as $attendance)
+                                <tr>
+                                    <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td>
+                                    <td>
+                                        <a href="{{ route('failed-attendances.justify', $attendance) }}"
+                                            class="btn btn-primary">
+                                            {{ __('attendances.justify') }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endunless
+
     </div>
 
 
