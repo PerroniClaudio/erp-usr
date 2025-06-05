@@ -119,8 +119,8 @@ class AttendanceController extends Controller {
             return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad un\'altra presenza già registrata per la stessa giornata.']);
         }
 
-        $timeOffRequests = $this->getTimeOffRequests($user->id, $fields['company_id'], $fields['date']);
-        if ($this->hasTimeOffOverlap($timeOffRequests, $fields['time_in'], $fields['time_out'])) {
+
+        if ($this->hasTimeOffOverlap($fields['date'], $fields['time_in'], $fields['time_out'], $user->id)) {
             return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad una richiesta di permesso/ferie già registrata per la stessa giornata.']);
         }
 
@@ -166,10 +166,10 @@ class AttendanceController extends Controller {
 
             // Se la richiesta è solo per un giorno
             if ($dateFrom->isSameDay($dateTo)) {
-                if (!empty($request->time_from) && !empty($request->time_to)) {
+                if (!empty($request->date_to) && !empty($request->date_from)) {
                     // Calcola le ore usando Carbon
-                    $timeFrom = Carbon::parse($request->time_from);
-                    $timeTo = Carbon::parse($request->time_to);
+                    $timeFrom = Carbon::parse($request->date_from);
+                    $timeTo = Carbon::parse($request->date_to);
                     $hours = $timeFrom->diffInMinutes($timeTo) / 60;
                     $total += $hours;
                 } else {
@@ -214,22 +214,20 @@ class AttendanceController extends Controller {
         return false;
     }
 
-    private function hasTimeOffOverlap($timeOffRequests, $newTimeIn, $newTimeOut) {
-        $newIn = strtotime($newTimeIn);
-        $newOut = strtotime($newTimeOut);
-        foreach ($timeOffRequests as $request) {
-            if (!empty($request->time_from) && !empty($request->time_to)) {
-                $timeOffIn = strtotime($request->time_from);
-                $timeOffOut = strtotime($request->time_to);
-                if (($newIn < $timeOffOut) && ($newOut > $timeOffIn)) {
-                    return true;
-                }
-            } else {
-                // Se la richiesta copre l'intera giornata, qualsiasi attendance è sovrapposta
-                return true;
-            }
-        }
-        return false;
+    private function hasTimeOffOverlap($newDate, $newTimeIn, $newTimeOut, $userId) {
+        $attendanceStart = Carbon::parse($newDate . ' ' . $newTimeIn);
+        $attendanceEnd = Carbon::parse($newDate . ' ' . $newTimeOut);
+
+        $overlap = TimeOffRequest::where('user_id', $userId)
+            ->where(function ($query) use ($attendanceStart, $attendanceEnd) {
+                $query->where(function ($q) use ($attendanceStart, $attendanceEnd) {
+                    $q->where('date_from', '<', $attendanceEnd)
+                        ->where('date_to', '>', $attendanceStart);
+                });
+            })
+            ->exists();
+
+        return $overlap;
     }
 
     /**
