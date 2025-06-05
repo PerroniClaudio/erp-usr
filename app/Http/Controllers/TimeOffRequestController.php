@@ -92,7 +92,7 @@ class TimeOffRequestController extends Controller {
         DB::commit();
 
         \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\TimeOffRequest($batch_id, $user, false));
-        \Illuminate\Support\Facades\Mail::to(env('ADMIN_MAIL'))->send(new \App\Mail\TimeOffRequest($batch_id, $user, true));
+        \Illuminate\Support\Facades\Mail::to(config('mail.admin_mail'))->send(new \App\Mail\TimeOffRequest($batch_id, $user, true));
 
         return redirect()->route('time-off-requests.index')->with('success', 'Richieste di permesso create con successo');
     }

@@ -85,37 +85,42 @@ class AttendanceController extends Controller {
             'attendance_type_id' => 'required|int',
         ]);
 
+        // Validazioni specifiche per utenti non admin
         if (!$user->hasRole('admin')) {
-            if (strtotime($fields['time_out']) < strtotime($fields['time_in'])) {
+            if ($this->isTimeOutBeforeTimeIn($fields['time_in'], $fields['time_out'])) {
                 return back()->withErrors(['message' => 'L\'orario di fine non può essere maggiore di quello di inizio']);
             }
 
-            if (strtotime($fields['date']) > strtotime(date('Y-m-d'))) {
+            if ($this->isDateInFuture($fields['date'])) {
                 return back()->withErrors(['message' => 'Non è possibile creare presenze nel futuro']);
             }
 
-            if ((strtotime(date('Y-m-d')) > strtotime('2025-06-07'))) {
-                if (strtotime($fields['date']) < strtotime(date('Y-m-d'))) {
-                    return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
-                }
+            if ($this->isPastAttendanceNotAllowed($fields['date'])) {
+                return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
             }
         }
 
-
-        $difference = (strtotime($fields['time_out']) - strtotime($fields['time_in'])) / 3600;
+        $difference = $this->calculateHourDifference($fields['time_in'], $fields['time_out']);
 
         if ($difference > 4) {
             return back()->withErrors(['message' => 'Una presenza non può durare più di 4 ore']);
         }
 
-        $timeOffRequests = TimeOffRequest::where('user_id', $user->id)
-            ->where('company_id', $fields['company_id'])
-            ->where('date_from', '<=', $fields['date'])
-            ->where('date_to', '>=', $fields['date'])
-            ->get();
+        $totalTimeOffHours = $this->getTotalTimeOffHours($user->id, $fields['company_id'], $fields['date']);
+        $attendancesOfDay = $this->getAttendancesOfDay($user->id, $fields['company_id'], $fields['date']);
+        $totalAttendanceHours = $attendancesOfDay->sum('hours') + $difference;
 
-        if (count($timeOffRequests) > 0) {
-            return back()->withErrors(['message' => 'Non ci devono essere richieste di ferie o permesso nella presenza']);
+        if (($totalAttendanceHours + $totalTimeOffHours) > 8) {
+            return back()->withErrors(['message' => 'La somma di ore di presenza e permesso/ferie non può superare le 8 ore nella stessa giornata']);
+        }
+
+        if ($this->hasAttendanceOverlap($attendancesOfDay, $fields['time_in'], $fields['time_out'])) {
+            return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad un\'altra presenza già registrata per la stessa giornata.']);
+        }
+
+        $timeOffRequests = $this->getTimeOffRequests($user->id, $fields['company_id'], $fields['date']);
+        if ($this->hasTimeOffOverlap($timeOffRequests, $fields['time_in'], $fields['time_out'])) {
+            return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad una richiesta di permesso/ferie già registrata per la stessa giornata.']);
         }
 
         Attendance::create([
@@ -129,6 +134,85 @@ class AttendanceController extends Controller {
         ]);
 
         return redirect()->route('attendances.index')->with('success', 'Presenza registrata con successo');
+    }
+
+    // --- Metodi di supporto privati ---
+
+    private function isTimeOutBeforeTimeIn($timeIn, $timeOut) {
+        return strtotime($timeOut) < strtotime($timeIn);
+    }
+
+    private function isDateInFuture($date) {
+        return strtotime($date) > strtotime(date('Y-m-d'));
+    }
+
+    private function isPastAttendanceNotAllowed($date) {
+        // Modifica la data di cutoff se necessario
+        $cutoff = '2025-06-07';
+        return (strtotime(date('Y-m-d')) > strtotime($cutoff)) && (strtotime($date) < strtotime(date('Y-m-d')));
+    }
+
+    private function calculateHourDifference($timeIn, $timeOut) {
+        return (strtotime($timeOut) - strtotime($timeIn)) / 3600;
+    }
+
+    private function getTotalTimeOffHours($userId, $companyId, $date) {
+        $timeOffRequests = $this->getTimeOffRequests($userId, $companyId, $date);
+        $total = 0;
+        foreach ($timeOffRequests as $request) {
+            if ($request->date_from == $request->date_to) {
+                $total += $request->hours ?? 8;
+            } else {
+                $total += $request->hours_per_day ?? 8;
+            }
+        }
+        return $total;
+    }
+
+    private function getAttendancesOfDay($userId, $companyId, $date) {
+        return Attendance::where('user_id', $userId)
+            ->where('company_id', $companyId)
+            ->where('date', $date)
+            ->get();
+    }
+
+    private function getTimeOffRequests($userId, $companyId, $date) {
+        return TimeOffRequest::where('user_id', $userId)
+            ->where('company_id', $companyId)
+            ->where('date_from', '<=', $date)
+            ->where('date_to', '>=', $date)
+            ->get();
+    }
+
+    private function hasAttendanceOverlap($attendances, $newTimeIn, $newTimeOut) {
+        $newIn = strtotime($newTimeIn);
+        $newOut = strtotime($newTimeOut);
+        foreach ($attendances as $attendance) {
+            $existingIn = strtotime($attendance->time_in);
+            $existingOut = strtotime($attendance->time_out);
+            if (($newIn < $existingOut) && ($newOut > $existingIn)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function hasTimeOffOverlap($timeOffRequests, $newTimeIn, $newTimeOut) {
+        $newIn = strtotime($newTimeIn);
+        $newOut = strtotime($newTimeOut);
+        foreach ($timeOffRequests as $request) {
+            if (!empty($request->time_from) && !empty($request->time_to)) {
+                $timeOffIn = strtotime($request->time_from);
+                $timeOffOut = strtotime($request->time_to);
+                if (($newIn < $timeOffOut) && ($newOut > $timeOffIn)) {
+                    return true;
+                }
+            } else {
+                // Se la richiesta copre l'intera giornata, qualsiasi attendance è sovrapposta
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

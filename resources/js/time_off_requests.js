@@ -62,7 +62,7 @@ generateDaysButton?.addEventListener("click", async () => {
     const daysArray = await generateDateRange(dateFrom, dateTo);
     populateDaysTable(daysArray);
 
-    generateDaysButton.setAttribute("disabled", "true");
+    // generateDaysButton.setAttribute("disabled", "true");
     showQuickActions();
 });
 
@@ -98,6 +98,10 @@ async function generateDateRange(start, end) {
 }
 
 function populateDaysTable(daysArray) {
+    if (daysTableBody) {
+        daysTableBody.innerHTML = "";
+    }
+
     daysArray.forEach((day, index) => {
         if (daysTableRowTemplate) {
             const clone = daysTableRowTemplate.content.cloneNode(true);
@@ -184,6 +188,11 @@ submitButton?.addEventListener("click", async (event) => {
         return;
     }
 
+    // Add daisyUI spinner to submit button
+    submitButton.disabled = true;
+    const originalContent = submitButton.innerHTML;
+    submitButton.innerHTML = `<span class="loading loading-spinner loading-sm"></span> Invia`;
+
     const data = Array.from(rows).map((row) => {
         let date_from =
             row.querySelector('[name="day"]').value +
@@ -214,6 +223,10 @@ submitButton?.addEventListener("click", async (event) => {
         })
         .catch((error) => {
             console.error("Error submitting form:", error);
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalContent;
         });
 });
 
