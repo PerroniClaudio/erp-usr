@@ -10,6 +10,7 @@ use App\Models\TimeOffRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller {
     /**
@@ -160,10 +161,26 @@ class AttendanceController extends Controller {
         $timeOffRequests = $this->getTimeOffRequests($userId, $companyId, $date);
         $total = 0;
         foreach ($timeOffRequests as $request) {
-            if ($request->date_from == $request->date_to) {
-                $total += $request->hours ?? 8;
+            $dateFrom = Carbon::parse($request->date_from);
+            $dateTo = Carbon::parse($request->date_to);
+
+            // Se la richiesta è solo per un giorno
+            if ($dateFrom->isSameDay($dateTo)) {
+                if (!empty($request->time_from) && !empty($request->time_to)) {
+                    // Calcola le ore usando Carbon
+                    $timeFrom = Carbon::parse($request->time_from);
+                    $timeTo = Carbon::parse($request->time_to);
+                    $hours = $timeFrom->diffInMinutes($timeTo) / 60;
+                    $total += $hours;
+                } else {
+                    // Usa le ore specificate o 8 di default
+                    $total += $request->hours ?? $request->hours_per_day ?? 8;
+                }
             } else {
-                $total += $request->hours_per_day ?? 8;
+                // Più giorni: somma le ore per ogni giorno
+                $days = $dateFrom->diffInDays($dateTo) + 1;
+                $hoursPerDay = $request->hours_per_day ?? 8;
+                $total += $hoursPerDay * $days;
             }
         }
         return $total;
