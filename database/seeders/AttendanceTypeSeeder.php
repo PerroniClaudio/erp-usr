@@ -30,6 +30,7 @@ class AttendanceTypeSeeder extends Seeder {
             [
                 'name' => 'Lavoro in sede',
                 'acronym' => 'LS',
+
             ],
             [
                 'name' => 'Lavoro c/o cliente',

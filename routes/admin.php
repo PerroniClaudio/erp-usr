@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\UsersController;
@@ -16,10 +17,13 @@ Route::group([
         $usersStatus = AttendanceController::getAttendancesDataToday();
         $timeOffController = new TimeOffRequestController();
         $pendingTimeOffRequests = $timeOffController->getPendingTimeOffRequests();
+        $failedAttendancesController = new FailedAttendanceController();
+        $failedAttendances = $failedAttendancesController->getPendingFailedAttendances();
 
         return view('admin.home', [
             'usersStatus' => $usersStatus,
             'pendingTimeOffRequests' => $pendingTimeOffRequests,
+            'failedAttendancesRequests' => $failedAttendances,
         ]);
     })->name('admin.home');
 });
@@ -78,4 +82,7 @@ Route::group([
     Route::get('/', [AttendanceController::class, 'adminIndex'])->name('admin.attendances.index');
     Route::get('/list', [AttendanceController::class, 'listAttendances'])->name('admin.attendances.list');
     Route::get('/{attendance}/edit', [AttendanceController::class, 'viewAttendance'])->name('admin.attendances.edit');
+    Route::get('/{failedAttendance}/handle', [FailedAttendanceController::class, 'handleFailedAttendance'])->name('admin.failed-attendances.edit');
+    Route::post('/{failedAttendance}/approve', [FailedAttendanceController::class, 'approveFailedAttendance'])->name('admin.failed-attendances.approve');
+    Route::post('/{failedAttendance}/deny', [FailedAttendanceController::class, 'denyFailedAttendance'])->name('admin.failed-attendances.deny');
 });

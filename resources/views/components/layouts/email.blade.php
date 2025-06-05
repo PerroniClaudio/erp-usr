@@ -94,6 +94,18 @@
             border-bottom-right-radius: 8px;
         }
 
+        .email-riquadro {
+            background-color: #f3f4f6;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .email-riquadro p {
+            margin: 0;
+            color: #374151;
+        }
+
         /* Dark mode for table */
         @media (prefers-color-scheme: dark) {
             body {
@@ -134,6 +146,15 @@
             .table td {
                 color: #EBF8FF !important;
                 border: 1px solid #ecf9ff0d !important;
+            }
+
+            .email-riquadro {
+                background-color: #2c3036 !important;
+                color: #EBF8FF !important;
+            }
+
+            .email-riquadro p {
+                color: #EBF8FF !important;
             }
 
         }

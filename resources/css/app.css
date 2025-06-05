@@ -83,3 +83,8 @@ hr {
 .fc .fc-daygrid-body {
     position: static;
 }
+
+dialog:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
