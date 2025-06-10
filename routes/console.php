@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -38,14 +39,17 @@ Artisan::command("attendance:check", function () {
 
 
 Schedule::call(function () {
+    $now = now()->toDateTimeString();
+    Log::info("daily_failed_attendance_email started at {$now}");
     if (config('app.env') === 'production') {
         Mail::to(config('mail.admin_mail'))->send(new \App\Mail\FailedAttendance());
     } elseif (config('app.env') === 'local') {
         Mail::to(config('mail.dev_email'))->send(new \App\Mail\FailedAttendance());
     }
-})->daily()->at('13:12')->name('daily_failed_attendance_email')->weekdays();
-
+})->daily()->at('13:00')->name('daily_failed_attendance_email')->weekdays();
 
 Schedule::call(function () {
+    $now = now()->toDateTimeString();
+    Log::info("daily_anomaly_attendance_email started at {$now}");
     CheckAttendances::dispatch()->onQueue('default');
 })->daily()->at('18:00')->name('daily_anomaly_attendance_email')->weekdays();
