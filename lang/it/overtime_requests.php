@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'overtime_requests' => 'Richieste Straordinario',
+    'new_request' => 'Nuova richiesta di straordinario',
+    'save_request' => 'Invia richiesta',
+    'company' => 'Azienda',
+    'date' => 'Data straordinario',
+    'time_in' => 'Orario inizio',
+    'time_out' => 'Orario fine',
+    'type' => 'Tipo di straordinario',
+    'hours' => 'Ore',
+    'status' => 'Stato',
+    'actions' => 'Azioni',
+    'created' => 'Creata',
+    'pending' => 'In attesa',
+    'approved' => 'Approvata',
+    'approve' => 'Approva',
+    'deny' => 'Rifiuta',
+    'denied' => 'Rifiutata',
+    'user' => 'Utente',
+    'admin_list' => 'Richieste di Straordinario',
+    'your_requests' => 'Le tue richieste di straordinario',
+    'new' => 'Nuova richiesta',
+];

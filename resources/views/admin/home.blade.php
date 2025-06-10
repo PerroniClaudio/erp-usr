@@ -34,6 +34,7 @@
         <x-home.attendances-today :usersStatus="$usersStatus" />
         <x-home.pending-time-off-requests :pendingTimeOffRequests="$pendingTimeOffRequests" />
         <x-home.failed-attendances-requests :failedAttendancesRequests="$failedAttendancesRequests" />
+        <x-home.pending-overtime-requests :pendingOvertimeRequests="$pendingOvertimeRequests" />
     </div>
 
 

@@ -2,38 +2,37 @@
 
 <div class="card bg-base-200 col-span-3">
     <div class="card-body">
-        <div class="card-title">{{ __('time_off_requests.pending_requests') }}</div>
+        <h3 class="card-title text-lg mb-2">
+            <x-lucide-sun class="h-5 w-5 text-primary inline-block" />
+            {{ __('time_off_requests.pending_requests') }}
+        </h3>
         <hr>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Tipo</th>
-                    <th>Data</th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-                @unless ($pendingTimeOffRequests->count())
+        @if ($pendingTimeOffRequests->isEmpty())
+            <div class="text-sm text-gray-500">{{ __('time_off_requests.no_pending_requests') }}</div>
+        @else
+            <table class="table">
+                <thead>
                     <tr>
-                        <td colspan="3" class="text-center">
-                            {{ __('time_off_requests.no_pending_requests') }}
-                        </td>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th>Azioni</th>
                     </tr>
-                @endunless
-
-                @foreach ($pendingTimeOffRequests as $request)
-                    <tr>
-                        <td>{{ $request['title'] }}</td>
-                        <td>{{ $request['type'] }}</td>
-                        <td>{{ $request['start_end'] }}</td>
-                        <td>
-                            <a href="{{ route('admin.time-off.edit', $request['batch']) }}"
-                                class="btn btn-primary btn-sm">{{ __('time_off_requests.handle') }}</a>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($pendingTimeOffRequests as $request)
+                        <tr>
+                            <td>{{ $request['title'] }}</td>
+                            <td>{{ $request['type'] }}</td>
+                            <td>{{ $request['start_end'] }}</td>
+                            <td>
+                                <a href="{{ route('admin.time-off.edit', $request['batch']) }}"
+                                    class="btn btn-xs btn-primary">{{ __('time_off_requests.handle') }}</a>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
     </div>
 </div>

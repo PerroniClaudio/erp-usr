@@ -135,12 +135,29 @@
                     })
                     ->get();
 
+                $overtimeRequests = \App\Models\OvertimeRequest::with('overtimeType')
+                    ->where('user_id', $user->id)
+                    ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
+                    ->get();
+
                 foreach ($attendances as $attendance) {
                     $giorno = \Carbon\Carbon::parse($attendance->date)->day;
                     if (is_null($datiGiorni[$attendance->attendanceType->acronym][$giorno])) {
                         $datiGiorni[$attendance->attendanceType->acronym][$giorno] = 0;
                     }
                     $datiGiorni[$attendance->attendanceType->acronym][$giorno] += $attendance->hours;
+                }
+
+                // Straordinari: ST, STN, STF, STNF
+                foreach ($overtimeRequests as $overtime) {
+                    $giorno = \Carbon\Carbon::parse($overtime->date)->day;
+                    $acronym = $overtime->overtimeType->acronym ?? null;
+                    if ($acronym && isset($datiGiorni[$acronym][$giorno])) {
+                        if (is_null($datiGiorni[$acronym][$giorno])) {
+                            $datiGiorni[$acronym][$giorno] = 0;
+                        }
+                        $datiGiorni[$acronym][$giorno] += $overtime->hours;
+                    }
                 }
 
                 foreach ($timeOffRequests as $request) {

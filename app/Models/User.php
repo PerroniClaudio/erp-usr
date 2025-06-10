@@ -118,4 +118,7 @@ class User extends Authenticatable {
     public function failedAttendances() {
         return $this->hasMany(FailedAttendance::class);
     }
+    public function overtimeRequests() {
+        return $this->hasMany(OvertimeRequest::class);
+    }
 }

@@ -15,4 +15,5 @@ return [
     "personnel_groups" => "Gruppi",
     "personnel_companies" => "Aziende",
     "personnel_functions" => "Funzioni utente",
+    'overtime_requests' => 'Richieste Straordinario',
 ];

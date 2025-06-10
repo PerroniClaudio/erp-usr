@@ -19,11 +19,14 @@ Route::group([
         $pendingTimeOffRequests = $timeOffController->getPendingTimeOffRequests();
         $failedAttendancesController = new FailedAttendanceController();
         $failedAttendances = $failedAttendancesController->getPendingFailedAttendances();
+        $overtimeController = new \App\Http\Controllers\OvertimeRequestController();
+        $pendingOvertimeRequests = $overtimeController->getPendingOvertimeRequests();
 
         return view('admin.home', [
             'usersStatus' => $usersStatus,
             'pendingTimeOffRequests' => $pendingTimeOffRequests,
             'failedAttendancesRequests' => $failedAttendances,
+            'pendingOvertimeRequests' => $pendingOvertimeRequests,
         ]);
     })->name('admin.home');
 });
@@ -86,4 +89,15 @@ Route::group([
     Route::get('/{failedAttendance}/handle', [FailedAttendanceController::class, 'handleFailedAttendance'])->name('admin.failed-attendances.edit');
     Route::post('/{failedAttendance}/approve', [FailedAttendanceController::class, 'approveFailedAttendance'])->name('admin.failed-attendances.approve');
     Route::post('/{failedAttendance}/deny', [FailedAttendanceController::class, 'denyFailedAttendance'])->name('admin.failed-attendances.deny');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:admin'],
+    'prefix' => 'admin/overtime-requests',
+], function () {
+    Route::get('/', [\App\Http\Controllers\OvertimeRequestController::class, 'adminIndex'])->name('admin.overtime-requests.index');
+    Route::get('/list', [\App\Http\Controllers\OvertimeRequestController::class, 'listOvertimeRequests'])->name('admin.overtime-requests.list');
+    Route::get('/{overtimeRequest}', [\App\Http\Controllers\OvertimeRequestController::class, 'adminShow'])->name('admin.overtime-requests.show');
+    Route::post('/{overtimeRequest}/approve', [\App\Http\Controllers\OvertimeRequestController::class, 'approve'])->name('admin.overtime-requests.approve');
+    Route::post('/{overtimeRequest}/deny', [\App\Http\Controllers\OvertimeRequestController::class, 'deny'])->name('admin.overtime-requests.deny');
 });

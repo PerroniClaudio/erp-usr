@@ -98,6 +98,15 @@
                     </li>
 
                     <li>
+                        <a href="{{ route('admin.overtime-requests.index') }}">
+
+                            <x-lucide-clock class="h-6 w-6 text-primary" />
+                            <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
+
+                        </a>
+                    </li>
+
+                    <li>
                         <details>
                             <summary>
                                 <x-lucide-user class="h-6 w-6 text-primary" />
@@ -118,6 +127,15 @@
                                         <div class="flex items-center">
                                             <x-lucide-sun class="h-6 w-6 text-primary" />
                                             <span class="ml-2">{{ __('navbar.time_off') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="{{ route('overtime-requests.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-clock class="h-6 w-6 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
                                         </div>
                                     </a>
                                 </li>
@@ -156,6 +174,14 @@
                             <div class="flex items-center">
                                 <x-lucide-sun class="h-6 w-6 text-primary" />
                                 <span class="ml-2">{{ __('navbar.time_off') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('overtime-requests.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-clock class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
                             </div>
                         </a>
                     </li>

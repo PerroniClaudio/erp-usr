@@ -5,6 +5,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BusinessTripController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\TimeOffRequestController;
+use App\Http\Controllers\OvertimeRequestController;
 
 Route::group([
     'middleware' => ['auth', 'role:standard'],
@@ -72,4 +73,15 @@ Route::group([
 ], function () {
     Route::get('/{failed_attendance}/justify-attendance', [FailedAttendanceController::class, 'justify'])->name('failed-attendances.justify');
     Route::post('/{failed_attendance}/send-justification', [FailedAttendanceController::class, 'sendJustification'])->name('failed-attendances.send-justification');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:standard'],
+    'prefix' => 'standard/overtime-requests',
+], function () {
+    Route::get('/', [\App\Http\Controllers\OvertimeRequestController::class, 'index'])->name('overtime-requests.index');
+    Route::get('/create', [\App\Http\Controllers\OvertimeRequestController::class, 'create'])->name('overtime-requests.create');
+    Route::post('/', [\App\Http\Controllers\OvertimeRequestController::class, 'store'])->name('overtime-requests.store');
+    Route::get('/list', [\App\Http\Controllers\OvertimeRequestController::class, 'listUserOvertimeRequests'])->name('overtime-requests.list');
+    Route::get('/{overtimeRequest}', [\App\Http\Controllers\OvertimeRequestController::class, 'show'])->name('overtime-requests.show');
 });
