@@ -58,10 +58,13 @@ class AttendanceController extends Controller {
      */
     public function create() {
         $attendanceTypes = AttendanceType::all();
-        $companies = Auth::user()->companies;
+
 
         if (Auth::user()->hasRole('admin')) {
             $users = User::all();
+            $companies = Company::all();
+        } else {
+            $companies = Auth::user()->companies;
         }
 
 
