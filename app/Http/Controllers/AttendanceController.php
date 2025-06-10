@@ -109,14 +109,16 @@ class AttendanceController extends Controller {
             }
         }
 
+        $user_id = $user->hasRole('admin') ? $request->input('user_id') : $user->id;
+
         $difference = $this->calculateHourDifference($fields['time_in'], $fields['time_out']);
 
         if ($difference > 4) {
             return back()->withErrors(['message' => 'Una presenza non può durare più di 4 ore']);
         }
 
-        $totalTimeOffHours = $this->getTotalTimeOffHours($user->id, $fields['company_id'], $fields['date']);
-        $attendancesOfDay = $this->getAttendancesOfDay($user->id, $fields['company_id'], $fields['date']);
+        $totalTimeOffHours = $this->getTotalTimeOffHours($user_id, $fields['company_id'], $fields['date']);
+        $attendancesOfDay = $this->getAttendancesOfDay($user_id, $fields['company_id'], $fields['date']);
         $totalAttendanceHours = $attendancesOfDay->sum('hours') + $difference;
 
         if (($totalAttendanceHours + $totalTimeOffHours) > 8) {
@@ -128,11 +130,11 @@ class AttendanceController extends Controller {
         }
 
 
-        if ($this->hasTimeOffOverlap($fields['date'], $fields['time_in'], $fields['time_out'], $user->id)) {
+        if ($this->hasTimeOffOverlap($fields['date'], $fields['time_in'], $fields['time_out'], $user_id)) {
             return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad una richiesta di permesso/ferie già registrata per la stessa giornata.']);
         }
 
-        $user_id = $user->hasRole('admin') ? $request->input('user_id') : $user->id;
+
 
 
         Attendance::create([
