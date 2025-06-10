@@ -60,6 +60,10 @@ class AttendanceController extends Controller {
         $attendanceTypes = AttendanceType::all();
         $companies = Auth::user()->companies;
 
+        if (Auth::user()->hasRole('admin')) {
+            $users = User::all();
+        }
+
 
         return view('standard.attendances.create', [
             'attendanceTypes' => $attendanceTypes,
@@ -69,6 +73,7 @@ class AttendanceController extends Controller {
             'error' => session('error'),
             'message' => session('message'),
             'errors' => session('errors'),
+            'users' => Auth::user()->hasRole('admin') ? $users : [],
         ]);
     }
 
@@ -124,8 +129,11 @@ class AttendanceController extends Controller {
             return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad una richiesta di permesso/ferie già registrata per la stessa giornata.']);
         }
 
+        $user_id = $user->hasRole('admin') ? $request->input('user_id') : $user->id;
+
+
         Attendance::create([
-            'user_id' => $user->id,
+            'user_id' => $user_id,
             'company_id' => $fields['company_id'],
             'date' => $fields['date'],
             'time_in' => $fields['time_in'],

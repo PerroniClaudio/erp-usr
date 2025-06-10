@@ -11,6 +11,22 @@
     <div class="card bg-base-300 ">
         <form class="card-body" method="POST" action="{{ route('attendances.store') }}">
             @csrf
+
+            @if (auth()->user()->hasRole('admin'))
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Utente</legend>
+                    <select class="select" name="user_id" value="{{ old('user_id') }}">
+                        @foreach ($users as $user)
+                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                {{ $user->name }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                </fieldset>
+            @endif
+
+
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">Azienda</legend>
                 <select class="select" name="company_id" value="{{ old('company_id') }}">

@@ -81,6 +81,7 @@ Route::group([
 ], function () {
     Route::get('/', [AttendanceController::class, 'adminIndex'])->name('admin.attendances.index');
     Route::get('/list', [AttendanceController::class, 'listAttendances'])->name('admin.attendances.list');
+    Route::get('/create', [AttendanceController::class, 'create'])->name('admin.attendances.create');
     Route::get('/{attendance}/edit', [AttendanceController::class, 'viewAttendance'])->name('admin.attendances.edit');
     Route::get('/{failedAttendance}/handle', [FailedAttendanceController::class, 'handleFailedAttendance'])->name('admin.failed-attendances.edit');
     Route::post('/{failedAttendance}/approve', [FailedAttendanceController::class, 'approveFailedAttendance'])->name('admin.failed-attendances.approve');

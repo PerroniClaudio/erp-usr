@@ -1,7 +1,14 @@
 <x-layouts.app>
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('attendances.attendances') }}</h1>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.attendances.create') }}" class="btn btn-primary">
+                {{ __('attendances.new_attendance') }}
+            </a>
+        </div>
     </div>
+
+    <hr>
 
     <div tabindex="0" class="collapse collapse-arrow bg-base-200 border-base-300 border">
         <div class="collapse-title font-semibold">{{ __('attendances.attendances_today') }}</div>
