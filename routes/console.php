@@ -53,3 +53,7 @@ Schedule::call(function () {
     Log::info("daily_anomaly_attendance_email started at {$now}");
     CheckAttendances::dispatch()->onQueue('default');
 })->daily()->at('18:00')->name('daily_anomaly_attendance_email')->weekdays();
+
+Schedule::call(function () {
+    Log::info("Test schedule running every minute at " . now()->toDateTimeString());
+})->everyMinute()->name('test_schedule_every_minute');
