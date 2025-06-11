@@ -94,11 +94,13 @@ class CheckAttendances implements ShouldQueue {
             }
         }
 
-        if (env('APP_ENV') === 'production') {
-            Mail::to(env('ATTENDANCES_EMAIL'))
+        if (config('app.env') === 'production') {
+            Mail::to(config('mail.admin_mail'))
                 ->send(new \App\Mail\AttendanceAnomaliesReport($usersWithAnomalies));
-        } else {
-            Mail::to(env('DEV_EMAIL'))
+            Mail::to(config('app.env'))
+                ->send(new \App\Mail\AttendanceAnomaliesReport($usersWithAnomalies));
+        } elseif (config('app.env') === 'local') {
+            Mail::to(config('mail.dev_email'))
                 ->send(new \App\Mail\AttendanceAnomaliesReport($usersWithAnomalies));
         }
 

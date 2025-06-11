@@ -43,6 +43,7 @@ Schedule::call(function () {
     Log::info("daily_failed_attendance_email started at {$now}");
     if (config('app.env') === 'production') {
         Mail::to(config('mail.admin_mail'))->send(new \App\Mail\FailedAttendance());
+        Mail::to(config('mail.dev_email'))->send(new \App\Mail\FailedAttendance());
     } elseif (config('app.env') === 'local') {
         Mail::to(config('mail.dev_email'))->send(new \App\Mail\FailedAttendance());
     }
@@ -53,7 +54,3 @@ Schedule::call(function () {
     Log::info("daily_anomaly_attendance_email started at {$now}");
     CheckAttendances::dispatch()->onQueue('default');
 })->daily()->at('18:00')->name('daily_anomaly_attendance_email')->weekdays();
-
-Schedule::call(function () {
-    Log::info("Test schedule running every minute at " . now()->toDateTimeString());
-})->everyMinute()->name('test_schedule_every_minute');
