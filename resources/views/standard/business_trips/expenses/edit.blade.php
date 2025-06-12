@@ -1,11 +1,13 @@
 <x-layouts.app>
 
+    <input type="hidden" id="is_edit" name="is_edit" value="1" />
+
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('business_trips.edit_expense') }}</h1>
 
 
-        <div class="hidden submit-button-container">
-            <a class="btn btn-primary hidden lg:inline-flex" onclick="document.getElementById('submit-button').click()">
+        <div class="hidden lg:inline-flex">
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
                 {{ __('business_trips.save') }}
             </a>
         </div>
@@ -13,18 +15,13 @@
 
     <hr>
 
-    <div role="alert" class="alert alert-info lg:w-1/3">
-        <x-lucide-info class="w-8 h-8" />
-        <p>Convalida l'indirizzo prima di procedere</p>
-    </div>
-
     <form class="grid lg:grid-cols-2 gap-4" method="POST"
         action="{{ route('business-trips.expenses.update', [
             'businessTrip' => $businessTrip->id,
             'expense' => $expense->id,
         ]) }}">
         @csrf
-        @method('PUT')
+        @method('PATCH')
 
         <input type="hidden" name="business_trip_id" value="{{ $businessTrip->id }}" />
 
@@ -153,13 +150,70 @@
 
     </form>
 
-    <div class="hidden submit-button-container">
+    <div class="grid lg:grid-cols-2 gap-4">
+        <div class="card bg-base-300">
+            <div class="card-body">
+                <h3 class="card-title">
+                    {{ __('business_trips.expense_justification') }}
+                </h3>
+                <hr>
+
+
+                <div class="btn btn-primary" id="upload-start">
+                    {{ __('business_trips.expense_justification_select_file') }}
+                </div>
+                <div class="btn btn-success hidden" id="upload-success">
+                    {{ __('business_trips.expense_justification_upload') }}
+                </div>
+
+
+
+
+                <div class="hidden" id="upload-info">
+                    <div class="alert alert-info flex items-center justify-between">
+                        <span id="filename-display"></span>
+                        <div class="btn btn-ghost">
+                            <x-lucide-x class="w-4 h-4" id="cancel-upload-button" />
+                        </div>
+                    </div>
+                </div>
+
+                @if ($expense->justification_file_name != null)
+                    <a href="{{ route('business-trips.expenses.download-justification', [
+                        'businessTripExpense' => $expense->id,
+                    ]) }}"
+                        target="_blank" class="btn btn-primary">
+                        {{ __('business_trips.expense_justification_download') }}
+                    </a>
+                @endif
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="lg:hidden block">
         <div class="flex flex-row-reverse">
-            <a class="btn btn-primary lg:hidden block" onclick="document.getElementById('submit-button').click()">
+            <a class="btn btn-primary " onclick="document.getElementById('submit-button').click()">
                 {{ __('business_trips.save') }}
             </a>
         </div>
     </div>
+
+    <form
+        action="{{ route('business-trips.expenses.upload-justification', [
+            'businessTripExpense' => $expense->id,
+        ]) }}"
+        method="POST" enctype="multipart/form-data" class="hidden">
+        @csrf
+        @method('PUT')
+        <input type="file" id="file-input" name="justification_file" class="hidden"
+            accept=".jpg, .jpeg, .png, .pdf" />
+
+        <button id="submit-file-button"></button>
+    </form>
 
     @push('scripts')
         @vite('resources/js/businessTrips.js')

@@ -33,4 +33,9 @@ return [
     'status_0' => 'Aperto',
     'status_1' => 'Chiuso',
     'export_nota_spese' => 'Esporta Nota Spese',
+    'expense_justification' => 'Giustificativo',
+    'expense_justification_select_file' => 'Seleziona file',
+    'expense_justification_upload' => 'Carica Giustificativo',
+    'expense_justification_download' => 'Scarica Giustificativo caricato',
+    'expense_justification_uploaded' => 'Giustificativo Caricato',
 ];

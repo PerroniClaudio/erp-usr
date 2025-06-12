@@ -20,7 +20,12 @@ class BusinessTripExpense extends Model {
         'province',
         'zip_code',
         'latitude',
-        'longitude'
+        'longitude',
+        'justification_file_path',
+        'justification_file_name',
+        'justification_file_mime_type',
+        'justification_file_size',
+        'justification_file_uploaded_at'
     ];
 
     private $expenseTypes = [

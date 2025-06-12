@@ -36,13 +36,15 @@ Route::group([
     Route::get('/pdf-batch', [BusinessTripController::class, 'generateMonthlyPdf'])->name('business-trips.pdf-batch');
 
     /** Spese */
+
     Route::get('/{businessTrip}/expenses', [BusinessTripController::class, 'expenses'])->name('business-trips.expenses');
     Route::get('/{businessTrip}/expenses/create', [BusinessTripController::class, 'createExpense'])->name('business-trips.expenses.create');
     Route::post('/{businessTrip}/expenses', [BusinessTripController::class, 'storeExpense'])->name('business-trips.expenses.store');
     Route::get('/{businessTrip}/expenses/{expense}/edit', [BusinessTripController::class, 'editExpense'])->name('business-trips.expenses.edit');
-    Route::put('/{businessTrip}/expenses/{expense}', [BusinessTripController::class, 'updateExpense'])->name('business-trips.expenses.update');
+    Route::put('/{businessTripExpense}/expenses/upload-justification', [BusinessTripController::class, 'uploadExpenseJustification'])->name('business-trips.expenses.upload-justification');
+    Route::patch('/{businessTrip}/expenses/{expense}', [BusinessTripController::class, 'updateExpense'])->name('business-trips.expenses.update');
     Route::delete('/{businessTrip}/expenses/{expense}', [BusinessTripController::class, 'destroyExpense'])->name('business-trips.expenses.destroy');
-
+    Route::get('/{businessTripExpense}/download-justification', [BusinessTripController::class, 'downloadExpenseJustification'])->name('business-trips.expenses.download-justification');
 
     /** Spostamenti */
     Route::get('/{businessTrip}/transfers', [BusinessTripController::class, 'transfers'])->name('business-trips.transfers');

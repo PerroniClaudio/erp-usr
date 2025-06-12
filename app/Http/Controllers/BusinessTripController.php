@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Illuminate\Support\Facades\Storage;
 
 class BusinessTripController extends Controller {
     /**
@@ -664,5 +665,39 @@ class BusinessTripController extends Controller {
             Log::error('Eccezione Google Routes API: ' . $e->getMessage());
         }
         return null;
+    }
+
+    /** Caricamento file spese */
+
+    public function uploadExpenseJustification(Request $request, BusinessTripExpense $businessTripExpense) {
+
+        if (!$request->hasFile('justification_file') || !$request->file('justification_file')->isValid()) {
+            return back()->with('error', 'Nessun file valido caricato.');
+        }
+        $file = $request->file('justification_file');
+
+        $file_path = "{$businessTripExpense->businessTrip->code}/spese/{$businessTripExpense->id}/" . time() . '_' . $file->getClientOriginalName() . '.' . $file->getClientOriginalExtension();
+        $path = $file->store($file_path, 'gcs');
+
+        $businessTripExpense->update([
+            'justification_file_path' => $path,
+            'justification_file_name' => $file->getClientOriginalName(),
+            'justification_file_mime_type' => $file->getMimeType(),
+            'justification_file_size' => $file->getSize(),
+            'justification_file_uploaded_at' => now(),
+        ]);
+
+        return redirect()->route('business-trips.edit', $businessTripExpense->business_trip_id)->with('success', 'Giustificativo caricato con successo');
+    }
+
+    public function downloadExpenseJustification(BusinessTripExpense $businessTripExpense) {
+        if (!$businessTripExpense->justification_file_path) {
+            return back()->with('error', 'Nessun giustificativo caricato per questa spesa.');
+        }
+        $disk = Storage::disk('gcs');
+        /** @var \Illuminate\Contracts\Filesystem\Cloud|\Spatie\GoogleCloudStorage\GoogleCloudStorageAdapter $disk */
+        $url = $disk->temporaryUrl($businessTripExpense->justification_file_path, now()->addMinutes(30));
+
+        return redirect($url);
     }
 }

@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const validateButton = document.getElementById("validate-address");
+const is_edit = document.querySelector("#is_edit").value == 1;
 
 validateButton.addEventListener("click", async () => {
     const formData = {
@@ -21,7 +22,9 @@ validateButton.addEventListener("click", async () => {
         if (response.data.status === "success") {
             populateAddressFields(response.data.content);
             toggleIcons(true);
-            showSubmitButton();
+            if (!is_edit) {
+                showSubmitButton();
+            }
             removeAlertInfo();
 
             document.querySelector("#error-message").classList.add("hidden");
@@ -114,4 +117,39 @@ function displayValidationErrors(errors) {
             errorElement.innerHTML = messages.join(", ");
         }
     }
+}
+
+if (is_edit) {
+    const fileInput = document.querySelector("#file-input");
+    const uploadStart = document.querySelector("#upload-start");
+    const fileUploadSuccess = document.querySelector("#upload-success");
+    const submitButton = document.querySelector("#submit-file-button");
+    const cancelUploadButton = document.querySelector("#cancel-upload-button");
+    const filenameDisplay = document.querySelector("#filename-display");
+    const filenameDisplayContainer = document.querySelector("#upload-info");
+
+    const handleUploadStartClick = () => fileInput.click();
+    const handleFileUploadSuccessClick = () => submitButton.click();
+    const handleCancelUploadClick = () => {
+        fileInput.value = "";
+        fileUploadSuccess.classList.add("hidden");
+        uploadStart.classList.remove("hidden");
+        filenameDisplay.textContent = "Nessun file selezionato";
+        filenameDisplayContainer.classList.add("hidden");
+    };
+    const handleFileInputChange = (event) => {
+        const file = event.target.files[0];
+        const hasFile = !!file;
+        fileUploadSuccess.classList.toggle("hidden", !hasFile);
+        uploadStart.classList.toggle("hidden", hasFile);
+        filenameDisplay.textContent = hasFile
+            ? file.name
+            : "Nessun file selezionato";
+        filenameDisplayContainer.classList.toggle("hidden", !hasFile);
+    };
+
+    uploadStart.addEventListener("click", handleUploadStartClick);
+    fileUploadSuccess.addEventListener("click", handleFileUploadSuccessClick);
+    fileInput.addEventListener("change", handleFileInputChange);
+    cancelUploadButton.addEventListener("click", handleCancelUploadClick);
 }

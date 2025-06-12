@@ -5,9 +5,11 @@
 
 
         <div class="hidden submit-button-container">
-            <a class="btn btn-primary hidden lg:block" onclick="document.getElementById('submit-button').click()">
-                {{ __('business_trips.save') }}
-            </a>
+            <div class="hidden lg:block">
+                <a class="btn btn-primary " onclick="document.getElementById('submit-button').click()">
+                    {{ __('business_trips.save') }}
+                </a>
+            </div>
         </div>
     </div>
 
@@ -153,9 +155,11 @@
 
     <div class="hidden submit-button-container">
         <div class="flex flex-row-reverse">
-            <a class="btn btn-primary lg:hidden block" onclick="document.getElementById('submit-button').click()">
-                {{ __('business_trips.save') }}
-            </a>
+            <div class="lg:hidden block">
+                <a class="btn btn-primary " onclick="document.getElementById('submit-button').click()">
+                    {{ __('business_trips.save') }}
+                </a>
+            </div>
         </div>
     </div>
 
