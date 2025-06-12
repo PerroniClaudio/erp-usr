@@ -51,12 +51,12 @@ class FailedAttendanceController extends Controller {
             'requested_type' => $request->type,
         ]);
 
-        if (env('APP_ENV') === 'production') {
-            Mail::to(env('ATTENDANCES_EMAIL'))
+        if (config('app.env') === 'production') {
+            Mail::to(config('mail.attendance_mail'))
                 ->send(new \App\Mail\SentJustification($failedAttendance));
             return redirect()->route('home')->with('success', 'La richiesta verrà elaborata entro 48 ore.');
         } else {
-            Mail::to(env('DEV_EMAIL'))
+            Mail::to(config('mail.dev_email'))
                 ->send(new \App\Mail\SentJustification($failedAttendance));
             return redirect()->route('home')->with('success', 'La richiesta verrà elaborata entro 48 ore.');
         }

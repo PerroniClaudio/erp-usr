@@ -676,7 +676,7 @@ class BusinessTripController extends Controller {
         }
         $file = $request->file('justification_file');
 
-        $file_path = "{$businessTripExpense->businessTrip->code}/spese/{$businessTripExpense->id}/" . time() . '_' . $file->getClientOriginalName() . '.' . $file->getClientOriginalExtension();
+        $file_path = "trasferte/{$businessTripExpense->businessTrip->code}/spese/{$businessTripExpense->id}/" . time() . '_' . $file->getClientOriginalName() . '.' . $file->getClientOriginalExtension();
         $path = $file->store($file_path, 'gcs');
 
         $businessTripExpense->update([
