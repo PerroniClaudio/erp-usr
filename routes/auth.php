@@ -5,6 +5,7 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use App\Models\Company;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 Route::get('/auth/redirect', function () {
     return Socialite::driver('microsoft')->redirect();
@@ -15,35 +16,98 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::get('/auth/microsoft/callback', function () {
-    $user = Socialite::driver('microsoft')->user();
+    try {
+        // Verifica se c'è uno stato nella richiesta
+        if (!request()->has('state') || !session()->has('state')) {
+            return redirect()->route('login')->withErrors(['error' => 'Stato di autenticazione non valido. Riprova.']);
+        }
 
-    $existingUser = User::where('email', $user->getEmail())->first();
+        $user = Socialite::driver('microsoft')->user();
 
-    if ($existingUser) {
-        Auth::login($existingUser);
-    } else {
-        $newUser = User::create([
-            'name' => $user->getName(),
-            'email' => $user->getEmail(),
-            'password' => encrypt($user->getEmail()),
-            'provider_id' => $user->getId(),
-            'provider' => 'microsoft',
+        $existingUser = User::where('email', $user->getEmail())->first();
+
+        if ($existingUser) {
+            Auth::login($existingUser);
+        } else {
+            $newUser = User::create([
+                'name' => $user->getName(),
+                'email' => $user->getEmail(),
+                'password' => encrypt($user->getEmail()),
+                'provider_id' => $user->getId(),
+                'provider' => 'microsoft',
+            ]);
+
+            $newUser->assignRole('standard'); // Assign the 'standard' role to the new user
+
+            if (stripos($newUser->name, 'Stefano') !== false) {
+                $newUser->assignRole('admin');
+            }
+
+            $company = Company::where('name', 'iFortech')->first();
+            if ($company) {
+                $newUser->companies()->associate($company);
+                $newUser->save();
+            }
+
+            Auth::login($newUser);
+        }
+
+        return redirect()->intended('/home');
+    } catch (\Laravel\Socialite\Two\InvalidStateException $e) {
+        // Log l'errore per debugging
+        Log::error('Socialite InvalidStateException: ' . $e->getMessage(), [
+            'request_data' => request()->all(),
+            'session_id' => session()->getId(),
+            'has_state_in_request' => request()->has('state'),
+            'has_state_in_session' => session()->has('state'),
+            'user_agent' => request()->userAgent(),
         ]);
 
-        $newUser->assignRole('standard'); // Assign the 'standard' role to the new user
+        return redirect()->route('login')->withErrors(['error' => 'Errore di autenticazione. Riprova.']);
+    } catch (\Exception $e) {
+        Log::error('Socialite general exception: ' . $e->getMessage());
 
-        if (stripos($newUser->name, 'Stefano') !== false) {
-            $newUser->assignRole('admin');
-        }
-       
-        $company = Company::where('name', 'iFortech')->first();
-        if ($company) {
-            $newUser->companies()->associate($company);
-            $newUser->save();
-        }
-
-        Auth::login($newUser);
+        return redirect()->route('login')->withErrors(['error' => 'Errore durante l\'autenticazione. Riprova.']);
     }
+})->middleware('socialite_session')->name('auth.microsoft.callback');
 
-    return redirect()->intended('/home');
-});
+// Rotta alternativa per casi di emergenza - disabilita la validazione dello stato
+Route::get('/auth/microsoft/callback-no-state', function () {
+    try {
+        $user = Socialite::driver('microsoft')->stateless()->user();
+
+        $existingUser = User::where('email', $user->getEmail())->first();
+
+        if ($existingUser) {
+            Auth::login($existingUser);
+        } else {
+            $newUser = User::create([
+                'name' => $user->getName(),
+                'email' => $user->getEmail(),
+                'password' => encrypt($user->getEmail()),
+                'provider_id' => $user->getId(),
+                'provider' => 'microsoft',
+            ]);
+
+            $newUser->assignRole('standard');
+
+            if (stripos($newUser->name, 'Stefano') !== false) {
+                $newUser->assignRole('admin');
+            }
+
+            $company = Company::where('name', 'iFortech')->first();
+            if ($company) {
+                $newUser->companies()->associate($company);
+                $newUser->save();
+            }
+
+            Auth::login($newUser);
+        }
+
+        return redirect()->intended('/home');
+    } catch (\Exception $e) {
+        Log::error('Socialite stateless exception: ' . $e->getMessage());
+
+        return redirect()->route('login')->withErrors(['error' => 'Errore durante l\'autenticazione. Riprova.']);
+    }
+})->name('auth.microsoft.callback.nostate');

@@ -37,6 +37,11 @@ Artisan::command("attendance:check", function () {
     \App\Jobs\CheckAttendances::dispatch()->onQueue('default');
 })->purpose('Check attendances and send notifications if needed');
 
+Artisan::command("logs:rotate", function () {
+    \App\Jobs\RotateLogs::dispatch()->onQueue('default');
+    $this->info("Log rotation job dispatched.");
+})->purpose('Rotate logs and store them in Google Cloud Storage');
+
 
 Schedule::call(function () {
     $now = now()->toDateTimeString();

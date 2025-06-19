@@ -49,16 +49,17 @@
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </div>
                                 </a>
-
-                                <form action="{{ route('business-trips.destroy', $businessTrip) }}" method="POST"
-                                    class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-warning"
-                                        onclick="return confirm('{{ __('business_trips.confirm_delete') }}')">
-                                        <x-lucide-trash-2 class="w-4 h-4" />
-                                    </button>
-                                </form>
+                                @if ($businessTrip->expenses->isEmpty() && $businessTrip->transfers->isEmpty())
+                                    <form action="{{ route('business-trips.destroy', $businessTrip) }}" method="POST"
+                                        class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-warning"
+                                            onclick="return confirm('{{ __('business_trips.confirm_delete') }}')">
+                                            <x-lucide-trash-2 class="w-4 h-4" />
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @empty
@@ -87,25 +88,28 @@
             <h1 class="text-3xl mb-4">{{ __('business_trips.export_nota_spese') }}</h1>
             <hr>
             <form action="{{ route('business-trips.pdf-batch') }}" method="GET">
+                <fieldset class="fieldset mb-4">
+                    <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
+                    <select id="year" name="year" class="select select-bordered">
+                        @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
+                            <option value="{{ $year }}" @if ($year == \Carbon\Carbon::now()->year) selected @endif>
+                                {{ $year }}</option>
+                        @endforeach
+                    </select>
+                </fieldset>
                 <fieldset class="fieldset">
                     <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}</legend>
                     <select id="month" name="month" class="select select-bordered">
                         @foreach (range(1, 12) as $month)
-                            <option value="{{ $month }}"
-                                {{ $month == \Carbon\Carbon::now()->month ? 'selected' : '' }}>
+                            <option
+                                value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}"
+                                @if ($month == \Carbon\Carbon::now()->subMonth()->month) selected @endif>
                                 {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
                             </option>
                         @endforeach
                     </select>
                 </fieldset>
-                <fieldset class="fieldset mb-4">
-                    <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
-                    <select id="year" name="year" class="select select-bordered">
-                        @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
-                            <option value="{{ $year }}">{{ $year }}</option>
-                        @endforeach
-                    </select>
-                </fieldset>
+
 
                 <button type="submit" class="btn btn-primary">
                     {{ __('business_trips.export_nota_spese') }}
