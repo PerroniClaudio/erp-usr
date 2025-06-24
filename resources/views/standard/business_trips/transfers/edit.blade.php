@@ -1,5 +1,7 @@
 <x-layouts.app>
 
+    <input type="hidden" id="is_edit" name="is_edit" value="1" />
+
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('business_trips.edit_transfer') }}</h1>
 
