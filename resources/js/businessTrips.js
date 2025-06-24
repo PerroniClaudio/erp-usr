@@ -22,9 +22,7 @@ validateButton.addEventListener("click", async () => {
         if (response.data.status === "success") {
             populateAddressFields(response.data.content);
             toggleIcons(true);
-            if (!is_edit) {
-                showSubmitButton();
-            }
+            showSubmitButton();
             removeAlertInfo();
 
             document.querySelector("#error-message").classList.add("hidden");
@@ -148,8 +146,19 @@ if (is_edit) {
         filenameDisplayContainer.classList.toggle("hidden", !hasFile);
     };
 
-    uploadStart.addEventListener("click", handleUploadStartClick);
-    fileUploadSuccess.addEventListener("click", handleFileUploadSuccessClick);
-    fileInput.addEventListener("change", handleFileInputChange);
-    cancelUploadButton.addEventListener("click", handleCancelUploadClick);
+    if (uploadStart) {
+        uploadStart.addEventListener("click", handleUploadStartClick);
+    }
+    if (fileUploadSuccess) {
+        fileUploadSuccess.addEventListener(
+            "click",
+            handleFileUploadSuccessClick
+        );
+    }
+    if (fileInput) {
+        fileInput.addEventListener("change", handleFileInputChange);
+    }
+    if (cancelUploadButton) {
+        cancelUploadButton.addEventListener("click", handleCancelUploadClick);
+    }
 }
