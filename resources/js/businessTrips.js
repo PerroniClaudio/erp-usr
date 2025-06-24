@@ -1,7 +1,10 @@
 import axios from "axios";
 
 const validateButton = document.getElementById("validate-address");
-const is_edit = document.querySelector("#is_edit").value == 1;
+const is_edit = (() => {
+    const el = document.querySelector("#is_edit");
+    return el ? el.value == 1 : false;
+})();
 
 validateButton.addEventListener("click", async () => {
     const formData = {
