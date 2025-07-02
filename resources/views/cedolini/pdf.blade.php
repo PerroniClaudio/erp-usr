@@ -116,6 +116,7 @@
                     'STNF' => 'STRAORDINARIO NOTTURNO/FESTIVO',
                     'LM' => 'LICENZA MATRIMONIO',
                     'OV' => 'ORE VIAGGIO',
+                    'CIL' => 'CORSO INTRA-LAVORATIVO',
                 ];
 
                 $datiGiorni = [];
@@ -262,6 +263,7 @@
                     <ul style="list-style: none; padding-left: 0; margin: 0;">
                         <li><strong>ST</strong> - STRAORDINARIO</li>
                         <li><strong>STN</strong> - STRAORDINARIO NOTTURNO</li>
+                        <li><strong>CIL</strong> - CORSO INTRA-LAVORATIVO</li>
                     </ul>
                 </td>
                 <td style="width: 20%">
