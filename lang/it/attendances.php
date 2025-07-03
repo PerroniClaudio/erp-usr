@@ -48,5 +48,15 @@ return [
     'deny_title' => 'Rifiuta',
     'deny_text' => 'Sei sicuro di voler rifiutare questa richiesta?',
     'reason' => 'Motivo...',
+    'request_type' => 'Tipo di richiesta',
+    'permission_request' => 'Richiesta Permesso',
+    'attendance_request' => 'Richiesta Presenza',
+    'morning_times' => 'Orari Mattino',
+    'afternoon_times' => 'Orari Pomeriggio (opzionale)',
+    'time_in' => 'Entrata',
+    'time_out' => 'Uscita',
+    'approve_attendance' => 'Approva come Presenza',
+    'approve_as_attendance_title' => 'Approva come Presenza',
+    'approve_as_attendance_text' => 'Questa operazione creerà una nuova presenza con gli orari richiesti dall\'utente.',
 
 ];

@@ -40,16 +40,44 @@ class FailedAttendanceController extends Controller {
     }
 
     public function sendJustification(Request $request, FailedAttendance $failedAttendance) {
-        $request->validate([
+        // Validazione base
+        $rules = [
             'reason' => 'required|string',
-            'type' => 'required|numeric',
-        ]);
+            'request_type' => 'required|in:0,1', // 0 = permesso, 1 = presenza
+        ];
 
-        $failedAttendance->update([
+        // Validazione condizionale in base al tipo di richiesta
+        if ($request->request_type == 0) {
+            // Richiesta permesso
+            $rules['type'] = 'required|numeric';
+        } else {
+            // Richiesta presenza
+            $rules['requested_time_in_morning'] = 'required|date_format:H:i';
+            $rules['requested_time_out_morning'] = 'required|date_format:H:i|after:requested_time_in_morning';
+            $rules['requested_time_in_afternoon'] = 'nullable|date_format:H:i|after:requested_time_out_morning';
+            $rules['requested_time_out_afternoon'] = 'nullable|date_format:H:i|after:requested_time_in_afternoon';
+        }
+
+        $request->validate($rules);
+
+        $updateData = [
             'status' => 1,
             'reason' => $request->reason,
-            'requested_type' => $request->type,
-        ]);
+            'request_type' => $request->request_type,
+        ];
+
+        if ($request->request_type == 0) {
+            // Richiesta permesso
+            $updateData['requested_type'] = $request->type;
+        } else {
+            // Richiesta presenza
+            $updateData['requested_time_in_morning'] = $request->requested_time_in_morning;
+            $updateData['requested_time_out_morning'] = $request->requested_time_out_morning;
+            $updateData['requested_time_in_afternoon'] = $request->requested_time_in_afternoon;
+            $updateData['requested_time_out_afternoon'] = $request->requested_time_out_afternoon;
+        }
+
+        $failedAttendance->update($updateData);
 
         if (config('app.env') === 'production') {
             Mail::to(config('mail.attendance_mail'))
@@ -75,28 +103,36 @@ class FailedAttendanceController extends Controller {
     }
 
     public function approveFailedAttendance(Request $request, FailedAttendance $failedAttendance) {
-        $request->validate([
-            'type' => 'required|in:rol,time_off',
-        ]);
+        if ($failedAttendance->request_type == 0) {
+            // Richiesta permesso
+            $request->validate([
+                'type' => 'required|in:rol,time_off',
+            ]);
 
-        switch ($request->type) {
-            case 'rol':
-                $this->approveAsRol($failedAttendance);
-                break;
-            case 'time_off':
-                $this->approveAsTimeOff($failedAttendance);
-                break;
+            switch ($request->type) {
+                case 'rol':
+                    $this->approveAsRol($failedAttendance);
+                    $mailType = 'Rol';
+                    break;
+                case 'time_off':
+                    $this->approveAsTimeOff($failedAttendance);
+                    $mailType = 'Ferie';
+                    break;
+            }
+        } else {
+            // Richiesta presenza - non serve validazione aggiuntiva
+            $this->approveAsAttendance($failedAttendance);
+            $mailType = 'Presenza';
         }
 
         // Aggiorna lo stato della FailedAttendance a giustificata
         $failedAttendance->update([
             'status' => 2,
         ]);
+
         // Invia una mail di conferma all'utente
-
         Mail::to($failedAttendance->user->email)
-            ->send(new \App\Mail\FailedAttendanceTimeOffApproved($failedAttendance, ($request->type === 'rol' ? 'Rol' : 'Ferie')));
-
+            ->send(new \App\Mail\FailedAttendanceTimeOffApproved($failedAttendance, $mailType));
 
         return redirect()->route('admin.home')->with('success', 'Presenza gestita con successo.');
     }
@@ -151,6 +187,57 @@ class FailedAttendanceController extends Controller {
             'company_id' => $company,
             'time_off_type_id' => $attendanceType->id
         ]);
+    }
+
+    private function approveAsAttendance(FailedAttendance $failedAttendance) {
+        // Crea una nuova Attendance con gli orari richiesti
+        $company = Company::where('name', 'iFortech')->first();
+        $attendanceType = \App\Models\AttendanceType::where('name', 'Presenza')->first();
+
+        // Se non esiste il tipo "Presenza", usa il primo disponibile o un default
+        if (!$attendanceType) {
+            $attendanceType = \App\Models\AttendanceType::first();
+        }
+
+        // Calcola le ore totali
+        $morningStart = \Carbon\Carbon::createFromFormat('H:i', $failedAttendance->requested_time_in_morning);
+        $morningEnd = \Carbon\Carbon::createFromFormat('H:i', $failedAttendance->requested_time_out_morning);
+        $morningHours = $morningEnd->diffInHours($morningStart, true);
+
+        $afternoonHours = 0;
+        if ($failedAttendance->requested_time_in_afternoon && $failedAttendance->requested_time_out_afternoon) {
+            $afternoonStart = \Carbon\Carbon::createFromFormat('H:i', $failedAttendance->requested_time_in_afternoon);
+            $afternoonEnd = \Carbon\Carbon::createFromFormat('H:i', $failedAttendance->requested_time_out_afternoon);
+            $afternoonHours = $afternoonEnd->diffInHours($afternoonStart, true);
+        }
+
+        $totalHours = $morningHours + $afternoonHours;
+
+        // Crea l'attendance del mattino
+        Attendance::create([
+            'user_id' => $failedAttendance->user_id,
+            'company_id' => $company->id,
+            'date' => $failedAttendance->date,
+            'time_in' => $failedAttendance->requested_time_in_morning,
+            'time_out' => $failedAttendance->requested_time_out_morning,
+            'hours' => $morningHours,
+            'status' => 1, // Approvata
+            'attendance_type_id' => $attendanceType ? $attendanceType->id : null,
+        ]);
+
+        // Se ci sono orari pomeridiani, crea una seconda attendance
+        if ($failedAttendance->requested_time_in_afternoon && $failedAttendance->requested_time_out_afternoon) {
+            Attendance::create([
+                'user_id' => $failedAttendance->user_id,
+                'company_id' => $company->id,
+                'date' => $failedAttendance->date,
+                'time_in' => $failedAttendance->requested_time_in_afternoon,
+                'time_out' => $failedAttendance->requested_time_out_afternoon,
+                'hours' => $afternoonHours,
+                'status' => 1, // Approvata
+                'attendance_type_id' => $attendanceType ? $attendanceType->id : null,
+            ]);
+        }
     }
 
     public function denyFailedAttendance(Request $request, FailedAttendance $failedAttendance) {
