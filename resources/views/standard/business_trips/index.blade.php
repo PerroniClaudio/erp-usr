@@ -101,8 +101,7 @@
                     <legend class="fieldset-legend">{{ __('personnel.users_cedolino_month') }}</legend>
                     <select id="month" name="month" class="select select-bordered">
                         @foreach (range(1, 12) as $month)
-                            <option
-                                value="{{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}"
+                            <option value="{{ str_pad($month, 2, '0', STR_PAD_LEFT) }}"
                                 @if ($month == \Carbon\Carbon::now()->subMonth()->month) selected @endif>
                                 {{ ucfirst(\Carbon\Carbon::create()->month($month)->locale('it')->translatedFormat('F')) }}
                             </option>

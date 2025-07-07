@@ -418,7 +418,7 @@ class BusinessTripController extends Controller {
 
     public function generateMonthlyPdf(Request $request) {
         $fields = $request->validate([
-            'month' => 'required|integer|min:1|max:12',
+            'month' => 'required',
             'year' => 'required|integer|min:1900',
         ]);
 
