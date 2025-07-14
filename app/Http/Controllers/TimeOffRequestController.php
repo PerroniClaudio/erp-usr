@@ -686,7 +686,7 @@ class TimeOffRequestController extends Controller {
 
             $events = collect($group['events']);
             $firstEvent = $events->first();
-            $$lastEvent = $events->last();
+            $lastEvent = $events->last();
 
             $start_formatted = \Carbon\Carbon::parse($firstEvent['start'])->format('d/m/Y');
             $end_formatted = \Carbon\Carbon::parse($lastEvent['end'])->format('d/m/Y');
