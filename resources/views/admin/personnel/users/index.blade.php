@@ -139,5 +139,31 @@
                     document.getElementById('modal-presenze').close();
                 }
             }
+
+            // Disabilita il bottone submit durante la richiesta GET
+            document.addEventListener('DOMContentLoaded', function() {
+                const forms = [
+                    document.getElementById('form-cedolino'),
+                    document.getElementById('form-presenze')
+                ];
+                forms.forEach(function(form) {
+                    if (!form) return;
+                    form.addEventListener('submit', function(e) {
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.classList.add('opacity-50', 'pointer-events-none');
+                        }
+                        // Per GET, lasciamo il comportamento default (redirect/download)
+                        // Ma riabilitiamo il bottone dopo un breve timeout in caso di download
+                        setTimeout(function() {
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.classList.remove('opacity-50', 'pointer-events-none');
+                            }
+                        }, 10000); // 3 secondi, regola se necessario
+                    });
+                });
+            });
         </script>
 </x-layouts.app>

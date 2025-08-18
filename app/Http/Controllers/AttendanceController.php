@@ -350,7 +350,7 @@ class AttendanceController extends Controller {
         $users = User::where('name', 'not like', 'Stefano%')
             ->get();
 
-        $today = date('Y-m-d');
+        $today = Carbon::today()->toDateString();
         $usersStatus = [];
 
         foreach ($users as $user) {
@@ -367,8 +367,8 @@ class AttendanceController extends Controller {
             }
 
             $timeOffToday = TimeOffRequest::where('user_id', $user->id)
-                ->where('date_from', '<=', $today)
-                ->where('date_to', '>=', $today)
+                ->whereDate('date_from', '<=', $today)
+                ->whereDate('date_to', '>=', $today)
                 ->exists();
 
             if ($timeOffToday) {

@@ -118,10 +118,11 @@
                 <th>STRAORDINARIO</th>
                 <th>STRAORD.<br>NOTTURNO</th>
                 <th>STRAORD.<br>FESTIVO</th>
+                <th>ROL</th>
                 <th>FERIE</th>
                 <th>CORSO INTRA<br>(incluse in<br>lavorato)</th>
                 <th>CORSO EXTRA</th>
-                <th>ROL</th>
+                <th>MALATTIA</th>
             </tr>
         </thead>
         <tbody>
@@ -130,20 +131,22 @@
                 <td>{{ $riepilogo['straordinario']['ore'] }}</td>
                 <td>{{ $riepilogo['straordinario_notturno']['ore'] }}</td>
                 <td>{{ $riepilogo['straordinario_festivo']['ore'] }}</td>
+                <td>{{ $riepilogo['rol']['ore'] }}</td>
                 <td>{{ $riepilogo['ferie']['ore'] }}</td>
                 <td>{{ $riepilogo['corso_intra']['ore'] }}</td>
                 <td>{{ $riepilogo['corso_extra']['ore'] }}</td>
-                <td>{{ $riepilogo['rol']['ore'] }}</td>
+                <td>{{ $riepilogo['malattia']['ore'] }}</td>
             </tr>
             <tr>
                 <td>{{ number_format($riepilogo['lavorato']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['straordinario']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['straordinario_notturno']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['straordinario_festivo']['giorni'], 3) }}</td>
+                <td>{{ number_format($riepilogo['rol']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['ferie']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['corso_intra']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['corso_extra']['giorni'], 3) }}</td>
-                <td>{{ number_format($riepilogo['rol']['giorni'], 3) }}</td>
+                <td>{{ number_format($riepilogo['malattia']['giorni'], 3) }}</td>
             </tr>
         </tbody>
     </table>

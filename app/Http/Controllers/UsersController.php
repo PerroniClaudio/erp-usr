@@ -253,10 +253,11 @@ class UsersController extends Controller {
             'straordinario' => ['ore' => 0, 'giorni' => 0],
             'straordinario_notturno' => ['ore' => 0, 'giorni' => 0],
             'straordinario_festivo' => ['ore' => 0, 'giorni' => 0],
+            'rol' => ['ore' => 0, 'giorni' => 0],
             'ferie' => ['ore' => 0, 'giorni' => 0],
             'corso_intra' => ['ore' => 0, 'giorni' => 0],
             'corso_extra' => ['ore' => 0, 'giorni' => 0],
-            'rol' => ['ore' => 0, 'giorni' => 0]
+            'malattia' => ['ore' => 0, 'giorni' => 0],
         ];
 
         foreach ($presenze as $presenza) {
@@ -281,6 +282,9 @@ class UsersController extends Controller {
                     break;
                 case 'Corso extra-lavorativo':
                     $key = 'corso_extra';
+                    break;
+                case 'Malattia':
+                    $key = 'malattia';
                     break;
             }
 
