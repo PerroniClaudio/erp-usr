@@ -4,7 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripExpense;
-use App\Models\BusinessTripTransfer;
+
 use App\Models\User;
 use App\Models\Company;
 use Spatie\Permission\Models\Role;

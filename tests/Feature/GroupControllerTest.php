@@ -9,14 +9,16 @@ class GroupControllerTest extends TestCase {
     use RefreshDatabase;
 
     public function test_index_view() {
-        $user = User::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
         $this->actingAs($user);
         $response = $this->get('/admin/personnel/groups');
         $response->assertStatus(200);
     }
 
     public function test_store_group() {
-        $user = User::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
         $this->actingAs($user);
         $response = $this->post('/admin/personnel/groups', [
             'name' => 'Nuovo Gruppo',
@@ -28,8 +30,9 @@ class GroupControllerTest extends TestCase {
     }
 
     public function test_update_group() {
-        $user = User::factory()->create();
-        $group = Group::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
+        $group = Group::factory()->createOne();
         $this->actingAs($user);
         $response = $this->put('/admin/personnel/groups/' . $group->id, [
             'name' => 'Gruppo Modificato',
@@ -42,8 +45,9 @@ class GroupControllerTest extends TestCase {
     }
 
     public function test_destroy_group() {
-        $user = User::factory()->create();
-        $group = Group::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
+        $group = Group::factory()->createOne();
         $this->actingAs($user);
         $response = $this->delete('/admin/personnel/groups/' . $group->id);
         $response->assertRedirect();

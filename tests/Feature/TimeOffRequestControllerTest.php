@@ -1,17 +1,19 @@
 <?php
 
+use App\Models\Company;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\TimeOffRequest;
 use App\Models\User;
 use App\Models\TimeOffType;
-use App\Models\Company;
 
 class TimeOffRequestControllerTest extends TestCase {
     use RefreshDatabase;
 
     public function test_index_view() {
         $user = User::factory()->create();
+            /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->actingAs($user);
         $response = $this->get('/standard/time-off-requests');
         $response->assertStatus(200);
@@ -21,6 +23,8 @@ class TimeOffRequestControllerTest extends TestCase {
         $user = User::factory()->create();
         $type = TimeOffType::factory()->create();
         $company = Company::factory()->create();
+            /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->actingAs($user);
         $response = $this->post('/standard/time-off-requests', [
             'requests' => json_encode([
@@ -47,6 +51,8 @@ class TimeOffRequestControllerTest extends TestCase {
             'company_id' => $company->id,
             'time_off_type_id' => $type->id,
         ]);
+            /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->actingAs($user);
         $response = $this->put('/standard/time-off-requests/' . $request->id, [
             'date_from' => now()->toDateString() . ' 10:00:00',
@@ -69,6 +75,8 @@ class TimeOffRequestControllerTest extends TestCase {
             'company_id' => $company->id,
             'time_off_type_id' => $type->id,
         ]);
+            /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+
         $this->actingAs($user);
         $response = $this->delete('/standard/time-off-requests/' . $request->id);
         $response->assertRedirect();

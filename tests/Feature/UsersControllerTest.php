@@ -8,7 +8,7 @@ use App\Models\Group;
 
 class UsersControllerTest extends TestCase {
     use RefreshDatabase;
-
+use App\Models\User;
     public function test_read_user() {
         $user = User::factory()->create();
 

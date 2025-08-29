@@ -18,7 +18,8 @@ class AttendanceControllerTest extends TestCase {
     }
 
     public function test_index_view() {
-        $user = User::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
         $user->assignRole('standard');
         $this->actingAs($user);
         $response = $this->get('/standard/attendances');
@@ -26,10 +27,11 @@ class AttendanceControllerTest extends TestCase {
     }
 
     public function test_store_attendance() {
-        $user = User::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
         $user->assignRole('standard');
-        $company = Company::factory()->create();
-        $type = AttendanceType::factory()->create();
+        $company = Company::factory()->createOne();
+        $type = AttendanceType::factory()->createOne();
         $this->actingAs($user);
         $response = $this->post('/standard/attendances', [
             'date' => now()->toDateString(),
@@ -46,10 +48,11 @@ class AttendanceControllerTest extends TestCase {
     }
 
     public function test_update_attendance() {
-        $user = User::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
         $user->assignRole('standard');
-        $company = Company::factory()->create();
-        $type = AttendanceType::factory()->create();
+        $company = Company::factory()->createOne();
+        $type = AttendanceType::factory()->createOne();
         $attendance = Attendance::factory()->create([
             'user_id' => $user->id,
             'company_id' => $company->id,
@@ -71,10 +74,11 @@ class AttendanceControllerTest extends TestCase {
     }
 
     public function test_destroy_attendance() {
-        $user = User::factory()->create();
+    /** @var \App\Models\User|\Illuminate\Contracts\Auth\Authenticatable $user */
+    $user = User::factory()->createOne();
         $user->assignRole('standard');
-        $company = Company::factory()->create();
-        $type = AttendanceType::factory()->create();
+        $company = Company::factory()->createOne();
+        $type = AttendanceType::factory()->createOne();
         $attendance = Attendance::factory()->create([
             'user_id' => $user->id,
             'company_id' => $company->id,
