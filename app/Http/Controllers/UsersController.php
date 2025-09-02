@@ -6,52 +6,60 @@ use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\Group;
 use App\Models\TimeOffRequest;
-use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Vehicle;
-use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class UsersController extends Controller {
+class UsersController extends Controller
+{
     //
 
     private $vehicleTypes;
+
     private $ownershipTypes;
+
     private $purchaseTypes;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->vehicleTypes = collect([
-            (object)['id' => 1, 'name' => 'Autoveicolo'],
-            (object)['id' => 2, 'name' => 'Ciclomotore'],
-            (object)['id' => 3, 'name' => 'Autocarro']
+            (object) ['id' => 1, 'name' => 'Autoveicolo'],
+            (object) ['id' => 2, 'name' => 'Ciclomotore'],
+            (object) ['id' => 3, 'name' => 'Autocarro'],
         ]);
 
         $this->ownershipTypes = collect([
-            (object)['id' => 1, 'name' => 'Aziendale'],
-            (object)['id' => 2, 'name' => 'Personale']
+            (object) ['id' => 1, 'name' => 'Aziendale'],
+            (object) ['id' => 2, 'name' => 'Personale'],
         ]);
 
         $this->purchaseTypes = collect([
-            (object)['id' => 1, 'name' => 'Acquisto'],
-            (object)['id' => 2, 'name' => 'Leasing'],
-            (object)['id' => 3, 'name' => 'Noleggio a breve termine'],
-            (object)['id' => 4, 'name' => 'Noleggio a lungo termine']
+            (object) ['id' => 1, 'name' => 'Acquisto'],
+            (object) ['id' => 2, 'name' => 'Leasing'],
+            (object) ['id' => 3, 'name' => 'Noleggio a breve termine'],
+            (object) ['id' => 4, 'name' => 'Noleggio a lungo termine'],
         ]);
     }
 
-    public function index() {
+    public function index()
+    {
         $users = User::all();
+
         return view('admin.personnel.users.index', compact('users'));
     }
 
-    public function edit(User $user) {
+    public function edit(User $user)
+    {
         return view('admin.personnel.users.edit', compact('user'));
     }
 
-    public function exportPdf(User $user, Request $request) {
+    public function exportPdf(User $user, Request $request)
+    {
         $request->validate([
             'mese' => 'required|string',
             'anno' => 'required|integer',
@@ -59,8 +67,6 @@ class UsersController extends Controller {
 
         $mese = $request->mese;
         $anno = $request->anno;
-
-
 
         // Otteniamo i dati per il PDF
         $mesiMap = [
@@ -75,45 +81,60 @@ class UsersController extends Controller {
             'Settembre' => 9,
             'Ottobre' => 10,
             'Novembre' => 11,
-            'Dicembre' => 12
+            'Dicembre' => 12,
         ];
 
         $meseNumero = $mesiMap[$mese];
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
 
-        $attendances = Attendance::where('user_id', $user->id)
-            ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
-            ->get();
+        $anomaliesData = $this->getAnomaliesData($user, $primoGiorno, $ultimoGiorno);
 
-        if ($attendances->isEmpty()) {
-            return redirect()->back()->with('error', 'Nessuna presenza trovata per l\'utente selezionato nel mese e anno specificati.');
+        if ($anomaliesData['hasAnomalies']) {
+            // Se ci sono anomalie, mostra la pagina delle anomalie
+            return view('admin.personnel.users.anomalies', [
+                'user' => $user,
+                'mese' => $mese,
+                'anno' => $anno,
+                'anomaliesData' => $anomaliesData,
+                'primoGiorno' => $primoGiorno,
+                'ultimoGiorno' => $ultimoGiorno,
+            ]);
+        } else {
+            $attendances = Attendance::where('user_id', $user->id)
+                ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
+                ->get();
+
+            if ($attendances->isEmpty()) {
+                return redirect()->back()->with('error', 'Nessuna presenza trovata per l\'utente selezionato nel mese e anno specificati.');
+            }
+
+            // Generiamo il PDF dalla vista
+            $pdf = PDF::loadView('cedolini.pdf', [
+                'user' => $user,
+                'mese' => $mese,
+                'anno' => $anno,
+                'meseNumero' => $meseNumero,
+                'primoGiorno' => $primoGiorno,
+                'ultimoGiorno' => $ultimoGiorno,
+                'festive' => $this->getFestiveDays(),
+            ]);
+
+            // Impostiamo le opzioni del PDF
+            $pdf->setPaper('a4', 'landscape');
+            $pdf->setOptions([
+                'dpi' => 150,
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+            ]);
+
+            return $pdf->download('cedolino_'.$user->name.'_'.$mese.'_'.$anno.'.pdf');
         }
-
-        // Generiamo il PDF dalla vista
-        $pdf = PDF::loadView('cedolini.pdf', [
-            'user' => $user,
-            'mese' => $mese,
-            'anno' => $anno,
-            'meseNumero' => $meseNumero,
-            'primoGiorno' => $primoGiorno,
-            'ultimoGiorno' => $ultimoGiorno,
-            'festive' => $this->getFestiveDays(),
-        ]);
-
-        // Impostiamo le opzioni del PDF
-        $pdf->setPaper('a4', 'landscape');
-        $pdf->setOptions([
-            'dpi' => 150,
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true
-        ]);
-
-        return $pdf->download('cedolino_' . $user->name . '_' . $mese . '_' . $anno . '.pdf');
     }
 
-    public function exportPresenzePdf(User $user, Request $request) {
+    public function exportPresenzePdf(User $user, Request $request)
+    {
         $request->validate([
             'mese' => 'required|string',
             'anno' => 'required|integer',
@@ -135,14 +156,12 @@ class UsersController extends Controller {
             'Settembre' => 9,
             'Ottobre' => 10,
             'Novembre' => 11,
-            'Dicembre' => 12
+            'Dicembre' => 12,
         ];
 
         $meseNumero = $mesiMap[$mese];
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
-
-
 
         // Otteniamo le presenze dell'utente per il mese specificato
         $attendances = Attendance::where('user_id', $user->id)
@@ -170,7 +189,7 @@ class UsersController extends Controller {
 
         // Calcoliamo i buoni pasto (un buono per ogni giorno lavorato in sede)
         $buoni_pasto = $presenze->filter(function ($presenza) {
-            return $presenza->tipologia == 'Lavoro in sede' && !$presenza->annullata;
+            return $presenza->tipologia == 'Lavoro in sede' && ! $presenza->annullata;
         })->groupBy('data')->count();
 
         // Generiamo il PDF
@@ -182,7 +201,7 @@ class UsersController extends Controller {
             'riepilogo' => $riepilogo,
             'buoni_pasto' => $buoni_pasto,
             'pagina' => 1,
-            'totale_pagine' => ceil($presenze->count() / 30) // Assumiamo circa 30 righe per pagina
+            'totale_pagine' => ceil($presenze->count() / 30), // Assumiamo circa 30 righe per pagina
         ]);
 
         // Impostiamo le opzioni del PDF
@@ -191,15 +210,74 @@ class UsersController extends Controller {
             'dpi' => 150,
             'defaultFont' => 'sans-serif',
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true
+            'isRemoteEnabled' => true,
         ]);
 
-        return $pdf->download('presenze_' . $user->name . '_' . $mese . '_' . $anno . '.pdf');
+        return $pdf->download('presenze_'.$user->name.'_'.$mese.'_'.$anno.'.pdf');
     }
 
-    private function preparePresenzeData($attendances, $timeOffRequests, $user, $primoGiorno, $ultimoGiorno) {
-        $presenze = new Collection();
+    public function exportAnomaliesPdf(User $user, Request $request)
+    {
+        $request->validate([
+            'mese' => 'required|string',
+            'anno' => 'required|integer',
+        ]);
 
+        $mese = $request->mese;
+        $anno = $request->anno;
+
+        // Otteniamo i dati per il PDF
+        $mesiMap = [
+            'Gennaio' => 1,
+            'Febbraio' => 2,
+            'Marzo' => 3,
+            'Aprile' => 4,
+            'Maggio' => 5,
+            'Giugno' => 6,
+            'Luglio' => 7,
+            'Agosto' => 8,
+            'Settembre' => 9,
+            'Ottobre' => 10,
+            'Novembre' => 11,
+            'Dicembre' => 12,
+        ];
+
+        $meseNumero = $mesiMap[$mese];
+        $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
+        $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
+
+        // Otteniamo i dati delle anomalie
+        $anomaliesData = $this->getAnomaliesData($user, $primoGiorno, $ultimoGiorno);
+
+        if (! $anomaliesData['hasAnomalies']) {
+            return redirect()->back()->with('error', 'Nessuna anomalia trovata per l\'utente selezionato nel periodo specificato.');
+        }
+
+        // Generiamo il PDF
+        $pdf = PDF::loadView('cedolini.anomalies_pdf', [
+            'user' => $user,
+            'mese' => $mese,
+            'anno' => $anno,
+            'anomaliesData' => $anomaliesData,
+            'primoGiorno' => $primoGiorno,
+            'ultimoGiorno' => $ultimoGiorno,
+        ]);
+
+        // Impostiamo le opzioni del PDF
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOptions([
+            'dpi' => 150,
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+        ]);
+
+        return $pdf->download('anomalie_'.$user->name.'_'.$mese.'_'.$anno.'.pdf');
+    }
+
+    private function preparePresenzeData($attendances, $timeOffRequests, $user, $primoGiorno, $ultimoGiorno)
+    {
+        $presenze = new Collection;
 
         // Aggiungiamo le presenze
         foreach ($attendances as $attendance) {
@@ -208,24 +286,24 @@ class UsersController extends Controller {
 
             $tipologia = $attendance->attendanceType->name;
 
-            $presenze->push((object)[
+            $presenze->push((object) [
                 'id' => $attendance->id,
                 'persona' => $user->name,
                 'azienda' => $attendance->company->name ?? 'IFORTECH S.R.L.',
                 'tipologia' => $tipologia,
                 'data' => $data,
-                'data_formattata' => $data->format('d-m-Y') . ' ' . $giorno_settimana,
+                'data_formattata' => $data->format('d-m-Y').' '.$giorno_settimana,
                 'ora_inizio' => Carbon::parse($attendance->time_in)->format('H:i'),
                 'ora_fine' => Carbon::parse($attendance->time_out)->format('H:i'),
                 'ore' => number_format(Carbon::parse($attendance->time_in)->diffInMinutes(Carbon::parse($attendance->time_out)) / 60, 2),
                 'annullata' => false,
-                'giornata' => null
+                'giornata' => null,
             ]);
         }
 
         // Aggiungiamo le ferie e i permessi
         foreach ($timeOffRequests as $request) {
-            $presenze->push((object)[
+            $presenze->push((object) [
                 'id' => $request->id,
                 'persona' => $user->name,
                 'azienda' => 'IFORTECH S.R.L.',
@@ -236,18 +314,19 @@ class UsersController extends Controller {
                 'ora_fine' => Carbon::parse($request->date_to)->format('H:i'),
                 'ore' => number_format(Carbon::parse($request->date_from)->diffInMinutes(Carbon::parse($request->date_to)) / 60, 2),
                 'annullata' => false,
-                'giornata' => null
+                'giornata' => null,
             ]);
         }
 
         // Ordiniamo le presenze per data e ora
         return $presenze->sortBy([
             ['data', 'asc'],
-            ['ora_inizio', 'asc']
+            ['ora_inizio', 'asc'],
         ]);
     }
 
-    private function calcolaRiepilogo($presenze, $permessi) {
+    private function calcolaRiepilogo($presenze, $permessi)
+    {
         $riepilogo = [
             'lavorato' => ['ore' => 0, 'giorni' => 0],
             'straordinario' => ['ore' => 0, 'giorni' => 0],
@@ -310,17 +389,15 @@ class UsersController extends Controller {
             $end_date = Carbon::parse($permesso->date_to);
             $ore = number_format($start_date->diffInMinutes($end_date) / 60, 2);
 
-
             $riepilogo[$key]['ore'] += floatval(str_replace(',', '.', $ore));
             $riepilogo[$key]['giorni'] += floatval(str_replace(',', '.', $ore)) / 8; // Consideriamo 8 ore come un giorno lavorativo
         }
 
-
-
         return $riepilogo;
     }
 
-    private function getGiornoSettimanaItaliano($giornoEn) {
+    private function getGiornoSettimanaItaliano($giornoEn)
+    {
         $giorni = [
             'Mon' => 'Lun',
             'Tue' => 'Mar',
@@ -328,13 +405,243 @@ class UsersController extends Controller {
             'Thu' => 'Gio',
             'Fri' => 'Ven',
             'Sat' => 'Sab',
-            'Sun' => 'Dom'
+            'Sun' => 'Dom',
         ];
 
         return $giorni[$giornoEn] ?? $giornoEn;
     }
 
-    public function updateData(Request $request, User $user) {
+    private function verifyAnomalies($user, $dateFrom, $dateTo): bool
+    {
+        $anomaliesData = $this->getAnomaliesData($user, $dateFrom, $dateTo);
+
+        return ! $anomaliesData['hasAnomalies'];
+    }
+
+    /**
+     * Ottiene i dati dettagliati delle anomalie per un utente in un periodo
+     */
+    private function getAnomaliesData($user, $dateFrom, $dateTo): array
+    {
+        // Calcolo delle settimane nel periodo
+        $startDate = Carbon::parse($dateFrom)->startOfWeek();
+        $endDate = Carbon::parse($dateTo)->endOfWeek();
+
+        // Ottieni tutte le presenze dell'utente nel periodo
+        $attendances = Attendance::where('user_id', $user->id)
+            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->with('attendanceType')
+            ->get();
+
+        // Ottieni tutti i permessi approvati dell'utente nel periodo
+        $timeOffRequests = TimeOffRequest::where('user_id', $user->id)
+            ->where('status', 2) // Solo quelli approvati
+            ->where(function ($query) use ($dateFrom, $dateTo) {
+                $query->whereBetween('date_from', [$dateFrom, $dateTo])
+                    ->orWhereBetween('date_to', [$dateFrom, $dateTo])
+                    ->orWhere(function ($q) use ($dateFrom, $dateTo) {
+                        $q->where('date_from', '<=', $dateFrom)
+                            ->where('date_to', '>=', $dateTo);
+                    });
+            })
+            ->with('type')
+            ->get();
+
+        // Giorni festivi
+        $festiveDays = $this->getFestiveDays();
+
+        // Calcolo monte ore teorico per il periodo
+        $totalExpectedHours = $this->calculateExpectedWorkingHours($dateFrom, $dateTo, $festiveDays);
+
+        // Gruppo per settimane
+        $weeklyData = [];
+        $currentWeek = $startDate->copy();
+
+        while ($currentWeek->lte($endDate)) {
+            $weekStart = $currentWeek->copy()->startOfWeek();
+            $weekEnd = $currentWeek->copy()->endOfWeek();
+
+            // Limita ai confini del periodo richiesto
+            $actualWeekStart = $weekStart->lt($dateFrom) ? Carbon::parse($dateFrom) : $weekStart;
+            $actualWeekEnd = $weekEnd->gt($dateTo) ? Carbon::parse($dateTo) : $weekEnd;
+
+            $weeklyHours = $this->calculateWeeklyHours(
+                $user,
+                $actualWeekStart,
+                $actualWeekEnd,
+                $attendances,
+                $timeOffRequests,
+                $festiveDays
+            );
+
+            $weeklyExpectedHours = $this->calculateExpectedWorkingHours($actualWeekStart, $actualWeekEnd, $festiveDays);
+            $weeklyDifference = $weeklyHours - $weeklyExpectedHours;
+
+            $weeklyData[] = [
+                'week_start' => $actualWeekStart->format('d/m/Y'),
+                'week_end' => $actualWeekEnd->format('d/m/Y'),
+                'expected_hours' => $weeklyExpectedHours,
+                'actual_hours' => $weeklyHours,
+                'difference' => $weeklyDifference,
+                'limit_exceeded' => $weeklyHours > 40,
+                'has_shortage' => $weeklyDifference < -4, // Tolleranza di mezza giornata
+                'has_excess' => $weeklyDifference > 4,
+            ];
+
+            $currentWeek->addWeek();
+        }
+
+        // Calcolo ore totali effettive
+        $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests);
+        $totalDifference = $totalActualHours - $totalExpectedHours;
+
+        // Verifica anomalie
+        $hasWeeklyAnomalies = collect($weeklyData)->contains(function ($week) {
+            return $week['limit_exceeded'] || $week['has_shortage'] || $week['has_excess'];
+        });
+        $hasMonthlyAnomalies = abs($totalDifference) > 8; // Tolleranza di una giornata
+
+        // Calcola i giorni lavorativi del periodo
+        $workingDaysInPeriod = $this->calculateWorkingDays($dateFrom, $dateTo, $festiveDays);
+
+        return [
+            'hasAnomalies' => $hasWeeklyAnomalies || $hasMonthlyAnomalies,
+            'totalExpectedHours' => $totalExpectedHours,
+            'totalActualHours' => $totalActualHours,
+            'totalDifference' => $totalDifference,
+            'workingDaysInPeriod' => $workingDaysInPeriod,
+            'hasWeeklyAnomalies' => $hasWeeklyAnomalies,
+            'hasMonthlyAnomalies' => $hasMonthlyAnomalies,
+            'weeklyData' => $weeklyData,
+            'attendances' => $attendances,
+            'timeOffRequests' => $timeOffRequests,
+        ];
+    }
+
+    /**
+     * Calcola i giorni lavorativi in un periodo
+     */
+    private function calculateWorkingDays($dateFrom, $dateTo, $festiveDays): int
+    {
+        $start = Carbon::parse($dateFrom);
+        $end = Carbon::parse($dateTo);
+        $workingDays = 0;
+
+        $current = $start->copy();
+        while ($current->lte($end)) {
+            // Salta weekend (sabato e domenica)
+            if (! $current->isWeekend()) {
+                // Controlla se è un giorno festivo
+                $dayMonth = $current->format('m-d');
+                if (! in_array($dayMonth, $festiveDays)) {
+                    $workingDays++;
+                }
+            }
+            $current->addDay();
+        }
+
+        return $workingDays;
+    }
+
+    /**
+     * Calcola le ore lavorative previste per un periodo escludendo weekend e festivi
+     */
+    private function calculateExpectedWorkingHours($dateFrom, $dateTo, $festiveDays): float
+    {
+        $start = Carbon::parse($dateFrom);
+        $end = Carbon::parse($dateTo);
+        $workingDays = 0;
+
+        $current = $start->copy();
+        while ($current->lte($end)) {
+            // Salta weekend (sabato e domenica)
+            if (! $current->isWeekend()) {
+                // Controlla se è un giorno festivo
+                $dayMonth = $current->format('m-d');
+                if (! in_array($dayMonth, $festiveDays)) {
+                    $workingDays++;
+                }
+            }
+            $current->addDay();
+        }
+
+        return $workingDays * 8; // 8 ore per giorno lavorativo
+    }
+
+    /**
+     * Calcola le ore lavorate in una settimana specifica
+     */
+    private function calculateWeeklyHours($user, $weekStart, $weekEnd, $attendances, $timeOffRequests, $festiveDays): float
+    {
+        $weeklyHours = 0;
+
+        // Ore da presenze
+        $weekAttendances = $attendances->filter(function ($attendance) use ($weekStart, $weekEnd) {
+            $attendanceDate = Carbon::parse($attendance->date);
+
+            return $attendanceDate->between($weekStart, $weekEnd);
+        });
+
+        foreach ($weekAttendances as $attendance) {
+            if ($attendance->time_in && $attendance->time_out) {
+                $timeIn = Carbon::parse($attendance->time_in);
+                $timeOut = Carbon::parse($attendance->time_out);
+                $weeklyHours += $timeIn->diffInMinutes($timeOut) / 60;
+            }
+        }
+
+        // Ore da permessi (ferie, rol, etc.)
+        $weekTimeOffs = $timeOffRequests->filter(function ($timeOff) use ($weekStart, $weekEnd) {
+            $timeOffStart = Carbon::parse($timeOff->date_from);
+            $timeOffEnd = Carbon::parse($timeOff->date_to);
+
+            return $timeOffStart->between($weekStart, $weekEnd) ||
+                   $timeOffEnd->between($weekStart, $weekEnd) ||
+                   ($timeOffStart->lte($weekStart) && $timeOffEnd->gte($weekEnd));
+        });
+
+        foreach ($weekTimeOffs as $timeOff) {
+            $timeOffStart = Carbon::parse($timeOff->date_from);
+            $timeOffEnd = Carbon::parse($timeOff->date_to);
+
+            // Calcola solo la porzione nella settimana corrente
+            $actualStart = $timeOffStart->lt($weekStart) ? $weekStart : $timeOffStart;
+            $actualEnd = $timeOffEnd->gt($weekEnd) ? $weekEnd : $timeOffEnd;
+
+            $weeklyHours += $actualStart->diffInMinutes($actualEnd) / 60;
+        }
+
+        return round($weeklyHours, 2);
+    }
+
+    /**
+     * Calcola il totale delle ore effettive nel periodo
+     */
+    private function calculateTotalActualHours($attendances, $timeOffRequests): float
+    {
+        $totalHours = 0;
+
+        // Ore da presenze
+        foreach ($attendances as $attendance) {
+            if ($attendance->time_in && $attendance->time_out) {
+                $timeIn = Carbon::parse($attendance->time_in);
+                $timeOut = Carbon::parse($attendance->time_out);
+                $totalHours += $timeIn->diffInMinutes($timeOut) / 60;
+            }
+        }
+
+        // Ore da permessi
+        foreach ($timeOffRequests as $timeOff) {
+            $timeOffStart = Carbon::parse($timeOff->date_from);
+            $timeOffEnd = Carbon::parse($timeOff->date_to);
+            $totalHours += $timeOffStart->diffInMinutes($timeOffEnd) / 60;
+        }
+
+        return round($totalHours, 2);
+    }
+
+    public function updateData(Request $request, User $user)
+    {
         $request->validate([
             'title' => 'required|string|max:50',
             'cfp' => 'required|string|max:16',
@@ -354,7 +661,8 @@ class UsersController extends Controller {
         return redirect()->route('users.edit', $user->id)->with('success', __('personnel.users_updated'));
     }
 
-    public function updateResidence(Request $request, User $user) {
+    public function updateResidence(Request $request, User $user)
+    {
         $request->validate([
             'address' => 'required|string|max:255',
             'city' => 'required|string|max:100',
@@ -370,11 +678,12 @@ class UsersController extends Controller {
         return response()->json([
             'status' => 'success',
             'message' => __('personnel.users_updated'),
-            'user' => $user
+            'user' => $user,
         ]);
     }
 
-    public function updateLocation(Request $request, User $user) {
+    public function updateLocation(Request $request, User $user)
+    {
         $request->validate([
             'location_address' => 'required|string|max:255',
             'location_city' => 'required|string|max:100',
@@ -390,11 +699,12 @@ class UsersController extends Controller {
         return response()->json([
             'status' => 'success',
             'message' => __('personnel.users_updated'),
-            'user' => $user
+            'user' => $user,
         ]);
     }
 
-    public function addVehicles(User $user) {
+    public function addVehicles(User $user)
+    {
 
         $brands = Vehicle::select('brand')->distinct()->orderBy('brand', 'asc')->get();
         $brands = $brands->pluck('brand')->map(function ($brand) {
@@ -410,7 +720,8 @@ class UsersController extends Controller {
         ]);
     }
 
-    public function associateVehicle(Request $request, User $user) {
+    public function associateVehicle(Request $request, User $user)
+    {
         $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'vehicle_type' => 'required|integer',
@@ -420,7 +731,7 @@ class UsersController extends Controller {
             'contract_start_date' => 'nullable|date',
             'contract_end_date' => 'nullable|date',
             'mileage' => 'nullable|numeric',
-            'mileage_update_date' => 'nullable|date'
+            'mileage_update_date' => 'nullable|date',
         ]);
 
         $user->vehicles()->attach($request->vehicle_id, [
@@ -431,23 +742,24 @@ class UsersController extends Controller {
             'contract_start_date' => $request->contract_start_date,
             'contract_end_date' => $request->contract_end_date,
             'mileage' => $request->mileage,
-            'mileage_update_date' => $request->mileage_update_date
+            'mileage_update_date' => $request->mileage_update_date,
         ]);
 
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_added'));
     }
 
-    public function destroyUserVehicle(Request $request, User $user, Vehicle $vehicle) {
+    public function destroyUserVehicle(Request $request, User $user, Vehicle $vehicle)
+    {
         $user->vehicles()->detach($vehicle->id);
 
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_deleted'));
     }
 
-    public function editUserVehicle(User $user, Vehicle $vehicle) {
+    public function editUserVehicle(User $user, Vehicle $vehicle)
+    {
 
         $joinedVehicle = $user->vehicles()->where('vehicles.id', $vehicle->id)->first();
         $mileageUpdates = $vehicle->mileageUpdates()->where('user_id', $user->id)->orderBy('update_date', 'desc')->get();
-
 
         return view('admin.personnel.users.vehicles.edit', [
             'user' => $user,
@@ -456,11 +768,12 @@ class UsersController extends Controller {
             'vehicleTypes' => $this->vehicleTypes,
             'ownershipTypes' => $this->ownershipTypes,
             'purchaseTypes' => $this->purchaseTypes,
-            'mileageUpdates' => $mileageUpdates
+            'mileageUpdates' => $mileageUpdates,
         ]);
     }
 
-    public function updateUserVehicle(Request $request, User $user) {
+    public function updateUserVehicle(Request $request, User $user)
+    {
         $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'vehicle_type' => 'required|integer',
@@ -470,10 +783,8 @@ class UsersController extends Controller {
             'contract_start_date' => 'nullable|date',
             'contract_end_date' => 'nullable|date',
             'mileage' => 'nullable|numeric',
-            'mileage_update_date' => 'nullable|date'
+            'mileage_update_date' => 'nullable|date',
         ]);
-
-
 
         $vehicle = Vehicle::find($request->vehicle_id);
         $pivot = $user->vehicles()->where('vehicles.id', $vehicle->id)->first();
@@ -497,33 +808,33 @@ class UsersController extends Controller {
             'contract_start_date' => $request->contract_start_date,
             'contract_end_date' => $request->contract_end_date,
             'mileage' => $request->mileage,
-            'mileage_update_date' => $request->mileage_update_date
+            'mileage_update_date' => $request->mileage_update_date,
         ]);
 
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_updated'));
     }
 
-    public function destroyUserCompany(Request $request, User $user, Company $company) {
+    public function destroyUserCompany(Request $request, User $user, Company $company)
+    {
         $user->companies()->detach($company->id);
 
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_company_deleted'));
     }
 
-    public function destroyUserGroup(Request $request, User $user, Group $group) {
+    public function destroyUserGroup(Request $request, User $user, Group $group)
+    {
         $user->groups()->detach($group->id);
 
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_group_deleted'));
     }
 
-
-
     /**
      * Valida un indirizzo utilizzando l'API di Nominatim.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function searchAddress(Request $request) {
+    public function searchAddress(Request $request)
+    {
 
         // 2. Costruzione della query per Nominatim (utilizzando il parametro 'q')
         // Combiniamo i campi in una singola stringa indirizzo
@@ -540,7 +851,7 @@ class UsersController extends Controller {
         // 3. Invio della richiesta a Nominatim usando il client HTTP di Laravel
         try {
             $response = Http::withHeaders([
-                'User-Agent' => 'IFT/1.0' // Sostituisci con un nome significativo e la tua email
+                'User-Agent' => 'IFT/1.0', // Sostituisci con un nome significativo e la tua email
             ])->get('https://nominatim.openstreetmap.org/search', $queryParams);
 
             // Verifica se la richiesta ha avuto successo
@@ -548,7 +859,7 @@ class UsersController extends Controller {
                 $data = $response->json();
 
                 // 4. Analisi della risposta
-                if (!empty($data)) {
+                if (! empty($data)) {
                     // Nominatim ha trovato almeno un risultato
                     $firstResult = $data[0];
 
@@ -571,46 +882,48 @@ class UsersController extends Controller {
                             'display_name' => $displayName,
                             'address_details' => $addressDetails,
                             // Puoi aggiungere altri dati dal risultato di Nominatim se necessario
-                        ]
+                        ],
                     ]);
                 } else {
                     // Nessun risultato trovato per l'indirizzo
                     return response()->json([
                         'status' => 'not_found',
                         'message' => 'Indirizzo non trovato.',
-                        'data' => null
+                        'data' => null,
                     ], 404); // Codice di stato 404 Not Found
                 }
             } else {
                 // La richiesta HTTP a Nominatim non è andata a buon fine
                 // Puoi loggare l'errore o restituire un messaggio generico
-                Log::error('Nominatim API request failed: ' . $response->status());
+                Log::error('Nominatim API request failed: '.$response->status());
+
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Errore durante la comunicazione con il servizio di validazione indirizzi.',
-                    'details' => $response->body() // Potrebbe contenere informazioni sull'errore da Nominatim
+                    'details' => $response->body(), // Potrebbe contenere informazioni sull'errore da Nominatim
                 ], $response->status()); // Usa il codice di stato della risposta di Nominatim
 
             }
         } catch (\Exception $e) {
             // Gestione di eventuali eccezioni durante la richiesta
-            Log::error('Exception during Nominatim API call: ' . $e->getMessage());
+            Log::error('Exception during Nominatim API call: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Si è verificato un errore imprevisto.',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage(),
             ], 500); // Codice di stato 500 Internal Server Error
         }
     }
 
-
-    private function getFestiveDays() {
+    private function getFestiveDays()
+    {
 
         $currentDate = \Carbon\Carbon::today();
 
         $easterDay = $this->calculateEasterDay($currentDate->year);
         $easterDay = $easterDay ? $easterDay->format('m-d') : null;
-        $easterMonday = $this->calculateEasterMonday($currentDate->year)->format('m-d');;
+        $easterMonday = $this->calculateEasterMonday($currentDate->year)->format('m-d');
 
         // List of known vacation days
         $knownHolidays = [
@@ -629,31 +942,31 @@ class UsersController extends Controller {
             $easterMonday, // Easter Monday
         ];
 
-
-
         return $knownHolidays;
     }
 
-
-    private function calculateEasterDay($year) {
+    private function calculateEasterDay($year)
+    {
         $a = $year % 19;
-        $b = (int)($year / 100);
+        $b = (int) ($year / 100);
         $c = $year % 100;
-        $d = (int)($b / 4);
+        $d = (int) ($b / 4);
         $e = $b % 4;
-        $f = (int)(($b + 8) / 25);
-        $g = (int)(($b - $f + 1) / 16);
-        $h = (int)((19 * $a + $b - $d - $g + 15) % 30);
-        $i = (int)($c / 16);
-        $k = (int)($c % 16);
-        $l = (int)((32 + 2 * $e + 2 * $i - $h - $k) % 7);
-        $m = (int)(($a + 11 * $h + 22 * $l) / 451);
+        $f = (int) (($b + 8) / 25);
+        $g = (int) (($b - $f + 1) / 16);
+        $h = (int) ((19 * $a + $b - $d - $g + 15) % 30);
+        $i = (int) ($c / 16);
+        $k = (int) ($c % 16);
+        $l = (int) ((32 + 2 * $e + 2 * $i - $h - $k) % 7);
+        $m = (int) (($a + 11 * $h + 22 * $l) / 451);
 
-        return \Carbon\Carbon::createFromDate($year, (int)(($h + $l - 7 * $m + 114) / 31), ($h + $l - 7 * $m + 114) % 31 + 1);
+        return \Carbon\Carbon::createFromDate($year, (int) (($h + $l - 7 * $m + 114) / 31), ($h + $l - 7 * $m + 114) % 31 + 1);
     }
 
-    private function calculateEasterMonday($year) {
+    private function calculateEasterMonday($year)
+    {
         $easterDay = $this->calculateEasterDay($year);
+
         return $easterDay->modify('+1 day');
     }
 }

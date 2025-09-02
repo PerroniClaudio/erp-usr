@@ -1,6 +1,10 @@
 <x-layouts.app>
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('time_off_requests.time_off_requests') }}</h1>
+        <a href="{{ route('admin.time-off.create') }}" class="btn btn-primary">
+            <x-lucide-plus class="w-4 h-4" />
+            {{ __('time_off_requests.new_admin_request') }}
+        </a>
     </div>
 
     <hr>

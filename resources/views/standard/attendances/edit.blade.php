@@ -49,6 +49,14 @@
             ]) }}">
             @csrf
             @method('PUT')
+
+            @if (Auth::user()->hasRole('admin'))
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Utente</legend>
+                    <input type="text" class="input" value="{{ $attendance->user->name }}" disabled />
+                </fieldset>
+            @endif
+
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">Azienda</legend>
                 <select class="select" name="company_id" value="{{ $attendance->company_id }}">

@@ -8,19 +8,22 @@ use App\Models\Company;
 use App\Models\Group;
 use App\Models\TimeOffRequest;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
-class AttendanceController extends Controller {
+class AttendanceController extends Controller
+{
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         return view('standard.attendances.index');
     }
 
-    public function getUserAttendances(Request $request) {
+    public function getUserAttendances(Request $request)
+    {
         $user = $request->user();
 
         // Request will have a start and an end date
@@ -41,7 +44,7 @@ class AttendanceController extends Controller {
         $events = $attendances->map(function ($attendance) {
             return [
                 'id' => $attendance->id,
-                'title' => $attendance->attendanceType->acronym . " (" . $attendance->time_in . " - " . $attendance->time_out . ")",
+                'title' => $attendance->attendanceType->acronym.' ('.$attendance->time_in.' - '.$attendance->time_out.')',
                 'date' => $attendance->date,
                 'description' => $attendance->attendanceType->description,
                 'color' => $attendance->attendanceType->color,
@@ -56,9 +59,9 @@ class AttendanceController extends Controller {
     /**
      * Show the form for creating a new resource.
      */
-    public function create() {
+    public function create()
+    {
         $attendanceTypes = AttendanceType::all();
-
 
         if (Auth::user()->hasRole('admin')) {
             $users = User::all();
@@ -66,7 +69,6 @@ class AttendanceController extends Controller {
         } else {
             $companies = Auth::user()->companies;
         }
-
 
         return view('standard.attendances.create', [
             'attendanceTypes' => $attendanceTypes,
@@ -83,7 +85,8 @@ class AttendanceController extends Controller {
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $user = $request->user();
 
         $fields = $request->validate([
@@ -95,7 +98,7 @@ class AttendanceController extends Controller {
         ]);
 
         // Validazioni specifiche per utenti non admin
-        if (!$user->hasRole('admin')) {
+        if (! $user->hasRole('admin')) {
             if ($this->isTimeOutBeforeTimeIn($fields['time_in'], $fields['time_out'])) {
                 return back()->withErrors(['message' => 'L\'orario di fine non può essere maggiore di quello di inizio']);
             }
@@ -129,13 +132,9 @@ class AttendanceController extends Controller {
             return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad un\'altra presenza già registrata per la stessa giornata.']);
         }
 
-
         if ($this->hasTimeOffOverlap($fields['date'], $fields['time_in'], $fields['time_out'], $user_id)) {
             return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad una richiesta di permesso/ferie già registrata per la stessa giornata.']);
         }
-
-
-
 
         Attendance::create([
             'user_id' => $user_id,
@@ -152,25 +151,31 @@ class AttendanceController extends Controller {
 
     // --- Metodi di supporto privati ---
 
-    private function isTimeOutBeforeTimeIn($timeIn, $timeOut) {
+    private function isTimeOutBeforeTimeIn($timeIn, $timeOut)
+    {
         return strtotime($timeOut) < strtotime($timeIn);
     }
 
-    private function isDateInFuture($date) {
+    private function isDateInFuture($date)
+    {
         return strtotime($date) > strtotime(date('Y-m-d'));
     }
 
-    private function isPastAttendanceNotAllowed($date) {
+    private function isPastAttendanceNotAllowed($date)
+    {
         // Modifica la data di cutoff se necessario
         $cutoff = '2025-06-07';
+
         return (strtotime(date('Y-m-d')) > strtotime($cutoff)) && (strtotime($date) < strtotime(date('Y-m-d')));
     }
 
-    private function calculateHourDifference($timeIn, $timeOut) {
+    private function calculateHourDifference($timeIn, $timeOut)
+    {
         return (strtotime($timeOut) - strtotime($timeIn)) / 3600;
     }
 
-    private function getTotalTimeOffHours($userId, $companyId, $date) {
+    private function getTotalTimeOffHours($userId, $companyId, $date)
+    {
         $timeOffRequests = $this->getTimeOffRequests($userId, $companyId, $date);
         $total = 0;
         foreach ($timeOffRequests as $request) {
@@ -179,7 +184,7 @@ class AttendanceController extends Controller {
 
             // Se la richiesta è solo per un giorno
             if ($dateFrom->isSameDay($dateTo)) {
-                if (!empty($request->date_to) && !empty($request->date_from)) {
+                if (! empty($request->date_to) && ! empty($request->date_from)) {
                     // Calcola le ore usando Carbon
                     $timeFrom = Carbon::parse($request->date_from);
                     $timeTo = Carbon::parse($request->date_to);
@@ -196,17 +201,20 @@ class AttendanceController extends Controller {
                 $total += $hoursPerDay * $days;
             }
         }
+
         return $total;
     }
 
-    private function getAttendancesOfDay($userId, $companyId, $date) {
+    private function getAttendancesOfDay($userId, $companyId, $date)
+    {
         return Attendance::where('user_id', $userId)
             ->where('company_id', $companyId)
             ->where('date', $date)
             ->get();
     }
 
-    private function getTimeOffRequests($userId, $companyId, $date) {
+    private function getTimeOffRequests($userId, $companyId, $date)
+    {
         return TimeOffRequest::where('user_id', $userId)
             ->where('company_id', $companyId)
             ->where('date_from', '<=', $date)
@@ -214,7 +222,8 @@ class AttendanceController extends Controller {
             ->get();
     }
 
-    private function hasAttendanceOverlap($attendances, $newTimeIn, $newTimeOut) {
+    private function hasAttendanceOverlap($attendances, $newTimeIn, $newTimeOut)
+    {
         $newIn = strtotime($newTimeIn);
         $newOut = strtotime($newTimeOut);
         foreach ($attendances as $attendance) {
@@ -224,12 +233,14 @@ class AttendanceController extends Controller {
                 return true;
             }
         }
+
         return false;
     }
 
-    private function hasTimeOffOverlap($newDate, $newTimeIn, $newTimeOut, $userId) {
-        $attendanceStart = Carbon::parse($newDate . ' ' . $newTimeIn);
-        $attendanceEnd = Carbon::parse($newDate . ' ' . $newTimeOut);
+    private function hasTimeOffOverlap($newDate, $newTimeIn, $newTimeOut, $userId)
+    {
+        $attendanceStart = Carbon::parse($newDate.' '.$newTimeIn);
+        $attendanceEnd = Carbon::parse($newDate.' '.$newTimeOut);
 
         $overlap = TimeOffRequest::where('user_id', $userId)
             ->where(function ($query) use ($attendanceStart, $attendanceEnd) {
@@ -246,20 +257,25 @@ class AttendanceController extends Controller {
     /**
      * Display the specified resource.
      */
-    public function show(Attendance $attendance) {
+    public function show(Attendance $attendance)
+    {
         return view('attendances.show', compact('attendance'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Attendance $attendance) {
+    public function edit(Attendance $attendance)
+    {
 
         if ($attendance->date !== date('Y-m-d')) {
             return redirect()->route('attendances.index')->withErrors(['message' => 'Non è possibile modificare una presenza che non è di oggi']);
         }
 
         $attendanceTypes = AttendanceType::all();
+        // Carica la relazione user per mostrare chi ha segnato la presenza agli admin
+        $attendance->load('user');
+
         return view('standard.attendances.edit', [
             'attendance' => $attendance,
             'attendanceTypes' => $attendanceTypes,
@@ -275,7 +291,8 @@ class AttendanceController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Attendance $attendance) {
+    public function update(Request $request, Attendance $attendance)
+    {
         $user = $request->user();
 
         $fields = $request->validate([
@@ -312,30 +329,35 @@ class AttendanceController extends Controller {
         if ($user->hasRole('admin')) {
             return redirect()->route('admin.attendances.index')->with('success', 'Presenza modificata con successo');
         }
+
         return redirect()->route('attendances.index')->with('success', 'Presenza modificata con successo');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, Attendance $attendance) {
+    public function destroy(Request $request, Attendance $attendance)
+    {
         $user = $request->user();
         $attendance->delete();
 
         if ($user->hasRole('admin')) {
             return redirect()->route('admin.attendances.index')->with('success', 'Presenza eliminata con successo');
         }
+
         return redirect()->route('attendances.index')->with('success', 'Presenza eliminata con successo');
     }
 
-    public function types() {
+    public function types()
+    {
         $types = AttendanceType::all();
+
         return view('attendances.types', compact('types'));
     }
 
     /** Admin */
-
-    public function adminIndex() {
+    public function adminIndex()
+    {
 
         $usersStatus = $this->getAttendancesDataToday();
 
@@ -346,7 +368,8 @@ class AttendanceController extends Controller {
         ]);
     }
 
-    public static function getAttendancesDataToday() {
+    public static function getAttendancesDataToday()
+    {
         $users = User::where('name', 'not like', 'Stefano%')
             ->get();
 
@@ -363,6 +386,7 @@ class AttendanceController extends Controller {
                     'user' => $user,
                     'status' => 'registered',
                 ];
+
                 continue;
             }
 
@@ -376,6 +400,7 @@ class AttendanceController extends Controller {
                     'user' => $user,
                     'status' => 'time_off',
                 ];
+
                 continue;
             }
 
@@ -388,7 +413,8 @@ class AttendanceController extends Controller {
         return $usersStatus;
     }
 
-    public function listAttendances(Request $request) {
+    public function listAttendances(Request $request)
+    {
 
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
@@ -400,7 +426,7 @@ class AttendanceController extends Controller {
 
         $company_user_ids = [];
         if ($companyId) {
-            $company  = Company::find($companyId);
+            $company = Company::find($companyId);
             $company_users = $company->users()->get();
 
             $company_user_ids = $company_users->pluck('id');
@@ -431,10 +457,8 @@ class AttendanceController extends Controller {
             ->with(['user', 'attendanceType'])
             ->get();
 
-
-
         $attendances = $attendances->sortBy(function ($attendance) {
-            return $attendance->user_id . '-' . $attendance->date . '-' . $attendance->time_in;
+            return $attendance->user_id.'-'.$attendance->date.'-'.$attendance->time_in;
         })->values();
 
         /*
@@ -464,13 +488,13 @@ class AttendanceController extends Controller {
         */
 
         $events = $attendances->map(function ($attendance) {
-            if ($attendance->user->color === "") {
+            if ($attendance->user->color === '') {
                 $attendance->user->assignColorToUser();
             }
 
             return [
                 'id' => $attendance->id,
-                'title' => $attendance->formattedUserName() . " - " . $attendance->attendanceType->acronym . " (" . $attendance->time_in . " - " . $attendance->time_out . ")",
+                'title' => $attendance->formattedUserName().' - '.$attendance->attendanceType->acronym.' ('.$attendance->time_in.' - '.$attendance->time_out.')',
                 'date' => $attendance->date,
                 'description' => $attendance->attendanceType->description,
                 'color' => $attendance->user->color,
@@ -482,13 +506,14 @@ class AttendanceController extends Controller {
         ]);
     }
 
-    public function mergeAttendances($attendances) {
+    public function mergeAttendances($attendances)
+    {
 
         // Group attendances by user_id
         $grouped = [];
         foreach ($attendances as $attendance) {
             $userId = $attendance->user_id;
-            if (!isset($grouped[$userId])) {
+            if (! isset($grouped[$userId])) {
                 $grouped[$userId] = [];
             }
             $grouped[$userId][] = $attendance;
@@ -500,8 +525,8 @@ class AttendanceController extends Controller {
             // Group by date and attendance_type_id
             $merged = [];
             foreach ($userAttendances as $attendance) {
-                $key = $attendance->date . '_' . $attendance->attendance_type_id;
-                if (!isset($merged[$key])) {
+                $key = $attendance->date.'_'.$attendance->attendance_type_id;
+                if (! isset($merged[$key])) {
                     $merged[$key] = clone $attendance;
                 } else {
                     // Merge time_in and time_out
@@ -517,14 +542,16 @@ class AttendanceController extends Controller {
             $result[$userId] = array_values($merged);
         }
 
-
-
         return $result;
     }
 
-    public function viewAttendance(Attendance $attendance) {
+    public function viewAttendance(Attendance $attendance)
+    {
 
         $attendanceTypes = AttendanceType::all();
+        // Carica la relazione user per mostrare chi ha segnato la presenza agli admin
+        $attendance->load('user');
+
         return view('standard.attendances.edit', [
             'attendance' => $attendance,
             'attendanceTypes' => $attendanceTypes,

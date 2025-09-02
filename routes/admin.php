@@ -15,11 +15,11 @@ Route::group([
     Route::get('/home', function () {
 
         $usersStatus = AttendanceController::getAttendancesDataToday();
-        $timeOffController = new TimeOffRequestController();
+        $timeOffController = new TimeOffRequestController;
         $pendingTimeOffRequests = $timeOffController->getPendingTimeOffRequests();
-        $failedAttendancesController = new FailedAttendanceController();
+        $failedAttendancesController = new FailedAttendanceController;
         $failedAttendances = $failedAttendancesController->getPendingFailedAttendances();
-        $overtimeController = new \App\Http\Controllers\OvertimeRequestController();
+        $overtimeController = new \App\Http\Controllers\OvertimeRequestController;
         $pendingOvertimeRequests = $overtimeController->getPendingOvertimeRequests();
 
         return view('admin.home', [
@@ -54,6 +54,7 @@ Route::group([
     Route::get('/users/{user}', [UsersController::class, 'edit'])->name('users.edit');
     Route::get('/users/{user}/export-cedolino', [UsersController::class, 'exportPdf'])->name('users.export-cedolino');
     Route::get('/users/{user}/export-presenze', [UsersController::class, 'exportPresenzePdf'])->name('users.export-presenze');
+    Route::get('/users/{user}/export-anomalie', [UsersController::class, 'exportAnomaliesPdf'])->name('users.export-anomalie');
     Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
     Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
     Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
@@ -71,11 +72,15 @@ Route::group([
     'prefix' => 'admin/time-off-requests',
 ], function () {
     Route::get('/', [TimeOffRequestController::class, 'adminIndex'])->name('admin.time-off.index');
+    Route::get('/create', [TimeOffRequestController::class, 'adminCreate'])->name('admin.time-off.create');
+    Route::post('/create', [TimeOffRequestController::class, 'adminStoreBatch'])->name('admin.time-off.store');
     Route::get('/list', [TimeOffRequestController::class, 'listTimeOffRequests'])->name('admin.time-off.list');
     Route::get('/{time_off_request:batch_id}', [TimeOffRequestController::class, 'viewTimeOffRequest'])->name('admin.time-off.edit');
     Route::post('/{time_off_request}/approve', [TimeOffRequestController::class, 'approveTimeOffRequest'])->name('admin.time-off.approve');
     Route::post('/{time_off_request}/deny', [TimeOffRequestController::class, 'denyTimeOffRequest'])->name('admin.time-off.deny');
     Route::delete('/{time_off_request}', [TimeOffRequestController::class, 'deleteTimeOffRequest'])->name('admin.time-off.delete');
+    Route::put('/{time_off_request:batch_id}/update-type', [TimeOffRequestController::class, 'updateTimeOffType'])->name('admin.time-off.update-type');
+    Route::patch('/{time_off_request}/update-single-type', [TimeOffRequestController::class, 'updateSingleRequestType'])->name('admin.time-off.update-single-type');
 });
 
 Route::group([

@@ -8,17 +8,17 @@ use App\Models\TimeOffRequest;
 use App\Models\TimeOffType;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Container\Attributes\Auth;
-use  Illuminate\Support\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class TimeOffRequestController extends Controller {
+class TimeOffRequestController extends Controller
+{
     /**
      * Display a listing of the resource.
      */
-    public function index() {
+    public function index()
+    {
         //
         return view('standard.time_off_requests.index');
     }
@@ -26,15 +26,18 @@ class TimeOffRequestController extends Controller {
     /**
      * Show the form for creating a new resource.
      */
-    public function create() {
+    public function create()
+    {
         $types = TimeOffType::all();
+
         return view('standard.time_off_requests.create', ['types' => $types]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $user = $request->user();
 
         $fields = $request->validate([
@@ -56,7 +59,8 @@ class TimeOffRequestController extends Controller {
         return redirect()->route('time-off-requests.index')->with('success', 'Richiesta di permesso creata con successo');
     }
 
-    public function storeBatch(Request $request) {
+    public function storeBatch(Request $request)
+    {
         $user = $request->user();
         $requests = json_decode($request->requests);
         $batch_id = uniqid();
@@ -83,6 +87,7 @@ class TimeOffRequestController extends Controller {
 
             if ($existingRequest) {
                 DB::rollBack();
+
                 return redirect()->back()->withErrors(['message' => 'Hai già una richiesta di permesso in questo periodo']);
             }
 
@@ -97,12 +102,14 @@ class TimeOffRequestController extends Controller {
         return redirect()->route('time-off-requests.index')->with('success', 'Richieste di permesso create con successo');
     }
 
-    private function normalizeDate(string $dateString): string {
+    private function normalizeDate(string $dateString): string
+    {
         // Se la stringa contiene uno spazio seguito da due cifre (timezone), sostituisci con +hh:mm
         return preg_replace('/ (\d{2}):(\d{2})$/', '+$1:$2', $dateString);
     }
 
-    public function getUserRequests(Request $request) {
+    public function getUserRequests(Request $request)
+    {
         $user = $request->user();
 
         // Request will have a start and an end date
@@ -124,7 +131,6 @@ class TimeOffRequestController extends Controller {
                 ->get();
         }
 
-
         $events = [];
 
         foreach ($requests as $req) {
@@ -132,13 +138,13 @@ class TimeOffRequestController extends Controller {
 
             $events[] = [
                 'id' => $req->id,
-                'title' => $req->user->name . " - " . $req->type->name,
+                'title' => $req->user->name.' - '.$req->type->name,
                 'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
                 'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
                 'color' => $color,
                 'status' => $req->status,
                 'display' => 'block',
-                'groupId' => $req->batch_id
+                'groupId' => $req->batch_id,
             ];
         }
 
@@ -168,11 +174,12 @@ class TimeOffRequestController extends Controller {
 
     /**
      * Raggruppa eventi con lo stesso groupId e date consecutive o dello stesso giorno
-     * 
-     * @param Collection|array $events La collezione di eventi da raggruppare
+     *
+     * @param  Collection|array  $events  La collezione di eventi da raggruppare
      * @return Collection Gli eventi raggruppati
      */
-    public function groupConsecutiveEvents($events): Collection {
+    public function groupConsecutiveEvents($events): Collection
+    {
         // Converte l'input in una Collection se è un array
         $events = is_array($events) ? collect($events) : $events;
 
@@ -216,7 +223,7 @@ class TimeOffRequestController extends Controller {
             }
 
             // Aggiungi l'ultimo gruppo se non è vuoto
-            if (!empty($currentGroup)) {
+            if (! empty($currentGroup)) {
                 $groupedEvents->push(collect($currentGroup));
             }
         }
@@ -226,11 +233,12 @@ class TimeOffRequestController extends Controller {
 
     /**
      * Versione avanzata che raggruppa eventi consecutivi e restituisce metadati utili
-     * 
-     * @param Collection|array $events La collezione di eventi da raggruppare
+     *
+     * @param  Collection|array  $events  La collezione di eventi da raggruppare
      * @return Collection Gli eventi raggruppati con metadati
      */
-    public function groupConsecutiveEventsWithMetadata($events): Collection {
+    public function groupConsecutiveEventsWithMetadata($events): Collection
+    {
         // Converte l'input in una Collection se è un array
         $events = is_array($events) ? collect($events) : $events;
 
@@ -274,7 +282,7 @@ class TimeOffRequestController extends Controller {
             }
 
             // Aggiungi l'ultimo gruppo se non è vuoto
-            if (!empty($currentGroup)) {
+            if (! empty($currentGroup)) {
                 $this->addGroupWithMetadata($groupedEvents, $currentGroup);
             }
         }
@@ -285,8 +293,11 @@ class TimeOffRequestController extends Controller {
     /**
      * Helper per aggiungere un gruppo con metadati utili
      */
-    private function addGroupWithMetadata(Collection &$groupedEvents, array $group): void {
-        if (empty($group)) return;
+    private function addGroupWithMetadata(Collection &$groupedEvents, array $group): void
+    {
+        if (empty($group)) {
+            return;
+        }
 
         $firstEvent = $group[0];
         $lastEvent = end($group);
@@ -301,8 +312,8 @@ class TimeOffRequestController extends Controller {
                 'totalEvents' => count($group),
                 'startDate' => $startDate->toDateTimeString(),
                 'endDate' => $endDate->toDateTimeString(),
-                'durationInDays' => $startDate->diffInDays($endDate) + 1
-            ]
+                'durationInDays' => $startDate->diffInDays($endDate) + 1,
+            ],
         ];
 
         $groupedEvents->push(collect($groupMetadata));
@@ -311,7 +322,8 @@ class TimeOffRequestController extends Controller {
     /**
      * Display the specified resource.
      */
-    public function show(TimeOffRequest $timeOffRequest) {
+    public function show(TimeOffRequest $timeOffRequest)
+    {
         $requests = TimeOffRequest::with(['type', 'user'])->where('batch_id', $timeOffRequest->batch_id)->orderBy('id', 'asc')->get();
 
         return view('standard.time_off_requests.show', ['requests' => $requests]);
@@ -320,7 +332,8 @@ class TimeOffRequestController extends Controller {
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($batch_id) {
+    public function edit($batch_id)
+    {
         $types = TimeOffType::all();
 
         $requests = TimeOffRequest::with(['type', 'user'])->where('batch_id', $batch_id)->orderBy('id', 'asc')->get();
@@ -335,7 +348,8 @@ class TimeOffRequestController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, TimeOffRequest $timeOffRequest) {
+    public function update(Request $request, TimeOffRequest $timeOffRequest)
+    {
         $fields = $request->validate([
             'date_from' => 'required|string',
             'date_to' => 'required|string',
@@ -348,7 +362,8 @@ class TimeOffRequestController extends Controller {
         return redirect()->route('time-off-requests.index')->with('success', 'Richiesta di permesso aggiornata con successo');
     }
 
-    public function updateBatch(Request $request, $batch_id) {
+    public function updateBatch(Request $request, $batch_id)
+    {
         $user = $request->user();
         $requests = json_decode($request->requests);
 
@@ -372,6 +387,7 @@ class TimeOffRequestController extends Controller {
 
             if ($existingRequest) {
                 DB::rollBack();
+
                 return response()->json([
                     'error' => 'Hai già una richiesta di permesso in questo periodo',
                     'conflicting_request_id' => $existingRequest->id,
@@ -389,13 +405,15 @@ class TimeOffRequestController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(TimeOffRequest $timeOffRequest) {
+    public function destroy(TimeOffRequest $timeOffRequest)
+    {
         $timeOffRequest->update(['status' => '4']);
 
         return redirect()->route('time-off-requests.index')->with('success', 'Richiesta di permesso cancellata con successo');
     }
 
-    public function estimateDays(Request $request) {
+    public function estimateDays(Request $request)
+    {
         $user = $request->user();
         $startDate = $request->input('date_from');
         $endDate = $request->input('date_to');
@@ -408,18 +426,18 @@ class TimeOffRequestController extends Controller {
         $festiveDays = $this->getFestiveDays($startDate, $endDate);
 
         while ($currentDate->lte($endDate)) {
-            if (!in_array($currentDate->toDateString(), $festiveDays)) {
+            if (! in_array($currentDate->toDateString(), $festiveDays)) {
                 $days[] = [
                     'day' => $currentDate->toDateString(),
                     'start_time' => '09:00',
                     'end_time' => '13:00',
-                    'total_hours' => "4.00",
+                    'total_hours' => '4.00',
                 ];
                 $days[] = [
                     'day' => $currentDate->toDateString(),
                     'start_time' => '14:00',
                     'end_time' => '18:00',
-                    'total_hours' => "4.00",
+                    'total_hours' => '4.00',
                 ];
             }
             $currentDate->addDay();
@@ -430,7 +448,8 @@ class TimeOffRequestController extends Controller {
         ]);
     }
 
-    private function getFestiveDays($startDate, $endDate) {
+    private function getFestiveDays($startDate, $endDate)
+    {
         $festiveDays = [];
 
         $currentDate = \Carbon\Carbon::parse($startDate);
@@ -438,7 +457,7 @@ class TimeOffRequestController extends Controller {
 
         $easterDay = $this->calculateEasterDay($currentDate->year);
         $easterDay = $easterDay ? $easterDay->format('m-d') : null;
-        $easterMonday = $this->calculateEasterMonday($currentDate->year)->format('m-d');;
+        $easterMonday = $this->calculateEasterMonday($currentDate->year)->format('m-d');
 
         // List of known vacation days
         $knownHolidays = [
@@ -470,32 +489,34 @@ class TimeOffRequestController extends Controller {
         return $festiveDays;
     }
 
-    private function calculateEasterDay($year) {
+    private function calculateEasterDay($year)
+    {
         $a = $year % 19;
-        $b = (int)($year / 100);
+        $b = (int) ($year / 100);
         $c = $year % 100;
-        $d = (int)($b / 4);
+        $d = (int) ($b / 4);
         $e = $b % 4;
-        $f = (int)(($b + 8) / 25);
-        $g = (int)(($b - $f + 1) / 16);
-        $h = (int)((19 * $a + $b - $d - $g + 15) % 30);
-        $i = (int)($c / 16);
-        $k = (int)($c % 16);
-        $l = (int)((32 + 2 * $e + 2 * $i - $h - $k) % 7);
-        $m = (int)(($a + 11 * $h + 22 * $l) / 451);
+        $f = (int) (($b + 8) / 25);
+        $g = (int) (($b - $f + 1) / 16);
+        $h = (int) ((19 * $a + $b - $d - $g + 15) % 30);
+        $i = (int) ($c / 16);
+        $k = (int) ($c % 16);
+        $l = (int) ((32 + 2 * $e + 2 * $i - $h - $k) % 7);
+        $m = (int) (($a + 11 * $h + 22 * $l) / 451);
 
-        return \Carbon\Carbon::createFromDate($year, (int)(($h + $l - 7 * $m + 114) / 31), ($h + $l - 7 * $m + 114) % 31 + 1);
+        return \Carbon\Carbon::createFromDate($year, (int) (($h + $l - 7 * $m + 114) / 31), ($h + $l - 7 * $m + 114) % 31 + 1);
     }
 
-    private function calculateEasterMonday($year) {
+    private function calculateEasterMonday($year)
+    {
         $easterDay = $this->calculateEasterDay($year);
+
         return $easterDay->modify('+1 day');
     }
 
-
     /** Funzioni per admin */
-
-    public function adminIndex() {
+    public function adminIndex()
+    {
         return view('admin.time_off_requests.index', [
             'groups' => Group::all(),
             'companies' => Company::all(),
@@ -504,20 +525,21 @@ class TimeOffRequestController extends Controller {
         ]);
     }
 
-    public function listTimeOffRequests(Request $request) {
+    public function listTimeOffRequests(Request $request)
+    {
 
         // Filtri opzionali
         $companyId = $request->input('company_id') != null ? $request->input('company_id') : null;
         $groupId = $request->input('group_id') != null ? $request->input('group_id') : null;
         $time_off_type_id = $request->input('type_id') != null ? $request->input('type_id') : null;
         $startDate = $request->input('start');
-        $endDate = date('Y-m-d', strtotime($request->input('end') . ' +3 days'));
+        $endDate = date('Y-m-d', strtotime($request->input('end').' +3 days'));
 
         // Costruisci la query utenti solo se necessario
 
         $company_user_ids = [];
         if ($companyId) {
-            $company  = Company::find($companyId);
+            $company = Company::find($companyId);
             $company_users = $company->users()->get();
 
             $company_user_ids = $company_users->pluck('id');
@@ -542,7 +564,6 @@ class TimeOffRequestController extends Controller {
             $userIds = User::pluck('id'); // Prendi tutti gli utenti se non ci sono filtri
         }
 
-
         // Query richieste permesso
         $requests = TimeOffRequest::with(['type', 'user'])
             ->where('status', '<>', '4')
@@ -556,7 +577,6 @@ class TimeOffRequestController extends Controller {
             ->orderBy('id', 'asc')
             ->get();
 
-
         $events = [];
 
         foreach ($requests as $req) {
@@ -566,13 +586,13 @@ class TimeOffRequestController extends Controller {
             $events[] = [
                 'id' => $req->id,
                 'user' => $req->user,
-                'title' => $req->formattedUserName() . " - " . $req->type->name,
+                'title' => $req->formattedUserName().' - '.$req->type->name,
                 'start' => \Carbon\Carbon::parse($req->date_from)->format('Y-m-d'),
                 'end' => \Carbon\Carbon::parse($req->date_to)->format('Y-m-d'),
                 'status' => $req->status,
                 'color' => $color,
                 'display' => 'block',
-                'groupId' => $req->batch_id
+                'groupId' => $req->batch_id,
             ];
         }
 
@@ -585,22 +605,22 @@ class TimeOffRequestController extends Controller {
             $events = collect($group['events']);
             $firstEvent = $events->first();
 
-            if ($group['metadata']['durationInDays'] ==  1) {
+            if ($group['metadata']['durationInDays'] == 1) {
                 $event = TimeOffRequest::find($firstEvent['id']);
                 $start_parsed = \Carbon\Carbon::parse($event->date_from);
                 $end_parsed = \Carbon\Carbon::parse($event->date_to);
 
-                $title = $firstEvent['title'] . ' (' . $start_parsed->format('H:i') . ' - ' . $end_parsed->format('H:i') . ')';
+                $title = $firstEvent['title'].' ('.$start_parsed->format('H:i').' - '.$end_parsed->format('H:i').')';
             } else {
                 $start_parsed = \Carbon\Carbon::parse($group['metadata']['startDate']);
                 $end_parsed = \Carbon\Carbon::parse($group['metadata']['endDate']);
 
-                $title = $start_parsed->format('d/m/Y') . ' - ' . $end_parsed->format('d/m/Y') . ' ' . $firstEvent['title'];
+                $title = $start_parsed->format('d/m/Y').' - '.$end_parsed->format('d/m/Y').' '.$firstEvent['title'];
             }
 
             $event_result[] = collect([
                 'id' => $firstEvent['id'],
-                'title' =>  $title,
+                'title' => $title,
                 'user' => $firstEvent['user'],
                 'status' => $firstEvent['status'],
                 'start' => Carbon::parse($group['metadata']['startDate'])->format('Y-m-d'),
@@ -616,7 +636,8 @@ class TimeOffRequestController extends Controller {
         ]);
     }
 
-    public function viewTimeOffRequest(TimeOffRequest $timeOffRequest) {
+    public function viewTimeOffRequest(TimeOffRequest $timeOffRequest)
+    {
 
         $types = TimeOffType::all();
 
@@ -625,12 +646,12 @@ class TimeOffRequestController extends Controller {
         return view('admin.time_off_requests.edit', [
             'requests' => $requests,
             'types' => $types,
-            'batch_id' => $timeOffRequest->batch_id
+            'batch_id' => $timeOffRequest->batch_id,
         ]);
     }
 
-    public function approveTimeOffRequest(TimeOffRequest $timeOffRequest) {
-
+    public function approveTimeOffRequest(TimeOffRequest $timeOffRequest)
+    {
 
         // Approva tutte le richieste con lo stesso batch_id
         TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->update(['status' => '2']);
@@ -638,21 +659,130 @@ class TimeOffRequestController extends Controller {
         return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso approvata con successo');
     }
 
-    public function denyTimeOffRequest(TimeOffRequest $timeOffRequest) {
+    public function denyTimeOffRequest(TimeOffRequest $timeOffRequest)
+    {
         // Rifiuta tutte le richieste con lo stesso batch_id
         TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->update(['status' => '3']);
 
         return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso rifiutata con successo');
     }
 
-    public function deleteTimeOffRequest(TimeOffRequest $timeOffRequest) {
+    public function deleteTimeOffRequest(TimeOffRequest $timeOffRequest)
+    {
         // Elimina tutte le richieste con lo stesso batch_id
         TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->delete();
 
         return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso eliminata con successo');
     }
 
-    public function getPendingTimeOffRequests() {
+    public function updateTimeOffType(Request $request, TimeOffRequest $timeOffRequest)
+    {
+        $fields = $request->validate([
+            'time_off_type_id' => 'required|int|in:1,2', // Solo Ferie (1) e ROL (2)
+        ]);
+
+        // Aggiorna tutte le richieste con lo stesso batch_id
+        TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)
+            ->update(['time_off_type_id' => $fields['time_off_type_id']]);
+
+        return redirect()->back()->with('success', 'Tipo di permesso aggiornato con successo');
+    }
+
+    public function updateSingleRequestType(Request $request, TimeOffRequest $timeOffRequest)
+    {
+        $fields = $request->validate([
+            'time_off_type_id' => 'required|int|in:1,2', // Solo Ferie (1) e ROL (2)
+        ]);
+
+        // Aggiorna solo questa specifica richiesta
+        $timeOffRequest->update(['time_off_type_id' => $fields['time_off_type_id']]);
+
+        return response()->json(['success' => true, 'message' => 'Tipo aggiornato con successo']);
+    }
+
+    /**
+     * Show the form for creating a new admin resource.
+     */
+    public function adminCreate()
+    {
+        $users = User::select('id', 'name', 'email')->orderBy('name', 'asc')->get();
+        $types = TimeOffType::all();
+
+        return view('admin.time_off_requests.create', ['users' => $users, 'types' => $types]);
+    }
+
+    /**
+     * Store a newly created admin resource with automatic approval.
+     */
+    public function adminStoreBatch(Request $request)
+    {
+        $requests = json_decode($request->requests);
+        $batch_id = uniqid();
+
+        // Validazione base
+        if (empty($requests)) {
+            return response()->json(['message' => 'Nessuna richiesta da processare'], 400);
+        }
+
+        // Verifica che l'utente specificato esista
+        $userId = $requests[0]->user_id;
+        $targetUser = User::find($userId);
+        
+        if (!$targetUser) {
+            return response()->json(['message' => 'Utente non trovato'], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($requests as $time_off_request) {
+                $fields = [
+                    'date_from' => $time_off_request->date_from,
+                    'date_to' => $time_off_request->date_to,
+                    'time_off_type_id' => $time_off_request->time_off_type_id,
+                    'user_id' => $userId,
+                    'company_id' => Company::where('name', 'iFortech')->first()->id,
+                    'batch_id' => $batch_id,
+                    'status' => 2, // Automaticamente approvata
+                ];
+
+                // Verifica sovrapposizioni con richieste esistenti
+                $existingRequest = TimeOffRequest::where('user_id', $userId)
+                    ->where(function ($query) use ($fields) {
+                        $query->whereBetween('date_from', [$fields['date_from'], $fields['date_to']])
+                            ->orWhereBetween('date_to', [$fields['date_from'], $fields['date_to']]);
+                    })
+                    ->first();
+
+                if ($existingRequest) {
+                    DB::rollBack();
+                    return response()->json(['message' => 'L\'utente ha già una richiesta di permesso in questo periodo'], 400);
+                }
+
+                TimeOffRequest::create($fields);
+            }
+
+            DB::commit();
+
+            // // Invia email di notifica all'utente
+            // \Illuminate\Support\Facades\Mail::to($targetUser->email)->send(new \App\Mail\TimeOffRequest($batch_id, $targetUser, false));
+
+            // // Invia email di notifica agli admin
+            // $admins = User::role('admin')->get();
+            // foreach ($admins as $admin) {
+            //     \Illuminate\Support\Facades\Mail::to($admin->email)->send(new \App\Mail\TimeOffRequest($batch_id, $targetUser, true));
+            // }
+
+            return response()->json(['message' => 'Richiesta creata e approvata con successo'], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Errore durante la creazione della richiesta: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getPendingTimeOffRequests()
+    {
         $pendingRequests = TimeOffRequest::with(['type', 'user'])
             ->where('status', '0') // Stato "In attesa"
             ->orderBy('id', 'asc')
@@ -674,7 +804,7 @@ class TimeOffRequestController extends Controller {
                 'status' => $req->status,
                 'color' => $color,
                 'display' => 'block',
-                'groupId' => $req->batch_id
+                'groupId' => $req->batch_id,
             ];
         }
 
@@ -695,7 +825,7 @@ class TimeOffRequestController extends Controller {
                 'id' => $firstEvent['id'],
                 'title' => $firstEvent['title'],
                 'type' => $firstEvent['type'],
-                'start_end' => $start_formatted . ' - ' . $end_formatted,
+                'start_end' => $start_formatted.' - '.$end_formatted,
                 'batch' => $group['metadata']['groupId'],
             ]);
         }

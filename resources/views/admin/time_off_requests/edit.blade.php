@@ -8,23 +8,44 @@
 
     <hr>
 
+    <!-- Toast notification container -->
+    <div id="toast-container" class="toast toast-top toast-end hidden">
+        <div class="alert alert-success">
+            <x-lucide-check class="w-4 h-4" />
+            <span id="toast-message">{{ __('time_off_requests.type_updated_successfully') }}</span>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
         <div class="flex flex-col gap-4 h-fit">
             <div class="card bg-base-300 ">
                 <div class="card-body">
+                    <h3 class="card-title">{{ __('time_off_requests.request_details') }}</h3>
+                    <hr>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('time_off_requests.requester') }}</legend>
+                        <input type="text" class="input w-full" value="{{ $requests->first()->user->name }}"
+                            disabled />
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="card bg-base-300 ">
+                <div class="card-body">
                     <h3 class="card-title">{{ __('time_off_requests.selected_days') }}</h3>
                     <hr>
                     <fieldset class="fieldset">
-                        <legend class="fieldset-legend">Data inizio</legend>
+                        <legend class="fieldset-legend">{{ __('time_off_requests.start_date') }}</legend>
                         <input type="date" id="date_from" name="date_from" class="input w-full"
                             value="{{ \Carbon\Carbon::parse($requests->first()->date_from)->format('Y-m-d') }}"
                             disabled />
                     </fieldset>
                     <fieldset class="fieldset">
-                        <legend class="fieldset-legend">Data fine</legend>
+                        <legend class="fieldset-legend">{{ __('time_off_requests.end_date') }}</legend>
                         <input type="date" id="date_to" name="date_to" class="input w-full"
-                            value="{{ \Carbon\Carbon::parse($requests->last()->date_to)->format('Y-m-d') }}" disabled />
+                            value="{{ \Carbon\Carbon::parse($requests->last()->date_to)->format('Y-m-d') }}"
+                            disabled />
                     </fieldset>
                 </div>
             </div>
@@ -168,14 +189,26 @@
                                     <tr class="day-row" data-key="{{ $request->id }}">
                                         <td>
                                             <fieldset class="fieldset">
-                                                <select class="select" name="type" disabled>
-                                                    @foreach ($types as $type)
-                                                        <option value="{{ $type->id }}"
-                                                            {{ $request->type->id == $type->id ? 'selected' : '' }}>
-                                                            {{ $type->name }}
+                                                @if ($request->status == 0)
+                                                    <select class="select type-select" name="type"
+                                                        data-request-id="{{ $request->id }}"
+                                                        onchange="updateRequestType({{ $request->id }}, this.value)">
+                                                        <option value="1"
+                                                            {{ $request->type->id == 1 ? 'selected' : '' }}>
+                                                            {{ __('time_off_requests.vacation') }}
                                                         </option>
-                                                    @endforeach
-                                                </select>
+                                                        <option value="2"
+                                                            {{ $request->type->id == 2 ? 'selected' : '' }}>
+                                                            {{ __('time_off_requests.rol') }}
+                                                        </option>
+                                                    </select>
+                                                @else
+                                                    <select class="select" name="type" disabled>
+                                                        <option value="{{ $request->type->id }}" selected>
+                                                            {{ $request->type->name }}
+                                                        </option>
+                                                    </select>
+                                                @endif
                                             </fieldset>
                                         </td>
                                         <td>
@@ -217,6 +250,72 @@
         </div>
 
     </div>
+
+    <script>
+        function showToast() {
+            const toast = document.getElementById('toast-container');
+            toast.classList.remove('hidden');
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function updateRequestType(requestId, typeId) {
+            const select = document.querySelector(`select[data-request-id="${requestId}"]`);
+            const originalClass = select.className;
+
+            // Show loading state
+            select.disabled = true;
+            select.className = originalClass + ' loading';
+
+            fetch(`/admin/time-off-requests/${requestId}/update-single-type`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        time_off_type_id: typeId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    select.disabled = false;
+                    select.className = originalClass;
+
+                    if (data.success) {
+                        // Show success feedback
+                        select.className = originalClass + ' border-green-500';
+                        showToast();
+
+                        // Reset visual feedback after 3 seconds
+                        setTimeout(() => {
+                            select.className = originalClass;
+                        }, 3000);
+                    } else {
+                        // Show error feedback
+                        select.className = originalClass + ' border-red-500';
+                        alert('{{ __('time_off_requests.update_error') }}');
+
+                        setTimeout(() => {
+                            select.className = originalClass;
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    select.disabled = false;
+                    select.className = originalClass + ' border-red-500';
+                    alert('{{ __('time_off_requests.update_error') }}');
+
+                    setTimeout(() => {
+                        select.className = originalClass;
+                    }, 3000);
+                });
+        }
+    </script>
 
 
 </x-layouts.app>
