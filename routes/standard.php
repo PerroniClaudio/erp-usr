@@ -21,7 +21,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['auth', 'role:standard', 'role:admin'],
+    'middleware' => ['auth'],
     'prefix' => 'standard/business-trips',
 ], function () {
     Route::get('/', [BusinessTripController::class, 'index'])->name('business-trips.index');

@@ -565,7 +565,7 @@ class BusinessTripController extends Controller
         // 3. Invio della richiesta a Nominatim usando il client HTTP di Laravel
         try {
             $response = Http::withHeaders([
-                'User-Agent' => 'IFT/1.0', // Sostituisci con un nome significativo e la tua email
+                'User-Agent' => 'IFT/2.0', // Sostituisci con un nome significativo e la tua email
             ])->get('https://nominatim.openstreetmap.org/search', $queryParams);
 
             // Verifica se la richiesta ha avuto successo
