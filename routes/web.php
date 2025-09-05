@@ -11,7 +11,7 @@ Route::get('/', function () {
 
 Route::get('/favicon', function () {
     try {
-        $favicon = Storage::disk('gcs')->get('favicon.ico');
+        $favicon = Storage::disk('s3')->get('favicon.ico');
 
         return response($favicon)
             ->header('Content-Type', 'image/x-icon')

@@ -5,18 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripExpense;
 use App\Models\BusinessTripTransfer;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Support\Facades\Storage;
 
-class BusinessTripController extends Controller {
+class BusinessTripController extends Controller
+{
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         $user = $request->user();
         $businessTrips = BusinessTrip::where('user_id', $user->id)
             ->with(['user'])
@@ -31,7 +33,8 @@ class BusinessTripController extends Controller {
     /**
      * Show the form for creating a new resource.
      */
-    public function create() {
+    public function create()
+    {
         //
 
         $companies = Auth::user()->companies;
@@ -44,7 +47,8 @@ class BusinessTripController extends Controller {
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         //
 
         $fields = $request->validate([
@@ -52,7 +56,7 @@ class BusinessTripController extends Controller {
             'date_to' => 'required|date|after_or_equal:date_from',
         ]);
 
-        $code = date('Y') . 'TRA' . str_pad(BusinessTrip::count() + 1, 5, '0', STR_PAD_LEFT);
+        $code = date('Y').'TRA'.str_pad(BusinessTrip::count() + 1, 5, '0', STR_PAD_LEFT);
 
         $user = $request->user();
 
@@ -72,7 +76,8 @@ class BusinessTripController extends Controller {
     /**
      * Display the specified resource.
      */
-    public function show(BusinessTrip $businessTrip) {
+    public function show(BusinessTrip $businessTrip)
+    {
         //
 
     }
@@ -80,7 +85,8 @@ class BusinessTripController extends Controller {
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(BusinessTrip $businessTrip) {
+    public function edit(BusinessTrip $businessTrip)
+    {
         //
 
         $companies = Auth::user()->companies;
@@ -98,7 +104,6 @@ class BusinessTripController extends Controller {
             $transfers = $raw_transfers;
         }
 
-
         return view('standard.business_trips.edit', [
             'businessTrip' => $businessTrip,
             'companies' => $companies,
@@ -107,10 +112,11 @@ class BusinessTripController extends Controller {
         ]);
     }
 
-    private function cleanupTransfers($transfers) {
+    private function cleanupTransfers($transfers)
+    {
 
         foreach ($transfers as $transfer) {
-            if ($transfer->address == "N/A") {
+            if ($transfer->address == 'N/A') {
 
                 $address_details = $this->resolveAddressFromCoordinates(
                     $transfer->latitude,
@@ -127,11 +133,11 @@ class BusinessTripController extends Controller {
         return $transfers;
     }
 
-
-    private function resolveAddressFromCoordinates($latitude, $longitude) {
+    private function resolveAddressFromCoordinates($latitude, $longitude)
+    {
         // Utilizza l'API di Nominatim per risolvere l'indirizzo
         $response = Http::withHeaders([
-            'User-Agent' => 'IFT/1.0' // Sostituisci con un nome significativo e la tua email
+            'User-Agent' => 'IFT/1.0', // Sostituisci con un nome significativo e la tua email
         ])->get('https://nominatim.openstreetmap.org/reverse', [
             'lat' => $latitude,
             'lon' => $longitude,
@@ -141,7 +147,6 @@ class BusinessTripController extends Controller {
 
         if ($response->successful()) {
             $data = $response->json();
-
 
             return [
                 'address' => $data['address']['road'] ?? 'N/A',
@@ -164,7 +169,8 @@ class BusinessTripController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, BusinessTrip $businessTrip) {
+    public function update(Request $request, BusinessTrip $businessTrip)
+    {
         //
 
         $fields = $request->validate([
@@ -181,7 +187,8 @@ class BusinessTripController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(BusinessTrip $businessTrip) {
+    public function destroy(BusinessTrip $businessTrip)
+    {
         //
 
         $businessTrip->update([
@@ -194,8 +201,8 @@ class BusinessTripController extends Controller {
     /**
      * * SPESE *
      */
-
-    public function getExpenses(BusinessTrip $businessTrip) {
+    public function getExpenses(BusinessTrip $businessTrip)
+    {
         $expenses = BusinessTripExpense::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
 
         return response([
@@ -203,7 +210,8 @@ class BusinessTripController extends Controller {
         ], 200);
     }
 
-    public function createExpense(BusinessTrip $businessTrip) {
+    public function createExpense(BusinessTrip $businessTrip)
+    {
         $companies = Auth::user()->companies;
 
         return view('standard.business_trips.expenses.create', [
@@ -212,7 +220,8 @@ class BusinessTripController extends Controller {
         ]);
     }
 
-    public function editExpense(BusinessTrip $businessTrip, BusinessTripExpense $expense) {
+    public function editExpense(BusinessTrip $businessTrip, BusinessTripExpense $expense)
+    {
         $companies = Auth::user()->companies;
 
         return view('standard.business_trips.expenses.edit', [
@@ -222,7 +231,8 @@ class BusinessTripController extends Controller {
         ]);
     }
 
-    public function updateExpense(BusinessTrip $businessTrip, BusinessTripExpense $expense, Request $request) {
+    public function updateExpense(BusinessTrip $businessTrip, BusinessTripExpense $expense, Request $request)
+    {
 
         $fields = $request->validate([
             'company_id' => 'required|integer',
@@ -243,7 +253,8 @@ class BusinessTripController extends Controller {
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Spesa aggiornata con successo');
     }
 
-    public function storeExpense(BusinessTrip $businessTrip, Request $request) {
+    public function storeExpense(BusinessTrip $businessTrip, Request $request)
+    {
 
         $fields = $request->validate([
             'company_id' => 'required|integer',
@@ -277,7 +288,8 @@ class BusinessTripController extends Controller {
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Spesa aggiunta con successo');
     }
 
-    public function destroyExpense(BusinessTrip $businessTrip, BusinessTripExpense $expense) {
+    public function destroyExpense(BusinessTrip $businessTrip, BusinessTripExpense $expense)
+    {
         //
 
         $expense->delete();
@@ -288,17 +300,16 @@ class BusinessTripController extends Controller {
     /**
      * * TRASFERIMENTI *
      */
-
-    public function createTransfer(BusinessTrip $businessTrip) {
+    public function createTransfer(BusinessTrip $businessTrip)
+    {
         $companies = Auth::user()->companies;
         $userVehicles = Auth::user()->vehicles;
         $userVehicles = $userVehicles->map(function ($vehicle) {
             return [
                 'id' => $vehicle->id,
-                'name' => $vehicle->brand . ' ' . $vehicle->model . ' - ' . $vehicle->pivot->plate_number,
+                'name' => $vehicle->brand.' '.$vehicle->model.' - '.$vehicle->pivot->plate_number,
             ];
         });
-
 
         return view('standard.business_trips.transfers.create', [
             'businessTrip' => $businessTrip,
@@ -307,13 +318,14 @@ class BusinessTripController extends Controller {
         ]);
     }
 
-    public function editTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer) {
+    public function editTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer)
+    {
         $companies = Auth::user()->companies;
         $userVehicles = Auth::user()->vehicles;
         $userVehicles = $userVehicles->map(function ($vehicle) {
             return [
                 'id' => $vehicle->id,
-                'name' => $vehicle->brand . ' ' . $vehicle->model . ' - ' . $vehicle->pivot->plate_number,
+                'name' => $vehicle->brand.' '.$vehicle->model.' - '.$vehicle->pivot->plate_number,
             ];
         });
 
@@ -325,7 +337,8 @@ class BusinessTripController extends Controller {
         ]);
     }
 
-    public function getTransfers(BusinessTrip $businessTrip) {
+    public function getTransfers(BusinessTrip $businessTrip)
+    {
         $transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
 
         return response([
@@ -333,7 +346,8 @@ class BusinessTripController extends Controller {
         ], 200);
     }
 
-    public function storeTransfer(BusinessTrip $businessTrip, Request $request) {
+    public function storeTransfer(BusinessTrip $businessTrip, Request $request)
+    {
 
         $fields = $request->validate([
             'company_id' => 'required|integer',
@@ -363,7 +377,8 @@ class BusinessTripController extends Controller {
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento aggiunto con successo');
     }
 
-    public function updateTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer, Request $request) {
+    public function updateTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer, Request $request)
+    {
 
         $fields = $request->validate([
             'company_id' => 'required|integer',
@@ -382,14 +397,16 @@ class BusinessTripController extends Controller {
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento aggiornato con successo');
     }
 
-    public function destroyTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer) {
+    public function destroyTransfer(BusinessTrip $businessTrip, BusinessTripTransfer $transfer)
+    {
 
         $transfer->delete();
 
         return redirect()->route('business-trips.edit', $businessTrip->id)->with('success', 'Trasferimento eliminato con successo');
     }
 
-    public function generatePdf(BusinessTrip $businessTrip) {
+    public function generatePdf(BusinessTrip $businessTrip)
+    {
 
         $transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
         $vehicle_id = $transfers[0]->vehicle_id;
@@ -413,17 +430,18 @@ class BusinessTripController extends Controller {
             'user_vehicle' => $user_vehicle,
         ]);
 
-        return $pdf->download('trasferta_' . $businessTrip->code . '.pdf');
+        return $pdf->download('trasferta_'.$businessTrip->code.'.pdf');
     }
 
-    public function generateMonthlyPdf(Request $request) {
+    public function generateMonthlyPdf(Request $request)
+    {
         $fields = $request->validate([
             'month' => 'required',
             'year' => 'required|integer|min:1900',
         ]);
 
-        $start_of_month = date('Y-m-d', strtotime($fields['year'] . '-' . $fields['month'] . '-01'));
-        $end_of_month = date('Y-m-t', strtotime($fields['year'] . '-' . $fields['month'] . '-01'));
+        $start_of_month = date('Y-m-d', strtotime($fields['year'].'-'.$fields['month'].'-01'));
+        $end_of_month = date('Y-m-t', strtotime($fields['year'].'-'.$fields['month'].'-01'));
 
         $user = $request->user();
 
@@ -439,8 +457,6 @@ class BusinessTripController extends Controller {
 
         $allTripsData = [];
         $user_vehicle = null;
-
-
 
         foreach ($businessTrips as $businessTrip) {
             $transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
@@ -467,7 +483,6 @@ class BusinessTripController extends Controller {
             ];
         }
 
-
         $pdf = PDF::loadView('cedolini.business_trips_batch', [
             'allTripsData' => $allTripsData,
             'month' => $fields['month'],
@@ -477,10 +492,11 @@ class BusinessTripController extends Controller {
             'user' => $user,
         ]);
 
-        return $pdf->download('trasferte_' . $fields['year'] . '_' . str_pad($fields['month'], 2, '0', STR_PAD_LEFT) . '.pdf');
+        return $pdf->download('trasferte_'.$fields['year'].'_'.str_pad($fields['month'], 2, '0', STR_PAD_LEFT).'.pdf');
     }
 
-    private function generateTransfers($transfers) {
+    private function generateTransfers($transfers)
+    {
 
         $pairs = [];
         for ($i = 0; $i < count($transfers) - 1; $i++) {
@@ -515,16 +531,17 @@ class BusinessTripController extends Controller {
                 ),
             ];
         }
+
         return $result;
     }
 
     /**
      * Valida un indirizzo utilizzando l'API di Nominatim.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function validateAddress(Request $request) {
+    public function validateAddress(Request $request)
+    {
         // 1. Validazione dei dati di input
         $fields = $request->validate([
             'address' => 'required|string',
@@ -535,7 +552,7 @@ class BusinessTripController extends Controller {
 
         // 2. Costruzione della query per Nominatim (utilizzando il parametro 'q')
         // Combiniamo i campi in una singola stringa indirizzo
-        $fullAddress = $fields['address'] . ', ' . $fields['city'] . ', ' . $fields['province'] . ', ' . $fields['zip_code'];
+        $fullAddress = $fields['address'].', '.$fields['city'].', '.$fields['province'].', '.$fields['zip_code'];
 
         // Parametri per la richiesta a Nominatim
         $queryParams = [
@@ -548,7 +565,7 @@ class BusinessTripController extends Controller {
         // 3. Invio della richiesta a Nominatim usando il client HTTP di Laravel
         try {
             $response = Http::withHeaders([
-                'User-Agent' => 'IFT/1.0' // Sostituisci con un nome significativo e la tua email
+                'User-Agent' => 'IFT/1.0', // Sostituisci con un nome significativo e la tua email
             ])->get('https://nominatim.openstreetmap.org/search', $queryParams);
 
             // Verifica se la richiesta ha avuto successo
@@ -556,7 +573,7 @@ class BusinessTripController extends Controller {
                 $data = $response->json();
 
                 // 4. Analisi della risposta
-                if (!empty($data)) {
+                if (! empty($data)) {
                     // Nominatim ha trovato almeno un risultato
                     $firstResult = $data[0];
 
@@ -579,44 +596,48 @@ class BusinessTripController extends Controller {
                             'display_name' => $displayName,
                             'address_details' => $addressDetails,
                             // Puoi aggiungere altri dati dal risultato di Nominatim se necessario
-                        ]
+                        ],
                     ]);
                 } else {
                     // Nessun risultato trovato per l'indirizzo
                     return response()->json([
                         'status' => 'not_found',
                         'message' => 'Indirizzo non trovato.',
-                        'data' => null
+                        'data' => null,
                     ], 404); // Codice di stato 404 Not Found
                 }
             } else {
                 // La richiesta HTTP a Nominatim non è andata a buon fine
                 // Puoi loggare l'errore o restituire un messaggio generico
-                Log::error('Nominatim API request failed: ' . $response->status());
+                Log::error('Nominatim API request failed: '.$response->status());
+
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Errore durante la comunicazione con il servizio di validazione indirizzi.',
-                    'details' => $response->body() // Potrebbe contenere informazioni sull'errore da Nominatim
+                    'details' => $response->body(), // Potrebbe contenere informazioni sull'errore da Nominatim
                 ], $response->status()); // Usa il codice di stato della risposta di Nominatim
 
             }
         } catch (\Exception $e) {
             // Gestione di eventuali eccezioni durante la richiesta
-            Log::error('Exception during Nominatim API call: ' . $e->getMessage());
+            Log::error('Exception during Nominatim API call: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Si è verificato un errore imprevisto.',
-                'details' => $e->getMessage()
+                'details' => $e->getMessage(),
             ], 500); // Codice di stato 500 Internal Server Error
         }
     }
 
     // Calcola la distanza stradale in auto tra due coordinate usando Google Routes API (nuova)
     // Restituisce la distanza in km (float) oppure null in caso di errore
-    public function routeDistanceGoogle($lat1, $lon1, $lat2, $lon2) {
+    public function routeDistanceGoogle($lat1, $lon1, $lat2, $lon2)
+    {
         $apiKey = config('services.google_maps.api_key'); // Usa la configurazione invece di env()
-        if (!$apiKey) {
+        if (! $apiKey) {
             Log::error('Google Maps API key mancante.');
+
             return null;
         }
 
@@ -625,18 +646,18 @@ class BusinessTripController extends Controller {
             'origin' => [
                 'location' => [
                     'latLng' => [
-                        'latitude' => (float)$lat1,
-                        'longitude' => (float)$lon1
-                    ]
-                ]
+                        'latitude' => (float) $lat1,
+                        'longitude' => (float) $lon1,
+                    ],
+                ],
             ],
             'destination' => [
                 'location' => [
                     'latLng' => [
-                        'latitude' => (float)$lat2,
-                        'longitude' => (float)$lon2
-                    ]
-                ]
+                        'latitude' => (float) $lat2,
+                        'longitude' => (float) $lon2,
+                    ],
+                ],
             ],
             'travelMode' => 'DRIVE',
             'routingPreference' => 'TRAFFIC_UNAWARE',
@@ -654,30 +675,32 @@ class BusinessTripController extends Controller {
                 $data = $response->json();
                 if (isset($data['routes'][0]['distanceMeters'])) {
                     $distanceKm = $data['routes'][0]['distanceMeters'] / 1000;
+
                     return round($distanceKm, 2);
                 } else {
-                    Log::error('Risposta Routes API senza distanza valida: ' . json_encode($data));
+                    Log::error('Risposta Routes API senza distanza valida: '.json_encode($data));
                 }
             } else {
-                Log::error('Errore Google Routes API: ' . $response->body());
+                Log::error('Errore Google Routes API: '.$response->body());
             }
         } catch (\Exception $e) {
-            Log::error('Eccezione Google Routes API: ' . $e->getMessage());
+            Log::error('Eccezione Google Routes API: '.$e->getMessage());
         }
+
         return null;
     }
 
     /** Caricamento file spese */
+    public function uploadExpenseJustification(Request $request, BusinessTripExpense $businessTripExpense)
+    {
 
-    public function uploadExpenseJustification(Request $request, BusinessTripExpense $businessTripExpense) {
-
-        if (!$request->hasFile('justification_file') || !$request->file('justification_file')->isValid()) {
+        if (! $request->hasFile('justification_file') || ! $request->file('justification_file')->isValid()) {
             return back()->with('error', 'Nessun file valido caricato.');
         }
         $file = $request->file('justification_file');
 
-        $file_path = "trasferte/{$businessTripExpense->businessTrip->code}/spese/{$businessTripExpense->id}/" . time() . '_' . $file->getClientOriginalName() . '.' . $file->getClientOriginalExtension();
-        $path = $file->store($file_path, 'gcs');
+        $file_path = "trasferte/{$businessTripExpense->businessTrip->code}/spese/{$businessTripExpense->id}/".time().'_'.$file->getClientOriginalName().'.'.$file->getClientOriginalExtension();
+        $path = $file->store($file_path, 's3');
 
         $businessTripExpense->update([
             'justification_file_path' => $path,
@@ -690,12 +713,13 @@ class BusinessTripController extends Controller {
         return redirect()->route('business-trips.edit', $businessTripExpense->business_trip_id)->with('success', 'Giustificativo caricato con successo');
     }
 
-    public function downloadExpenseJustification(BusinessTripExpense $businessTripExpense) {
-        if (!$businessTripExpense->justification_file_path) {
+    public function downloadExpenseJustification(BusinessTripExpense $businessTripExpense)
+    {
+        if (! $businessTripExpense->justification_file_path) {
             return back()->with('error', 'Nessun giustificativo caricato per questa spesa.');
         }
-        $disk = Storage::disk('gcs');
-        /** @var \Illuminate\Contracts\Filesystem\Cloud|\Spatie\GoogleCloudStorage\GoogleCloudStorageAdapter $disk */
+        $disk = Storage::disk('s3');
+        /** @var \Illuminate\Contracts\Filesystem\Cloud|\Illuminate\Filesystem\AwsS3V3Adapter $disk */
         $url = $disk->temporaryUrl($businessTripExpense->justification_file_path, now()->addMinutes(30));
 
         return redirect($url);

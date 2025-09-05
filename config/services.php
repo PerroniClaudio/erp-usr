@@ -44,4 +44,12 @@ return [
     'google_maps' => [
         'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
+
+    'google_service_account' => [
+        'project_id' => env('GOOGLE_PROJECT_ID'),
+        'client_email' => env('GOOGLE_CLIENT_EMAIL'),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'private_key' => env('GOOGLE_PRIVATE_KEY'),
+        'private_key_id' => env('GOOGLE_PRIVATE_KEY_ID'),
+    ],
 ];
