@@ -34,8 +34,8 @@ importers:
         specifier: ^9.0.1
         version: 9.1.2
       daisyui:
-        specifier: ^5.0.16
-        version: 5.0.16
+        specifier: ^5.1.10
+        version: 5.1.10
       laravel-vite-plugin:
         specifier: ^1.2.0
         version: 1.2.0(vite@6.2.5(jiti@2.4.2)(lightningcss@1.29.2))
@@ -455,8 +455,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  daisyui@5.0.16:
-    resolution: {integrity: sha512-MQiZQ21+r91zrKv3fxDOF56dzkfrr2FyXOaR/1T4f9AIeI/ilkc0i+UqOIE/VqjIfkWyq+wBPmBcyIf6iPJpYQ==}
+  daisyui@5.1.10:
+    resolution: {integrity: sha512-p1J/HME2WmaSiy6u2alIbeP3gd5PNVft3+6Bdll0BRSm/UdI4084+pD01LxFug/5wGexNewWqbcEL6nB2n2o+Q==}
 
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
@@ -1117,7 +1117,7 @@ snapshots:
       tree-kill: 1.2.2
       yargs: 17.7.2
 
-  daisyui@5.0.16: {}
+  daisyui@5.1.10: {}
 
   delayed-stream@1.0.0: {}
 
