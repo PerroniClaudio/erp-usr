@@ -11,15 +11,27 @@ Route::get('/', function () {
 
 Route::get('/favicon', function () {
     try {
-        $favicon = Storage::disk('s3')->get('favicon.ico');
+        // Prova prima con S3
+        if (Storage::disk('s3')->exists('favicon.ico')) {
+            $favicon = Storage::disk('s3')->get('favicon.ico');
 
-        return response($favicon)
-            ->header('Content-Type', 'image/x-icon')
-            ->header('Cache-Control', 'public, max-age=86400'); // Cache per 24 ore
+            return response($favicon)
+                ->header('Content-Type', 'image/x-icon')
+                ->header('Cache-Control', 'public, max-age=86400'); // Cache per 24 ore
+        }
     } catch (Exception $e) {
-        // Fallback alla favicon locale se non trova quella nel bucket
-        return response()->file(public_path('favicon.ico'));
+        // Log dell'errore per debug
+        logger()->warning('S3 favicon access failed: ' . $e->getMessage());
     }
+    
+    // Fallback alla favicon locale
+    $localFavicon = public_path('favicon.ico');
+    if (file_exists($localFavicon)) {
+        return response()->file($localFavicon);
+    }
+    
+    // Se non esiste nemmeno la favicon locale, ritorna 404
+    return response()->json(['error' => 'Favicon not found'], 404);
 })->name('favicon');
 
 Route::get('/home', function () {
