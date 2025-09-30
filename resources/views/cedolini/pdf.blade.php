@@ -139,7 +139,7 @@
                 $overtimeRequests = \App\Models\OvertimeRequest::with('overtimeType')
                     ->where('user_id', $user->id)
                     ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
-                    ->where('state', 2)
+                    ->where('status', 2)
                     ->get();
 
 
