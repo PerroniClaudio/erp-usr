@@ -17,6 +17,7 @@ class OvertimeRequest extends Model {
         'hours',
         'status',
         'batch_id',
+        'overtime_type_id',
     ];
 
     public function user() {

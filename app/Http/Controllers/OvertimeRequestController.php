@@ -61,7 +61,17 @@ class OvertimeRequestController extends Controller {
             }
         }
 
-        OvertimeRequest::create($fields);
+
+        OvertimeRequest::create([
+            'user_id' => $fields['user_id'],
+            'date' => $fields['date'],
+            'time_in' => $fields['time_in'],
+            'time_out' => $fields['time_out'],
+            'hours' => $fields['hours'],
+            'company_id' => $fields['company_id'],
+            'overtime_type_id' => $fields['overtime_type_id'],
+            'status' => $fields['status'],
+        ]);
         return redirect()->route('overtime-requests.index')->with('success', 'Richiesta di straordinario inviata con successo');
     }
 
