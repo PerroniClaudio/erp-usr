@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\Group;
+use App\Models\OvertimeRequest;
 use App\Models\TimeOffRequest;
 use App\Models\User;
 use App\Models\Vehicle;

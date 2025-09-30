@@ -139,7 +139,9 @@
                 $overtimeRequests = \App\Models\OvertimeRequest::with('overtimeType')
                     ->where('user_id', $user->id)
                     ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
+                    ->where('state', 2)
                     ->get();
+
 
                 foreach ($attendances as $attendance) {
                     $giorno = \Carbon\Carbon::parse($attendance->date)->day;
@@ -153,13 +155,20 @@
                 foreach ($overtimeRequests as $overtime) {
                     $giorno = \Carbon\Carbon::parse($overtime->date)->day;
                     $acronym = $overtime->overtimeType->acronym ?? null;
-                    if ($acronym && isset($datiGiorni[$acronym][$giorno])) {
+             
+                    if (
+                        $acronym &&
+                        array_key_exists($acronym, $datiGiorni) &&
+                        array_key_exists($giorno, $datiGiorni[$acronym])
+                    ) {
                         if (is_null($datiGiorni[$acronym][$giorno])) {
                             $datiGiorni[$acronym][$giorno] = 0;
                         }
                         $datiGiorni[$acronym][$giorno] += $overtime->hours;
                     }
                 }
+
+                
 
                 foreach ($timeOffRequests as $request) {
                     $startDate = \Carbon\Carbon::parse($request->date_from);
