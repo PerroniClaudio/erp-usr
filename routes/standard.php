@@ -1,12 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BusinessTripController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\TimeOffRequestController;
-use App\Http\Controllers\OvertimeRequestController;
 use App\Http\Controllers\UsersController;
+use Illuminate\Support\Facades\Route;
 
 Route::group([
     'middleware' => ['auth', 'role:standard'],
@@ -38,7 +38,6 @@ Route::group([
     Route::get('/pdf-batch', [BusinessTripController::class, 'generateMonthlyPdf'])->name('business-trips.pdf-batch');
 
     /** Spese */
-
     Route::get('/{businessTrip}/expenses', [BusinessTripController::class, 'expenses'])->name('business-trips.expenses');
     Route::get('/{businessTrip}/expenses/create', [BusinessTripController::class, 'createExpense'])->name('business-trips.expenses.create');
     Route::post('/{businessTrip}/expenses', [BusinessTripController::class, 'storeExpense'])->name('business-trips.expenses.store');
@@ -88,4 +87,13 @@ Route::group([
     Route::post('/', [\App\Http\Controllers\OvertimeRequestController::class, 'store'])->name('overtime-requests.store');
     Route::get('/list', [\App\Http\Controllers\OvertimeRequestController::class, 'listUserOvertimeRequests'])->name('overtime-requests.list');
     Route::get('/{overtimeRequest}', [\App\Http\Controllers\OvertimeRequestController::class, 'show'])->name('overtime-requests.show');
+});
+
+// Routes for announcements (accessible to all authenticated users)
+Route::group([
+    'middleware' => ['auth'],
+    'prefix' => 'standard/announcements',
+], function () {
+    Route::get('/unread', [AnnouncementController::class, 'unread'])->name('announcements.unread');
+    Route::post('/{announcement}/mark-as-read', [AnnouncementController::class, 'markAsRead'])->name('announcements.mark-as-read');
 });

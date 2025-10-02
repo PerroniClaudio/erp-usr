@@ -1,5 +1,7 @@
 <x-layouts.app>
 
+    <!-- Componente per visualizzare gli annunci non letti -->
+    <x-announcements.viewer />
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a href="{{ route('attendances.index') }}" class="card bg-base-200 shadow-xl hover:shadow-2xl">

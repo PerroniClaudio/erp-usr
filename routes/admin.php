@@ -109,3 +109,16 @@ Route::group([
     Route::post('/{overtimeRequest}/approve', [\App\Http\Controllers\OvertimeRequestController::class, 'approve'])->name('admin.overtime-requests.approve');
     Route::post('/{overtimeRequest}/deny', [\App\Http\Controllers\OvertimeRequestController::class, 'deny'])->name('admin.overtime-requests.deny');
 });
+
+Route::group([
+    'middleware' => ['auth', 'role:admin'],
+    'prefix' => 'admin/announcements',
+], function () {
+    Route::get('/', [\App\Http\Controllers\AnnouncementController::class, 'index'])->name('admin.announcements.index');
+    Route::get('/create', [\App\Http\Controllers\AnnouncementController::class, 'create'])->name('admin.announcements.create');
+    Route::post('/', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('admin.announcements.store');
+    Route::get('/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'show'])->name('admin.announcements.show');
+    Route::get('/{announcement}/edit', [\App\Http\Controllers\AnnouncementController::class, 'edit'])->name('admin.announcements.edit');
+    Route::put('/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'update'])->name('admin.announcements.update');
+    Route::delete('/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'destroy'])->name('admin.announcements.destroy');
+});

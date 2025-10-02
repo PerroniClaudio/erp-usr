@@ -40,10 +40,11 @@
             <ul class="menu bg-base-300 text-base-content min-h-full w-80 p-4 ">
                 <li class="border-b-2 border-base-100 pb-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="bg-primary w-8 aspect-square rounded-full flex flex-col justify-center items-center text-primary-content font-bold">
+                        <div
+                            class="bg-primary w-8 aspect-square rounded-full flex flex-col justify-center items-center text-primary-content font-bold">
                             @php
                                 $initials = collect(explode(' ', auth()->user()->name))
-                                    ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                                    ->map(fn($part) => strtoupper(substr($part, 0, 1)))
                                     ->take(2)
                                     ->implode('');
 
@@ -124,6 +125,13 @@
                             <x-lucide-clock class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
 
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('admin.announcements.index') }}">
+                            <x-lucide-megaphone class="h-6 w-6 text-primary" />
+                            <span class="ml-2">Annunci</span>
                         </a>
                     </li>
 

@@ -8,9 +8,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable {
+class User extends Authenticatable
+{
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -58,7 +59,8 @@ class User extends Authenticatable {
         '#BC427F',
     ];
 
-    public function assignColorToUser() {
+    public function assignColorToUser()
+    {
         $this->color = $this->colorBank[array_rand($this->colorBank)];
         $this->save();
     }
@@ -78,26 +80,36 @@ class User extends Authenticatable {
      *
      * @return array<string, string>
      */
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
 
-    public function companies() {
+    public function companies()
+    {
         return $this->belongsToMany(Company::class, 'user_companies', 'user_id', 'company_id');
     }
-    public function attendances() {
+
+    public function attendances()
+    {
         return $this->hasMany(Attendance::class);
     }
-    public function timeOffRequests() {
+
+    public function timeOffRequests()
+    {
         return $this->hasMany(TimeOffRequest::class);
     }
-    public function groups() {
+
+    public function groups()
+    {
         return $this->belongsToMany(Group::class, 'groups_users', 'user_id', 'group_id');
     }
-    public function vehicles() {
+
+    public function vehicles()
+    {
         return $this->belongsToMany(Vehicle::class, 'user_vehicle', 'user_id', 'vehicle_id')
             ->withPivot([
                 'vehicle_type',
@@ -107,18 +119,34 @@ class User extends Authenticatable {
                 'contract_start_date',
                 'contract_end_date',
                 'mileage',
-                'mileage_update_date'
+                'mileage_update_date',
             ]);
     }
 
-    public function mileageUpdates() {
+    public function mileageUpdates()
+    {
         return $this->hasMany(MileageUpdate::class);
     }
 
-    public function failedAttendances() {
+    public function failedAttendances()
+    {
         return $this->hasMany(FailedAttendance::class);
     }
-    public function overtimeRequests() {
+
+    public function overtimeRequests()
+    {
         return $this->hasMany(OvertimeRequest::class);
+    }
+
+    public function viewedAnnouncements()
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_user')->withTimestamps();
+    }
+
+    public function unreadAnnouncements()
+    {
+        return Announcement::active()
+            ->whereNotIn('id', $this->viewedAnnouncements()->pluck('id'))
+            ->orderBy('created_at', 'desc');
     }
 }
