@@ -179,6 +179,18 @@ class BusinessTripController extends Controller
             'status' => 'required|integer',
         ]);
 
+        // Verifica se si sta tentando di cambiare lo status
+        if ($request->status != $businessTrip->status) {
+            // Calcola la data limite per modificare lo status (primo giorno del mese successivo + 1 giorno)
+            $businessTripDate = \Carbon\Carbon::parse($businessTrip->date_from);
+            $deadlineDate = $businessTripDate->copy()->startOfMonth()->addMonth()->addDay();
+
+            // Se la data limite è già passata, impedisci il cambio di status
+            if (now()->isAfter($deadlineDate)) {
+                return back()->with('error', 'Non è possibile modificare lo status di una trasferta più vecchia di un mese. Scadenza: '.$deadlineDate->format('d/m/Y'));
+            }
+        }
+
         $businessTrip->update($fields);
 
         return back()->with('success', 'Trasferta aggiornata con successo');
