@@ -22,4 +22,5 @@ return [
     'admin_list' => 'Richieste di Straordinario',
     'your_requests' => 'Le tue richieste di straordinario',
     'new' => 'Nuova richiesta',
+    'new_admin' => 'Nuova richiesta admin',
 ];

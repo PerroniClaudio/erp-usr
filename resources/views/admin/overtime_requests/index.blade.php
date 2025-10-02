@@ -1,6 +1,8 @@
 <x-layouts.app>
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('overtime_requests.admin_list') }}</h1>
+        <a href="{{ route('admin.overtime-requests.create') }}" class="btn btn-primary"><x-lucide-plus
+                class="w-4 h-4" />{{ __('overtime_requests.new_admin') }}</a>
     </div>
     <hr>
     <div class="card bg-base-300">

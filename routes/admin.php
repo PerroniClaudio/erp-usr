@@ -102,8 +102,10 @@ Route::group([
     'prefix' => 'admin/overtime-requests',
 ], function () {
     Route::get('/', [\App\Http\Controllers\OvertimeRequestController::class, 'adminIndex'])->name('admin.overtime-requests.index');
+    Route::get('/create', [\App\Http\Controllers\OvertimeRequestController::class, 'adminCreate'])->name('admin.overtime-requests.create');
     Route::get('/list', [\App\Http\Controllers\OvertimeRequestController::class, 'listOvertimeRequests'])->name('admin.overtime-requests.list');
     Route::get('/{overtimeRequest}', [\App\Http\Controllers\OvertimeRequestController::class, 'adminShow'])->name('admin.overtime-requests.show');
+    Route::post('/store', [\App\Http\Controllers\OvertimeRequestController::class, 'adminStore'])->name('admin.overtime-requests.store');
     Route::post('/{overtimeRequest}/approve', [\App\Http\Controllers\OvertimeRequestController::class, 'approve'])->name('admin.overtime-requests.approve');
     Route::post('/{overtimeRequest}/deny', [\App\Http\Controllers\OvertimeRequestController::class, 'deny'])->name('admin.overtime-requests.deny');
 });

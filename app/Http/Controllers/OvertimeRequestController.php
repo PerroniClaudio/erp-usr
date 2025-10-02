@@ -206,4 +206,46 @@ class OvertimeRequestController extends Controller {
             ->orderBy('date', 'asc')
             ->get();
     }
+
+    public function adminCreate() {
+        $companies = Company::all();
+        $overtimeTypes = \App\Models\OvertimeType::all();
+        $users = User::select('id', 'name', 'email')->orderBy('name', 'asc')->get();
+        return view('admin.overtime_requests.create', compact('companies', 'overtimeTypes', 'users'));
+    }
+
+    public function adminStore(Request $request) {
+        $fields = $request->validate([
+            'user_id' => 'required|int|exists:users,id',
+            'date' => 'required|date',
+            'time_in' => 'required',
+            'time_out' => 'required',
+            'company_id' => 'required|int|exists:companies,id',
+            'overtime_type_id' => 'required|int|exists:overtime_types,id',
+        ]);
+        $fields['hours'] = (strtotime($fields['time_out']) - strtotime($fields['time_in'])) / 3600;
+        $fields['status'] = 2; // Approvata direttamente dall'admin
+
+        // Recupera il tipo di straordinario
+        $overtimeType = \App\Models\OvertimeType::find($fields['overtime_type_id']);
+        $date = $fields['date'];
+        $timeIn = $fields['time_in'];
+        $isHoliday = $this->isHoliday($date);
+        $isNight = strtotime($timeIn) >= strtotime('22:00');
+
+        if ($overtimeType) {
+            if ($overtimeType->acronym === 'STN' && !$isNight) {
+                return back()->withErrors(['time_in' => 'Lo straordinario notturno deve iniziare dopo le 22:00.'])->withInput();
+            }
+            if ($overtimeType->acronym === 'STF' && !$isHoliday) {
+                return back()->withErrors(['date' => 'Lo straordinario festivo deve essere in un giorno festivo.'])->withInput();
+            }
+            if ($overtimeType->acronym === 'STNF' && (!$isNight || !$isHoliday)) {
+                return back()->withErrors(['date' => 'Lo straordinario notturno e festivo deve essere sia dopo le 22:00 che in un giorno festivo.'])->withInput();
+            }
+        }
+
+        OvertimeRequest::create($fields);
+        return redirect()->route('admin.overtime-requests.index')->with('success', 'Richiesta di straordinario creata con successo');
+    }
 }

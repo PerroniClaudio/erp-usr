@@ -38,6 +38,23 @@
         <div class="drawer-side z-50">
             <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
             <ul class="menu bg-base-300 text-base-content min-h-full w-80 p-4 ">
+                <li class="border-b-2 border-base-100 pb-2 mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-primary w-8 aspect-square rounded-full flex flex-col justify-center items-center text-primary-content font-bold">
+                            @php
+                                $initials = collect(explode(' ', auth()->user()->name))
+                                    ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                                    ->take(2)
+                                    ->implode('');
+
+                                echo $initials[0] . ($initials[1] ?? '');
+                            @endphp
+                        </div>
+                        <span>
+                            {{ auth()->user()->name }}
+                        </span>
+                    </div>
+                </li>
                 <!-- Sidebar content here -->
                 @if (auth()->user()->hasRole('admin'))
                     <li>
