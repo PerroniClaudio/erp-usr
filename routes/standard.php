@@ -6,6 +6,7 @@ use App\Http\Controllers\BusinessTripController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\OvertimeRequestController;
+use App\Http\Controllers\UsersController;
 
 Route::group([
     'middleware' => ['auth', 'role:standard'],
@@ -13,6 +14,7 @@ Route::group([
 ], function () {
     Route::get('/', [AttendanceController::class, 'index'])->name('attendances.index');
     Route::get('/user', [AttendanceController::class, 'getUserAttendances'])->name('attendances.user-attendances');
+    Route::get('/export-presenze', [UsersController::class, 'exportCurrentUserPresenze'])->name('attendances.export-presenze');
     Route::get('/create', [AttendanceController::class, 'create'])->name('attendances.create');
     Route::post('/', [AttendanceController::class, 'store'])->name('attendances.store');
     Route::get('/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendances.edit');

@@ -46,6 +46,7 @@ return [
     "users_export" => "Elenco Esportazioni",
     "users_export_cedolino" => "Cedolino",
     "users_export_presenze" => "Presenze",
+    "users_export_presenze_user" => "Esporta presenze utente",
     "users_edit_user" => "Modifica utente",
     "users_personal_data" => "Dati personali",
     "users_save" => "Salva",

@@ -217,6 +217,15 @@ class UsersController extends Controller
         return $pdf->download('presenze_'.$user->name.'_'.$mese.'_'.$anno.'.pdf');
     }
 
+    /**
+     * Export current logged user's attendances as PDF
+     */
+    public function exportCurrentUserPresenze(Request $request)
+    {
+        $user = $request->user();
+        return $this->exportPresenzePdf($user, $request);
+    }
+
     public function exportAnomaliesPdf(User $user, Request $request)
     {
         $request->validate([
