@@ -21,15 +21,15 @@ Route::get('/favicon', function () {
         }
     } catch (Exception $e) {
         // Log dell'errore per debug
-        logger()->warning('S3 favicon access failed: ' . $e->getMessage());
+        logger()->warning('S3 favicon access failed: '.$e->getMessage());
     }
-    
+
     // Fallback alla favicon locale
     $localFavicon = public_path('favicon.ico');
     if (file_exists($localFavicon)) {
         return response()->file($localFavicon);
     }
-    
+
     // Se non esiste nemmeno la favicon locale, ritorna 404
     return response()->json(['error' => 'Favicon not found'], 404);
 })->name('favicon');
@@ -54,6 +54,10 @@ Route::get('/vehicles/search', function () {
 
     return response()->json(['models' => $vehicles]);
 })->middleware(['auth'])->name('vehicles.brands.search');
+
+Route::get('/refresh-csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->middleware(['auth'])->name('csrf.refresh');
 
 require __DIR__.'/auth.php';
 require __DIR__.'/standard.php';
