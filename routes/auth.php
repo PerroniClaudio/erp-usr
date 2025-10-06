@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Company;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Services\AttendanceCheckService;
 
 Route::get('/auth/redirect', function () {
     return Socialite::driver('microsoft')->redirect();
@@ -28,6 +29,12 @@ Route::get('/auth/microsoft/callback', function () {
 
         if ($existingUser) {
             Auth::login($existingUser);
+            
+            // Esegui controllo ore lavorative dopo il login per utenti non admin
+            if (!$existingUser->hasRole('admin')) {
+                $attendanceCheckService = new AttendanceCheckService();
+                $attendanceCheckService->performLoginAttendanceCheck($existingUser);
+            }
         } else {
             $newUser = User::create([
                 'name' => $user->getName(),
@@ -50,6 +57,12 @@ Route::get('/auth/microsoft/callback', function () {
             }
 
             Auth::login($newUser);
+            
+            // Esegui controllo ore lavorative dopo il login per nuovi utenti non admin
+            if (!$newUser->hasRole('admin')) {
+                $attendanceCheckService = new AttendanceCheckService();
+                $attendanceCheckService->performLoginAttendanceCheck($newUser);
+            }
         }
 
         return redirect()->intended('/home');
@@ -80,6 +93,12 @@ Route::get('/auth/microsoft/callback-no-state', function () {
 
         if ($existingUser) {
             Auth::login($existingUser);
+            
+            // Esegui controllo ore lavorative dopo il login per utenti non admin
+            if (!$existingUser->hasRole('admin')) {
+                $attendanceCheckService = new AttendanceCheckService();
+                $attendanceCheckService->performLoginAttendanceCheck($existingUser);
+            }
         } else {
             $newUser = User::create([
                 'name' => $user->getName(),
@@ -102,6 +121,12 @@ Route::get('/auth/microsoft/callback-no-state', function () {
             }
 
             Auth::login($newUser);
+            
+            // Esegui controllo ore lavorative dopo il login per nuovi utenti non admin
+            if (!$newUser->hasRole('admin')) {
+                $attendanceCheckService = new AttendanceCheckService();
+                $attendanceCheckService->performLoginAttendanceCheck($newUser);
+            }
         }
 
         return redirect()->intended('/home');

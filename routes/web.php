@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Vehicle;
+use App\Services\AttendanceCheckService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +42,10 @@ Route::get('/home', function () {
     if ($user->hasRole('admin')) {
         return redirect()->route('admin.home');
     }
+
+    // Esegui controllo ore lavorative per utenti standard
+    $attendanceCheckService = new AttendanceCheckService();
+    $attendanceCheckService->performLoginAttendanceCheck($user);
 
     return view('home', [
         'failedAttendances' => $user->failedAttendances()->where('status', 0)->get(),
