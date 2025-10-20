@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TimeOffRequest extends Model {
+class TimeOffRequest extends Model
+{
     use HasFactory;
 
     protected $fillable = [
@@ -15,14 +16,15 @@ class TimeOffRequest extends Model {
         'date_from',
         'date_to',
         'status',
-        'batch_id'
+        'batch_id',
+        'denial_reason',
     ];
 
     protected $status_names = [
         0 => 'created',
         1 => 'pending',
         2 => 'approved',
-        3 => 'rejected'
+        3 => 'rejected',
     ];
 
     protected $colors = [
@@ -33,18 +35,21 @@ class TimeOffRequest extends Model {
         4 => '#f0ad4e', // Rifiutato ma dell'utente attivo
     ];
 
-    public function type() {
+    public function type()
+    {
         return $this->belongsTo(TimeOffType::class, 'time_off_type_id');
     }
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function getColorForRequest($user_id) {
+    public function getColorForRequest($user_id)
+    {
 
         if ($user_id == 0) {
-            // richiesta di un admin, ritorna il colore principale 
+            // richiesta di un admin, ritorna il colore principale
 
             if ($this->status == 0 || $this->status == 1) {
                 return $this->user->color; // Pending for active user
@@ -71,17 +76,18 @@ class TimeOffRequest extends Model {
             }
         }
 
-        return "#000"; // Default color if none match
+        return '#000'; // Default color if none match
 
     }
 
-    public function formattedUserName() {
+    public function formattedUserName()
+    {
 
         $name_parts = explode(' ', $this->user->name);
 
-        $name = str_split($name_parts[0])[0] . '.';
+        $name = str_split($name_parts[0])[0].'.';
         $lastName = $name_parts[1] ?? '';
 
-        return $name . ' ' . $lastName;
+        return $name.' '.$lastName;
     }
 }

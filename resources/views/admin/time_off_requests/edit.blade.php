@@ -104,16 +104,22 @@
                             {{ __('time_off_requests.deny_request_text') }}
                         </p>
 
-                        <div class="flex flex-row-reverse">
-                            <form method="POST"
-                                action="{{ route('admin.time-off.deny', ['time_off_request' => $requests->first()->id]) }}">
-                                @csrf
+                        <form method="POST"
+                            action="{{ route('admin.time-off.deny', ['time_off_request' => $requests->first()->id]) }}">
+                            @csrf
 
+                            <fieldset class="fieldset mb-4">
+                                <legend class="fieldset-legend">{{ __('time_off_requests.deny_reason') }}</legend>
+                                <textarea name="denial_reason" class="textarea textarea-bordered w-full"
+                                    placeholder="{{ __('time_off_requests.deny_reason_placeholder') }}" required></textarea>
+                            </fieldset>
+
+                            <div class="flex flex-row-reverse">
                                 <button type="submit" class="btn btn-secondary">
                                     {{ __('time_off_requests.deny') }}
                                 </button>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
 
                     </div>
                 </dialog>

@@ -34,6 +34,8 @@ return [
     'deny' => 'Rifiuta',
     'deny_request_title' => 'Rifiuta Richiesta di Ferie/Permesso',
     'deny_request_text' => 'Sei sicuro di voler rifiutare questa richiesta di ferie/permesso?',
+    'deny_reason' => 'Motivazione del Rifiuto',
+    'deny_reason_placeholder' => 'Inserisci la motivazione del rifiuto...',
 
     'delete' => 'Elimina',
     'delete_request_title' => 'Elimina Richiesta di Ferie/Permesso',
@@ -54,7 +56,7 @@ return [
     'rol' => 'Rol',
     'type_updated_successfully' => 'Tipo di permesso aggiornato con successo',
     'update_error' => 'Errore durante l\'aggiornamento del tipo',
-    
+
     // Admin-specific translations
     'new_admin_request' => 'Nuova Richiesta Admin',
     'select_user_and_days' => 'Seleziona Utente e Giorni',

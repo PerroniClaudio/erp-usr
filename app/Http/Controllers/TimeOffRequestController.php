@@ -659,10 +659,22 @@ class TimeOffRequestController extends Controller
         return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso approvata con successo');
     }
 
-    public function denyTimeOffRequest(TimeOffRequest $timeOffRequest)
+    public function denyTimeOffRequest(Request $request, TimeOffRequest $timeOffRequest)
     {
+        $validated = $request->validate([
+            'denial_reason' => 'required|string|min:5',
+        ]);
+
         // Rifiuta tutte le richieste con lo stesso batch_id
-        TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->update(['status' => '3']);
+        TimeOffRequest::where('batch_id', $timeOffRequest->batch_id)->update([
+            'status' => '3',
+            'denial_reason' => $validated['denial_reason'],
+        ]);
+
+        // Invia email all'utente che ha effettuato la richiesta
+        $user = $timeOffRequest->user;
+        \Illuminate\Support\Facades\Mail::to($user->email)
+            ->send(new \App\Mail\TimeOffRequestDenied($timeOffRequest->batch_id, $user, $validated['denial_reason']));
 
         return redirect()->route('admin.time-off.index')->with('success', 'Richiesta di permesso rifiutata con successo');
     }
@@ -727,8 +739,8 @@ class TimeOffRequestController extends Controller
         // Verifica che l'utente specificato esista
         $userId = $requests[0]->user_id;
         $targetUser = User::find($userId);
-        
-        if (!$targetUser) {
+
+        if (! $targetUser) {
             return response()->json(['message' => 'Utente non trovato'], 400);
         }
 
@@ -756,6 +768,7 @@ class TimeOffRequestController extends Controller
 
                 if ($existingRequest) {
                     DB::rollBack();
+
                     return response()->json(['message' => 'L\'utente ha già una richiesta di permesso in questo periodo'], 400);
                 }
 
@@ -777,7 +790,8 @@ class TimeOffRequestController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Errore durante la creazione della richiesta: ' . $e->getMessage()], 500);
+
+            return response()->json(['message' => 'Errore durante la creazione della richiesta: '.$e->getMessage()], 500);
         }
     }
 
