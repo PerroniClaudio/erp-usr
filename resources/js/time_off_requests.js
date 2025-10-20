@@ -41,6 +41,8 @@ const generateDaysButton = document.getElementById("generate-days");
 const dateErrorField = document.getElementById("date-error-field");
 const daysTableBody = document.getElementById("days-table-body");
 const daysTableRowTemplate = document.getElementById("days-table-row-template");
+const dateFromInput = document.getElementById("date_from");
+const dateFromWarning = document.getElementById("date-from-warning");
 
 generateDaysButton?.addEventListener("click", async () => {
     const dateFrom = document.getElementById("date_from")?.value;
@@ -64,6 +66,46 @@ generateDaysButton?.addEventListener("click", async () => {
 
     // generateDaysButton.setAttribute("disabled", "true");
     showQuickActions();
+});
+
+/** Warning per date vicine */
+function daysFromToday(dateString) {
+    if (!dateString) {
+        return Infinity;
+    }
+
+    const today = new Date();
+    // Normalizza orario a mezzanotte per evitare problemi di fuso
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(dateString);
+    d.setHours(0, 0, 0, 0);
+
+    const diffMs = d - today;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays;
+}
+
+function updateDateFromWarning() {
+    if (!dateFromInput || !dateFromWarning) return;
+
+    const diffDays = daysFromToday(dateFromInput.value);
+
+    // Mostra warning solo se la data è oggi o nei prossimi 5 giorni
+    if (diffDays >= 0 && diffDays <= 5) {
+        dateFromWarning.classList.remove("hidden");
+    } else {
+        dateFromWarning.classList.add("hidden");
+    }
+}
+
+// Controllo on-load se il campo ha già un valore (es. old() o edit)
+document.addEventListener("DOMContentLoaded", () => {
+    updateDateFromWarning();
+});
+
+// Aggiorna quando l'utente cambia la data
+dateFromInput?.addEventListener("change", () => {
+    updateDateFromWarning();
 });
 
 function isValidDate(date) {

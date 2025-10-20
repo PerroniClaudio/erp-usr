@@ -15,6 +15,33 @@
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">Data inizio</legend>
                         <input type="date" id="date_from" name="date_from" class="input w-full" />
+                        {{-- Warning per date troppo vicine alla data odierna (<=5 giorni) --}}
+                        @php
+                            $showDateFromWarning = false;
+                            $dateFromCandidate = old('date_from') ?? ($date_from ?? null);
+
+                            if ($dateFromCandidate) {
+                                try {
+                                    $d = \Carbon\Carbon::parse($dateFromCandidate)->startOfDay();
+                                    $today = \Carbon\Carbon::now()->startOfDay();
+                                    $diff = $d->diffInDays($today);
+                                    if ($d->gte($today) && $diff <= 5) {
+                                        $showDateFromWarning = true;
+                                    }
+                                } catch (Exception $e) {
+                                    // se il parsing fallisce, non mostrare il warning
+                                }
+                            }
+                        @endphp
+
+                        <div id="date-from-warning"
+                            class="alert alert-warning mt-2 {{ $showDateFromWarning ? '' : 'hidden' }}" role="alert">
+                            <x-lucide-alert-triangle class="w-6 h-6" />
+                            <p>Ricordiamo che per regolamento aziendale ferie e permessi vanno chieste con un minimo di
+                                5 gg di preavviso. <br> La richiesta potrebbe venire rifiutata. <br> Attenzione:
+                                preparare
+                                opportuno giustificativo</p>
+                        </div>
                     </fieldset>
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">Data fine</legend>
