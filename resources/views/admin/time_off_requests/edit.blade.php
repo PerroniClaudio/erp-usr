@@ -50,15 +50,16 @@
                 </div>
             </div>
 
-            @if ($requests->first()->status == 0)
+            @php
+                $requestStatus = $requests->first()->status;
+            @endphp
+
+            @if ($requestStatus == 0)
                 <div class="btn btn-primary" onclick="document.getElementById('approve').showModal()">
                     {{ __('time_off_requests.approve') }}
                 </div>
                 <div class="btn btn-secondary" onclick="document.getElementById('deny').showModal()">
                     {{ __('time_off_requests.deny') }}
-                </div>
-                <div class="btn btn-warning" onclick="document.getElementById('delete').showModal()">
-                    {{ __('time_off_requests.delete') }}
                 </div>
 
                 <dialog id="approve" class="modal">
@@ -123,36 +124,8 @@
 
                     </div>
                 </dialog>
-                <dialog id="delete" class="modal">
-                    <div class="modal-box">
-                        <div class="flex flex-row-reverse items-end">
-                            <form method="dialog">
-                                <!-- if there is a button in form, it will close the modal -->
-                                <button class="btn btn-ghost">
-                                    <x-lucide-x class="w-4 h-4" />
-                                </button>
-                            </form>
-                        </div>
-                        <h3 class="text-lg font-bold"> {{ __('time_off_requests.delete_request_title') }}</h3>
-                        <p class="py-4">
-                            {{ __('time_off_requests.delete_request_text') }}
-                        </p>
-
-                        <div class="flex flex-row-reverse">
-                            <form method="POST"
-                                action="{{ route('admin.time-off.delete', ['time_off_request' => $requests->first()->id]) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-warning">
-                                    {{ __('time_off_requests.delete') }}
-                                </button>
-                            </form>
-                        </div>
-
-                    </div>
-                </dialog>
             @else
-                @switch($requests->first()->status)
+                @switch($requestStatus)
                     @case(2)
                         <div role="alert" class="alert alert-success">
                             <x-lucide-check class="w-6 h-6" />
@@ -168,6 +141,39 @@
                     @break
                 @endswitch
             @endif
+
+            <div class="btn btn-warning" onclick="document.getElementById('delete').showModal()">
+                {{ __('time_off_requests.delete') }}
+            </div>
+
+            <dialog id="delete" class="modal">
+                <div class="modal-box">
+                    <div class="flex flex-row-reverse items-end">
+                        <form method="dialog">
+                            <!-- if there is a button in form, it will close the modal -->
+                            <button class="btn btn-ghost">
+                                <x-lucide-x class="w-4 h-4" />
+                            </button>
+                        </form>
+                    </div>
+                    <h3 class="text-lg font-bold"> {{ __('time_off_requests.delete_request_title') }}</h3>
+                    <p class="py-4">
+                        {{ __('time_off_requests.delete_request_text') }}
+                    </p>
+
+                    <div class="flex flex-row-reverse">
+                        <form method="POST"
+                            action="{{ route('admin.time-off.delete', ['time_off_request' => $requests->first()->id]) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-warning">
+                                {{ __('time_off_requests.delete') }}
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </dialog>
 
 
         </div>
