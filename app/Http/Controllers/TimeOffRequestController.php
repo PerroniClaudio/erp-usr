@@ -41,8 +41,8 @@ class TimeOffRequestController extends Controller
         $user = $request->user();
 
         $fields = $request->validate([
-            'date_from' => 'required|string',
-            'date_to' => 'required|string',
+            'date_from' => 'required|date',
+            'date_to' => 'required|date',
             'company_id' => 'required|int',
             'time_off_type_id' => 'required|int',
             'description' => 'required|string',
@@ -50,6 +50,10 @@ class TimeOffRequestController extends Controller
 
         if (strtotime($fields['date_to']) < strtotime($fields['date_from'])) {
             return redirect()->back()->withErrors(['message' => 'La data di fine non può essere maggiore di quella di inizio']);
+        }
+
+        if ($this->violatesMinimumNotice($user, $fields['date_from'])) {
+            return redirect()->back()->withErrors(['message' => self::NOTICE_ERROR_MESSAGE])->withInput();
         }
 
         $fields['user_id'] = $user->id;
@@ -77,6 +81,12 @@ class TimeOffRequestController extends Controller
             $fields['user_id'] = $user->id;
             $fields['company_id'] = Company::where('name', 'iFortech')->first()->id;
             $fields['batch_id'] = $batch_id;
+
+            if ($this->violatesMinimumNotice($user, $fields['date_from'])) {
+                DB::rollBack();
+
+                return redirect()->back()->withErrors(['message' => self::NOTICE_ERROR_MESSAGE])->withInput();
+            }
 
             $existingRequest = TimeOffRequest::where('user_id', $user->id)
                 ->where(function ($query) use ($fields) {
@@ -170,6 +180,21 @@ class TimeOffRequestController extends Controller
         return response()->json([
             'events' => $event_result,
         ]);
+    }
+
+    private const MINIMUM_NOTICE_DAYS = 3;
+    private const NOTICE_ERROR_MESSAGE = 'Le richieste di ferie o permessi devono avere almeno 3 giorni di preavviso.';
+
+    private function violatesMinimumNotice(User $user, string $requestedStartDate): bool
+    {
+        if ($user->hasRole('admin')) {
+            return false;
+        }
+
+        $requestedStart = Carbon::parse($requestedStartDate)->startOfDay();
+        $minimumAllowedDate = Carbon::now()->startOfDay()->addDays(self::MINIMUM_NOTICE_DAYS);
+
+        return $requestedStart->lt($minimumAllowedDate);
     }
 
     /**
