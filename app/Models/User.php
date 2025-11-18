@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\UserDefaultSchedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -136,6 +137,47 @@ class User extends Authenticatable
     public function overtimeRequests()
     {
         return $this->hasMany(OvertimeRequest::class);
+    }
+
+    public function defaultSchedules()
+    {
+        return $this->hasMany(UserDefaultSchedule::class);
+    }
+
+    public function ensureDefaultSchedule()
+    {
+        if ($this->defaultSchedules()->exists()) {
+            return $this->defaultSchedules;
+        }
+
+        $entries = [];
+        $workDays = [
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+        ];
+
+        foreach ($workDays as $day) {
+            $entries[] = [
+                'day' => $day,
+                'hour_start' => '08:00',
+                'hour_end' => '12:00',
+                'total_hours' => 4,
+                'type' => 'work',
+            ];
+
+            $entries[] = [
+                'day' => $day,
+                'hour_start' => '13:00',
+                'hour_end' => '17:00',
+                'total_hours' => 4,
+                'type' => 'work',
+            ];
+        }
+
+        return $this->defaultSchedules()->createMany($entries);
     }
 
     public function viewedAnnouncements()

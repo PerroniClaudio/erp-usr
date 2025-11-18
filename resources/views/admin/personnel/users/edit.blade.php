@@ -136,6 +136,41 @@
             </form>
         </div>
 
+        @php
+            $defaultScheduleItems = old(
+                'schedule',
+                $user->defaultSchedules
+                    ->map(
+                        fn($item) => [
+                            'day' => $item->day,
+                            'hour_start' =>
+                                $item->hour_start instanceof \Illuminate\Support\Carbon
+                                    ? $item->hour_start->format('H:i')
+                                    : $item->hour_start,
+                            'hour_end' =>
+                                $item->hour_end instanceof \Illuminate\Support\Carbon
+                                    ? $item->hour_end->format('H:i')
+                                    : $item->hour_end,
+                            'type' => $item->type,
+                        ],
+                    )
+                    ->toArray(),
+            );
+        @endphp
+
+        <div class="card bg-base-300">
+            <div class="card-body flex flex-col gap-4">
+
+                <h2 class="text-lg">Calendario di default</h2>
+                <hr>
+                <p class="text-sm ">Imposta le fasce orarie settimanali per questo utente.
+                </p>
+
+                <a href="{{ route('users.default-schedules.calendar', $user) }}" class="btn btn-primary">Visualizza
+                    calendario</a>
+            </div>
+        </div>
+
         <div class="card bg-base-300">
             <div class="card-body">
                 <div class="flex items-center justify-between">

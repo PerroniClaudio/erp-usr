@@ -56,7 +56,10 @@ Route::group([
     Route::get('/users/{user}/export-presenze', [UsersController::class, 'exportPresenzePdf'])->name('users.export-presenze');
     Route::get('/users/{user}/export-nota-spese', [\App\Http\Controllers\NotaSpeseController::class, 'exportMonthly'])->name('users.export-nota-spese');
     Route::get('/users/{user}/export-anomalie', [UsersController::class, 'exportAnomaliesPdf'])->name('users.export-anomalie');
+    Route::get('/users/{user}/default-schedules/calendar', [UsersController::class, 'showDefaultSchedule'])->name('users.default-schedules.calendar');
     Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
+    Route::post('/users/{user}/default-schedules', [UsersController::class, 'updateDefaultSchedules'])->name('users.default-schedules.update');
+    Route::post('/users/{user}/default-schedules/generate', [UsersController::class, 'generateDefaultSchedules'])->name('users.default-schedules.generate');
     Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
     Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
     Route::get('/users/{user}/add-vehicles', [UsersController::class, 'addVehicles'])->name('users.add-vehicles');

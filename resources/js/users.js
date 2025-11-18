@@ -228,3 +228,69 @@ personalDataActivator.addEventListener("click", (event) => {
     personalDataActivator.classList.toggle("btn-primary");
     personalDataActivator.classList.toggle("btn-secondary");
 });
+
+// Gestione calendario di default
+const scheduleContainer = document.getElementById("default-schedule-rows");
+const scheduleTemplate = document.getElementById("schedule-row-template");
+const addScheduleRowButton = document.getElementById("add-schedule-row");
+
+if (scheduleContainer && scheduleTemplate && addScheduleRowButton) {
+    let nextScheduleIndex = parseInt(
+        scheduleContainer.dataset.nextIndex || "0",
+        10
+    );
+
+    const addEmptyState = () => {
+        if (scheduleContainer.querySelector(".schedule-row")) {
+            return;
+        }
+
+        const empty = document.createElement("div");
+        empty.className = "text-sm text-base-content/70 schedule-empty-state";
+        empty.textContent = "Nessuna fascia configurata.";
+        scheduleContainer.appendChild(empty);
+    };
+
+    const bindRemove = (row) => {
+        row.querySelectorAll(".remove-schedule-row").forEach((button) => {
+            button.addEventListener("click", () => {
+                row.remove();
+                addEmptyState();
+            });
+        });
+    };
+
+    const removeEmptyState = () => {
+        const emptyState = scheduleContainer.querySelector(
+            ".schedule-empty-state"
+        );
+
+        if (emptyState) {
+            emptyState.remove();
+        }
+    };
+
+    const addRow = () => {
+        removeEmptyState();
+        const fragment = scheduleTemplate.content.cloneNode(true);
+        const row = fragment.querySelector(".schedule-row");
+
+        fragment.querySelectorAll("[data-name]").forEach((element) => {
+            const name = element.dataset.name.replace(
+                "__INDEX__",
+                nextScheduleIndex
+            );
+            element.setAttribute("name", name);
+        });
+
+        nextScheduleIndex += 1;
+        bindRemove(row);
+        scheduleContainer.appendChild(fragment);
+    };
+
+    scheduleContainer
+        .querySelectorAll(".schedule-row")
+        .forEach((row) => bindRemove(row));
+
+    addScheduleRowButton.addEventListener("click", () => addRow());
+}

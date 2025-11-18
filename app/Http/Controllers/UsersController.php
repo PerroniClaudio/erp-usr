@@ -9,12 +9,14 @@ use App\Models\OvertimeRequest;
 use App\Models\TimeOffRequest;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\UserDefaultSchedule;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class UsersController extends Controller
 {
@@ -56,7 +58,85 @@ class UsersController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.personnel.users.edit', compact('user'));
+        $user->load([
+            'defaultSchedules' => function ($query) {
+                $query->orderByRaw("CASE day
+                    WHEN 'monday' THEN 1
+                    WHEN 'tuesday' THEN 2
+                    WHEN 'wednesday' THEN 3
+                    WHEN 'thursday' THEN 4
+                    WHEN 'friday' THEN 5
+                    WHEN 'saturday' THEN 6
+                    WHEN 'sunday' THEN 7
+                    ELSE 8 END")->orderBy('hour_start');
+            },
+        ]);
+
+        $dayLabels = [
+            'monday' => 'Lunedì',
+            'tuesday' => 'Martedì',
+            'wednesday' => 'Mercoledì',
+            'thursday' => 'Giovedì',
+            'friday' => 'Venerdì',
+            'saturday' => 'Sabato',
+            'sunday' => 'Domenica',
+        ];
+
+        $scheduleTypes = [
+            'work' => 'Lavoro',
+            'overtime' => 'Straordinario',
+        ];
+
+        return view('admin.personnel.users.edit', compact('user', 'dayLabels', 'scheduleTypes'));
+    }
+
+    public function showDefaultSchedule(User $user)
+    {
+        $referenceMonday = Carbon::now()->startOfWeek(Carbon::MONDAY);
+
+        $scheduleEvents = $user->defaultSchedules()
+            ->orderByRaw("CASE day
+                WHEN 'monday' THEN 1
+                WHEN 'tuesday' THEN 2
+                WHEN 'wednesday' THEN 3
+                WHEN 'thursday' THEN 4
+                WHEN 'friday' THEN 5
+                WHEN 'saturday' THEN 6
+                WHEN 'sunday' THEN 7
+                ELSE 8 END")
+            ->orderBy('hour_start')
+            ->get()
+            ->map(function ($item) use ($referenceMonday) {
+                $dayOffsets = [
+                    'monday' => 0,
+                    'tuesday' => 1,
+                    'wednesday' => 2,
+                    'thursday' => 3,
+                    'friday' => 4,
+                    'saturday' => 5,
+                    'sunday' => 6,
+                ];
+
+                $date = $referenceMonday->copy()->addDays($dayOffsets[$item->day] ?? 0)->toDateString();
+
+                return [
+                    'id' => $item->id,
+                    'title' => $item->type === 'overtime' ? 'Straordinario' : 'Lavoro',
+                    'start' => "{$date} {$item->hour_start}",
+                    'end' => "{$date} {$item->hour_end}",
+                    'type' => $item->type,
+                    'display' => 'block',
+                ];
+            });
+
+      
+
+        return view('admin.personnel.users.default-schedule', [
+            'user' => $user,
+            'scheduleEvents' => $scheduleEvents,
+            'initialDate' => $referenceMonday->toDateString(),
+            'schedules' => $user->defaultSchedules,
+        ]);
     }
 
     public function exportPdf(User $user, Request $request)
@@ -669,6 +749,56 @@ class UsersController extends Controller
         $user->update($request->all());
 
         return redirect()->route('users.edit', $user->id)->with('success', __('personnel.users_updated'));
+    }
+
+    public function updateDefaultSchedules(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'schedule' => 'array',
+            'schedule.*.day' => 'required|string|in:' . implode(',', UserDefaultSchedule::DAYS),
+            'schedule.*.hour_start' => 'required|date_format:H:i',
+            'schedule.*.hour_end' => 'required|date_format:H:i',
+            'schedule.*.type' => 'required|string|in:' . implode(',', UserDefaultSchedule::TYPES),
+        ]);
+
+        $scheduleItems = $validated['schedule'] ?? [];
+
+        if (empty($scheduleItems)) {
+            $user->defaultSchedules()->delete();
+
+            return redirect()->route('users.edit', $user)->with('success', 'Calendario aggiornato.');
+        }
+
+        $normalized = collect($scheduleItems)->map(function (array $item) {
+            $start = Carbon::createFromFormat('H:i', $item['hour_start']);
+            $end = Carbon::createFromFormat('H:i', $item['hour_end']);
+
+            if ($end->lte($start)) {
+                throw ValidationException::withMessages([
+                    'hour_end' => 'L\'orario di fine deve essere successivo a quello di inizio.',
+                ]);
+            }
+
+            return [
+                'day' => $item['day'],
+                'hour_start' => $start->format('H:i'),
+                'hour_end' => $end->format('H:i'),
+                'total_hours' => $start->diffInMinutes($end) / 60,
+                'type' => $item['type'],
+            ];
+        });
+
+        $user->defaultSchedules()->delete();
+        $user->defaultSchedules()->createMany($normalized->toArray());
+
+        return redirect()->route('users.edit', $user)->with('success', 'Calendario aggiornato.');
+    }
+
+    public function generateDefaultSchedules(User $user)
+    {
+        $user->ensureDefaultSchedule();
+
+        return redirect()->route('users.default-schedules.calendar', $user)->with('success', 'Calendario standard generato.');
     }
 
     public function updateResidence(Request $request, User $user)
