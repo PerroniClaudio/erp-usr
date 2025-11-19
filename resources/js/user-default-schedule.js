@@ -6,8 +6,33 @@ import axios from "axios";
 
 const calendarEl = document.getElementById("default-schedule-calendar");
 
+const parseJson = (value, fallback) => {
+    try {
+        return JSON.parse(value || "") || fallback;
+    } catch (_) {
+        return fallback;
+    }
+};
+
 if (calendarEl) {
-    const schedules = JSON.parse(calendarEl.dataset.schedules || "[]");
+    const schedules = parseJson(calendarEl.dataset.schedules, []);
+    const attendanceTypes = parseJson(calendarEl.dataset.attendanceTypes, []);
+    const defaultAttendanceTypeId =
+        calendarEl.dataset.defaultAttendanceType ||
+        (attendanceTypes.length ? String(attendanceTypes[0].id) : null);
+    const attendanceTypeMap = new Map(attendanceTypes.map((type) => [String(type.id), type]));
+    const fallbackColor = "#94a3b8";
+
+    const getAttendanceType = (id) => attendanceTypeMap.get(String(id));
+    const getAttendanceLabel = (id) => {
+        const attendanceType = getAttendanceType(id);
+        return attendanceType ? attendanceType.name : "Fascia";
+    };
+    const getColorForType = (id) => {
+        const attendanceType = getAttendanceType(id);
+        return attendanceType?.color || fallbackColor;
+    };
+
     const saveUrl = calendarEl.dataset.saveUrl;
     const initialDate = calendarEl.dataset.initialDate;
     const weekStart = new Date(`${initialDate}T00:00:00`);
@@ -40,13 +65,16 @@ if (calendarEl) {
             const dateStr = formatDateLocal(date);
             const startTime = normalizeTime(item.hour_start);
             const endTime = normalizeTime(item.hour_end);
+            const attendanceTypeId = item.attendance_type_id ?? defaultAttendanceTypeId;
 
             return {
-                title: item.type === "overtime" ? "Straordinario" : "Lavoro",
+                title: getAttendanceLabel(attendanceTypeId),
                 start: `${dateStr}T${startTime}`,
                 end: `${dateStr}T${endTime}`,
-                type: item.type,
                 display: "block",
+                extendedProps: {
+                    attendanceTypeId,
+                },
             };
         });
 
@@ -62,15 +90,6 @@ if (calendarEl) {
     const modalDelete = document.getElementById("modal-delete");
 
     const weekdayMap = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-    const weekdayLabels = [
-        calendarEl.dataset.sundayLabel || "Domenica",
-        calendarEl.dataset.mondayLabel || "Lunedì",
-        calendarEl.dataset.tuesdayLabel || "Martedì",
-        calendarEl.dataset.wednesdayLabel || "Mercoledì",
-        calendarEl.dataset.thursdayLabel || "Giovedì",
-        calendarEl.dataset.fridayLabel || "Venerdì",
-        calendarEl.dataset.saturdayLabel || "Sabato",
-    ];
     const weekdayShortLabels = [
         calendarEl.dataset.sundayShortLabel || "dom",
         calendarEl.dataset.mondayShortLabel || "lun",
@@ -82,18 +101,12 @@ if (calendarEl) {
     ];
 
     let selectedEvent = null;
-    let pendingRange = null;
 
     const updateEventAppearance = (event) => {
-        const type = event.extendedProps.type || "work";
-        const isOvertime = type === "overtime";
-        const bg = isOvertime ? "#facc15" : "#60a5fa"; // amber-300 / blue-400
-        const border = isOvertime ? "#d97706" : "#2563eb"; // amber-600 / blue-600
-        const text = "#1f2937"; // slate-800
-
-        event.setProp("backgroundColor", bg);
-        event.setProp("borderColor", border);
-        event.setProp("textColor", text);
+        const color = getColorForType(event.extendedProps.attendanceTypeId);
+        event.setProp("backgroundColor", color);
+        event.setProp("borderColor", color);
+        event.setProp("textColor", "#1f2937");
     };
 
     const combineDateTime = (date, timeStr) => {
@@ -103,9 +116,8 @@ if (calendarEl) {
         return result;
     };
 
-    const openModal = ({ event = null, start = null, end = null, type = "work" }) => {
+    const openModal = ({ event = null, start = null, end = null, attendanceTypeId = defaultAttendanceTypeId }) => {
         selectedEvent = event;
-        pendingRange = event ? null : { start, end, type };
         const baseDate = event ? event.start : start;
 
         const title = document.querySelector("#schedule-modal .modal-box h3");
@@ -114,12 +126,15 @@ if (calendarEl) {
                 ? modal?.dataset.titleEdit || "Modifica fascia"
                 : modal?.dataset.titleAdd || "Aggiungi fascia";
         }
-        if (modalDaySelect) {
+
+        if (modalDaySelect && baseDate) {
             modalDaySelect.value = weekdayMap[baseDate.getDay()];
         }
-        modalHourStart.value = (event ? event.start : start).toTimeString().slice(0, 5);
-        modalHourEnd.value = (event ? event.end : end).toTimeString().slice(0, 5);
-        modalType.value = event ? event.extendedProps.type || "work" : type;
+        modalHourStart.value = normalizeTime((event ? event.start : start)?.toTimeString() || "08:00");
+        modalHourEnd.value = normalizeTime((event ? event.end : end)?.toTimeString() || "12:00");
+        if (modalType) {
+            modalType.value = String(event ? event.extendedProps.attendanceTypeId : attendanceTypeId ?? defaultAttendanceTypeId);
+        }
         modal?.showModal();
     };
 
@@ -141,7 +156,7 @@ if (calendarEl) {
         dayHeaderContent: (arg) => weekdayShortLabels[arg.date.getDay()],
         events: mapSchedulesToEvents(),
         select: (info) => {
-            openModal({ start: info.start, end: info.end, type: "work" });
+            openModal({ start: info.start, end: info.end, attendanceTypeId: defaultAttendanceTypeId });
             calendar.unselect();
         },
         eventClick: (info) => openModal({ event: info.event }),
@@ -153,9 +168,9 @@ if (calendarEl) {
     const serializeEvents = () => {
         return calendar.getEvents().map((event) => ({
             day: weekdayMap[event.start.getDay()],
-            hour_start: event.start.toTimeString().slice(0, 5),
-            hour_end: event.end.toTimeString().slice(0, 5),
-            type: event.extendedProps.type || "work",
+            hour_start: normalizeTime(event.start.toTimeString()),
+            hour_end: normalizeTime(event.end.toTimeString()),
+            attendance_type_id: event.extendedProps.attendanceTypeId || defaultAttendanceTypeId,
         }));
     };
 
@@ -167,7 +182,7 @@ if (calendarEl) {
             form.append(`schedule[${index}][day]`, item.day);
             form.append(`schedule[${index}][hour_start]`, item.hour_start);
             form.append(`schedule[${index}][hour_end]`, item.hour_end);
-            form.append(`schedule[${index}][type]`, item.type);
+            form.append(`schedule[${index}][attendance_type_id]`, item.attendance_type_id);
         });
 
         axios
@@ -188,7 +203,7 @@ if (calendarEl) {
         const end = new Date(now);
         end.setHours(12, 0, 0, 0);
 
-        openModal({ start, end, type: "work" });
+        openModal({ start, end, attendanceTypeId: defaultAttendanceTypeId });
     });
 
     modalSave?.addEventListener("click", () => {
@@ -206,40 +221,29 @@ if (calendarEl) {
             return;
         }
 
-        const newType = modalType.value;
+        const newTypeId = modalType?.value || defaultAttendanceTypeId;
+        const newTitle = getAttendanceLabel(newTypeId);
 
         if (selectedEvent) {
             selectedEvent.setStart(newStart);
             selectedEvent.setEnd(newEnd);
-            selectedEvent.setExtendedProp("type", newType);
-            selectedEvent.setProp(
-                "title",
-                newType === "overtime"
-                    ? (modal?.dataset.typeOvertime || "Straordinario")
-                    : (modal?.dataset.typeWork || "Lavoro")
-            );
+            selectedEvent.setProp("title", newTitle);
+            selectedEvent.setExtendedProp("attendanceTypeId", newTypeId);
             updateEventAppearance(selectedEvent);
         } else {
-            const added = calendar.addEvent({
-                title:
-                    newType === "overtime"
-                        ? (modal?.dataset.typeOvertime || "Straordinario")
-                        : (modal?.dataset.typeWork || "Lavoro"),
+            const event = calendar.addEvent({
+                title: newTitle,
                 start: newStart,
                 end: newEnd,
-                type: newType,
                 display: "block",
+                extendedProps: {
+                    attendanceTypeId: newTypeId,
+                },
             });
-            if (added) updateEventAppearance(added);
+            if (event) updateEventAppearance(event);
         }
 
-        pendingRange = null;
-        modal?.close();
-    });
-
-    modalCancel?.addEventListener("click", () => {
         selectedEvent = null;
-        pendingRange = null;
         modal?.close();
     });
 
@@ -249,5 +253,10 @@ if (calendarEl) {
             selectedEvent = null;
             modal?.close();
         }
+    });
+
+    modalCancel?.addEventListener("click", () => {
+        selectedEvent = null;
+        modal?.close();
     });
 }

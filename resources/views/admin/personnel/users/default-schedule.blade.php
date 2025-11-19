@@ -28,6 +28,8 @@
             <div id="default-schedule-calendar" data-schedules='@json($schedules)'
                 data-save-url="{{ route('users.default-schedules.update', $user) }}"
                 data-initial-date="{{ $initialDate }}"
+                data-attendance-types='@json($attendanceTypesPayload)'
+                data-default-attendance-type="{{ $defaultAttendanceTypeId }}"
                 data-monday-label="{{ __('personnel.users_default_schedule_monday') }}"
                 data-tuesday-label="{{ __('personnel.users_default_schedule_tuesday') }}"
                 data-wednesday-label="{{ __('personnel.users_default_schedule_wednesday') }}"
@@ -52,8 +54,6 @@
     <dialog id="schedule-modal" class="modal"
         data-title-add="{{ __('personnel.users_default_schedule_modal_add') }}"
         data-title-edit="{{ __('personnel.users_default_schedule_modal_edit') }}"
-        data-type-work="{{ __('personnel.users_default_schedule_type_work') }}"
-        data-type-overtime="{{ __('personnel.users_default_schedule_type_overtime') }}"
         data-error-end-before-start="{{ __('personnel.users_default_schedule_error_end_before_start') }}"
         data-error-save="{{ __('personnel.users_default_schedule_save_error') }}">
         <div class="modal-box">
@@ -85,8 +85,11 @@
                 <label class="form-control">
                     <span class="label-text text-sm">{{ __('personnel.users_default_schedule_type') }}</span>
                     <select id="modal-type" class="select select-bordered w-full">
-                        <option value="work">{{ __('personnel.users_default_schedule_type_work') }}</option>
-                        <option value="overtime">{{ __('personnel.users_default_schedule_type_overtime') }}</option>
+                        @foreach ($attendanceTypes as $attendanceType)
+                            <option value="{{ $attendanceType->id }}">
+                                {{ $attendanceType->name }} ({{ $attendanceType->acronym }})
+                            </option>
+                        @endforeach
                     </select>
                 </label>
             </div>

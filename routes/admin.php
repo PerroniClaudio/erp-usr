@@ -6,6 +6,7 @@ use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\UsersController;
+use App\Models\WeeklyScheduleApproval;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -21,12 +22,16 @@ Route::group([
         $failedAttendances = $failedAttendancesController->getPendingFailedAttendances();
         $overtimeController = new \App\Http\Controllers\OvertimeRequestController;
         $pendingOvertimeRequests = $overtimeController->getPendingOvertimeRequests();
+        $weekStart = now()->startOfWeek(\Carbon\Carbon::MONDAY);
+        $approvalPending = !WeeklyScheduleApproval::whereDate('week_start', $weekStart)->whereNotNull('approved_at')->exists();
 
         return view('admin.home', [
             'usersStatus' => $usersStatus,
             'pendingTimeOffRequests' => $pendingTimeOffRequests,
             'failedAttendancesRequests' => $failedAttendances,
             'pendingOvertimeRequests' => $pendingOvertimeRequests,
+            'approvalPending' => $approvalPending,
+            'weekStart' => $weekStart,
         ]);
     })->name('admin.home');
 });
@@ -57,6 +62,8 @@ Route::group([
     Route::get('/users/{user}/export-nota-spese', [\App\Http\Controllers\NotaSpeseController::class, 'exportMonthly'])->name('users.export-nota-spese');
     Route::get('/users/{user}/export-anomalie', [UsersController::class, 'exportAnomaliesPdf'])->name('users.export-anomalie');
     Route::get('/users/{user}/default-schedules/calendar', [UsersController::class, 'showDefaultSchedule'])->name('users.default-schedules.calendar');
+    Route::get('/user-schedules', [\App\Http\Controllers\UserScheduleController::class, 'index'])->name('user-schedules.index');
+    Route::post('/user-schedules', [\App\Http\Controllers\UserScheduleController::class, 'store'])->name('user-schedules.store');
     Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
     Route::post('/users/{user}/default-schedules', [UsersController::class, 'updateDefaultSchedules'])->name('users.default-schedules.update');
     Route::post('/users/{user}/default-schedules/generate', [UsersController::class, 'generateDefaultSchedules'])->name('users.default-schedules.generate');

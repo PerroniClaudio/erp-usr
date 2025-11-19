@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\AttendanceType;
 use App\Models\Company;
 use App\Models\Group;
 use App\Models\OvertimeRequest;
@@ -95,6 +96,7 @@ class UsersController extends Controller
         $referenceMonday = Carbon::now()->startOfWeek(Carbon::MONDAY);
 
         $scheduleEvents = $user->defaultSchedules()
+            ->with('attendanceType')
             ->orderByRaw("CASE day
                 WHEN 'monday' THEN 1
                 WHEN 'tuesday' THEN 2
@@ -119,23 +121,39 @@ class UsersController extends Controller
 
                 $date = $referenceMonday->copy()->addDays($dayOffsets[$item->day] ?? 0)->toDateString();
 
+                $attendance = $item->attendanceType;
+
                 return [
                     'id' => $item->id,
-                    'title' => $item->type === 'overtime' ? 'Straordinario' : 'Lavoro',
+                    'title' => $attendance?->name ?? 'Fascia',
                     'start' => "{$date} {$item->hour_start}",
                     'end' => "{$date} {$item->hour_end}",
-                    'type' => $item->type,
+                    'attendance_type_id' => $item->attendance_type_id,
                     'display' => 'block',
                 ];
             });
 
-      
+        $attendanceTypes = AttendanceType::orderBy('name')->get();
+        $defaultAttendanceTypeId = $attendanceTypes->first()?->id;
+        $colorPalette = ['#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#e73028', '#f472b6', '#2dd4bf', '#437f97'];
+        $paletteCount = count($colorPalette);
+        $attendanceTypesPayload = $attendanceTypes->values()->map(function ($type, $index) use ($colorPalette, $paletteCount) {
+            return [
+                'id' => $type->id,
+                'name' => $type->name,
+                'acronym' => $type->acronym,
+                'color' => $colorPalette[$index % $paletteCount],
+            ];
+        });
 
         return view('admin.personnel.users.default-schedule', [
             'user' => $user,
             'scheduleEvents' => $scheduleEvents,
             'initialDate' => $referenceMonday->toDateString(),
             'schedules' => $user->defaultSchedules,
+            'attendanceTypes' => $attendanceTypes,
+            'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
+            'attendanceTypesPayload' => $attendanceTypesPayload,
         ]);
     }
 
@@ -758,7 +776,7 @@ class UsersController extends Controller
             'schedule.*.day' => 'required|string|in:' . implode(',', UserDefaultSchedule::DAYS),
             'schedule.*.hour_start' => 'required|date_format:H:i',
             'schedule.*.hour_end' => 'required|date_format:H:i',
-            'schedule.*.type' => 'required|string|in:' . implode(',', UserDefaultSchedule::TYPES),
+            'schedule.*.attendance_type_id' => 'required|exists:attendance_types,id',
         ]);
 
         $scheduleItems = $validated['schedule'] ?? [];
@@ -784,7 +802,7 @@ class UsersController extends Controller
                 'hour_start' => $start->format('H:i'),
                 'hour_end' => $end->format('H:i'),
                 'total_hours' => $start->diffInMinutes($end) / 60,
-                'type' => $item['type'],
+                'attendance_type_id' => $item['attendance_type_id'],
             ];
         });
 

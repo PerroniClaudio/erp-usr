@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\AttendanceType;
 use App\Models\User;
 use App\Models\UserDefaultSchedule;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,7 +23,7 @@ class UserDefaultScheduleFactory extends Factory
             'hour_start' => sprintf('%02d:00', $start),
             'hour_end' => sprintf('%02d:00', $end),
             'total_hours' => $end - $start,
-            'type' => $this->faker->randomElement(UserDefaultSchedule::TYPES),
+            'attendance_type_id' => AttendanceType::factory(),
         ];
     }
 }

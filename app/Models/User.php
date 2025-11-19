@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\AttendanceType;
 use App\Models\UserDefaultSchedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -159,13 +160,16 @@ class User extends Authenticatable
             'friday',
         ];
 
+        $defaultAttendanceTypeId = AttendanceType::where('acronym', 'LS')->value('id')
+            ?? AttendanceType::query()->value('id');
+
         foreach ($workDays as $day) {
             $entries[] = [
                 'day' => $day,
                 'hour_start' => '08:00',
                 'hour_end' => '12:00',
                 'total_hours' => 4,
-                'type' => 'work',
+                'attendance_type_id' => $defaultAttendanceTypeId,
             ];
 
             $entries[] = [
@@ -173,11 +177,16 @@ class User extends Authenticatable
                 'hour_start' => '13:00',
                 'hour_end' => '17:00',
                 'total_hours' => 4,
-                'type' => 'work',
+                'attendance_type_id' => $defaultAttendanceTypeId,
             ];
         }
 
         return $this->defaultSchedules()->createMany($entries);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(UserSchedule::class);
     }
 
     public function viewedAnnouncements()

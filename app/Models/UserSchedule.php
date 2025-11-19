@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class UserDefaultSchedule extends Model
+class UserSchedule extends Model
 {
     use HasFactory;
 
@@ -22,6 +22,7 @@ class UserDefaultSchedule extends Model
 
     protected $fillable = [
         'user_id',
+        'date',
         'day',
         'hour_start',
         'hour_end',
@@ -30,6 +31,7 @@ class UserDefaultSchedule extends Model
     ];
 
     protected $casts = [
+        'date' => 'date',
         'hour_start' => 'datetime:H:i',
         'hour_end' => 'datetime:H:i',
         'total_hours' => 'decimal:2',
