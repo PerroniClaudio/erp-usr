@@ -4,7 +4,6 @@ import interactionPlugin from "@fullcalendar/interaction";
 import itLocale from "@fullcalendar/core/locales/it";
 import axios from "axios";
 
-const schedulerContainers = document.querySelectorAll(".user-weekly-scheduler");
 const modal = document.getElementById("weekly-schedule-modal");
 const modalDaySelect = document.getElementById("weekly-modal-day-select");
 const modalHourStart = document.getElementById("weekly-modal-hour-start");
@@ -96,6 +95,7 @@ const renderSummary = (container, calendar) => {
     const emptyText = container.dataset.emptyText || "";
     const events = calendar
         .getEvents()
+        .filter((event) => !event.extendedProps.timeOff)
         .slice()
         .sort((a, b) => {
             const dayA = dayOffsets[weekdayMap[a.start.getDay()]] ?? 7;
@@ -141,13 +141,16 @@ const renderSummary = (container, calendar) => {
 const serializeEvents = (calendar, helpers) => {
     if (!helpers) return [];
 
-    return calendar.getEvents().map((event) => ({
-        day: weekdayMap[event.start.getDay()],
-        date: formatDateLocal(event.start),
-        hour_start: normalizeTime(event.start.toTimeString()),
-        hour_end: normalizeTime(event.end.toTimeString()),
-        attendance_type_id: event.extendedProps.attendanceTypeId || helpers.defaultAttendanceTypeId,
-    }));
+    return calendar
+        .getEvents()
+        .filter((event) => !event.extendedProps.timeOff)
+        .map((event) => ({
+            day: weekdayMap[event.start.getDay()],
+            date: formatDateLocal(event.start),
+            hour_start: normalizeTime(event.start.toTimeString()),
+            hour_end: normalizeTime(event.end.toTimeString()),
+            attendance_type_id: event.extendedProps.attendanceTypeId || helpers.defaultAttendanceTypeId,
+        }));
 };
 
 let activeCalendar = null;
@@ -160,7 +163,6 @@ const openModal = ({ calendar, container, event = null, start = null, end = null
     selectedEvent = event;
 
     const helpers = container.__attendanceHelpers;
-    if (!helpers) return;
     if (!helpers) return;
     const baseDate = event ? event.start : start;
     const addLabel = container.dataset.labelAdd || "Aggiungi fascia";
@@ -182,14 +184,16 @@ const openModal = ({ calendar, container, event = null, start = null, end = null
     modal?.showModal();
 };
 
-schedulerContainers.forEach((container) => {
+const initializeScheduler = (container) => {
     const calendarEl = container.querySelector(".user-weekly-calendar");
     if (!calendarEl) return;
 
     const helpers = createAttendanceHelpers(container);
     container.__attendanceHelpers = helpers;
+    const readOnly = container.dataset.readonly === "true";
 
     const schedules = parseJson(container.dataset.schedules, []);
+    const timeOff = parseJson(container.dataset.timeOff, []);
     const weekStart = new Date(`${container.dataset.weekStart}T00:00:00`);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
@@ -217,6 +221,30 @@ schedulerContainers.forEach((container) => {
             };
         });
 
+    const toTimeOffEvents = () =>
+        timeOff.map((item) => {
+            const start = item.start ? new Date(item.start) : new Date(`${item.date}T00:00:00`);
+            const end = item.end ? new Date(item.end) : (() => {
+                const tmp = new Date(start);
+                tmp.setHours(23, 59, 59, 999);
+                return tmp;
+            })();
+
+            return {
+                title: item.title || "Time Off",
+                start,
+                end,
+                allDay: false,
+                display: "background",
+                overlap: false,
+                backgroundColor: item.color || fallbackColor,
+                borderColor: item.color || fallbackColor,
+                extendedProps: {
+                    timeOff: true,
+                },
+            };
+        });
+
     const calendar = new Calendar(calendarEl, {
         plugins: [timeGridPlugin, interactionPlugin],
         initialView: "timeGridWeek",
@@ -225,7 +253,7 @@ schedulerContainers.forEach((container) => {
         allDaySlot: false,
         slotMinTime: "06:00:00",
         slotMaxTime: "22:00:00",
-        selectable: true,
+        selectable: !readOnly,
         editable: false,
         locale: itLocale,
         height: "auto",
@@ -233,29 +261,39 @@ schedulerContainers.forEach((container) => {
         headerToolbar: false,
         dayHeaderContent: (arg) =>
             weekdayShortLabels[weekdayMap[arg.date.getDay()]] || weekdayMap[arg.date.getDay()].slice(0, 3),
-        events: toEvents(),
+        events: [...toEvents(), ...toTimeOffEvents()],
         select: (info) => {
+            if (readOnly) return;
             openModal({ calendar, container, start: info.start, end: info.end, attendanceTypeId: helpers.defaultAttendanceTypeId });
             calendar.unselect();
         },
-        eventClick: (info) => openModal({ calendar, container, event: info.event }),
-        eventDidMount: (info) => applyEventAppearance(info.event, helpers),
+        eventClick: (info) => {
+            if (readOnly || info.event.extendedProps.timeOff) return;
+            openModal({ calendar, container, event: info.event });
+        },
+        eventDidMount: (info) => {
+            if (info.event.extendedProps.timeOff) return;
+            applyEventAppearance(info.event, helpers);
+        },
     });
 
     calendar.render();
     renderSummary(container, calendar);
 
     const addBtn = container.querySelector(".add-slot");
-    addBtn?.addEventListener("click", () => {
-        const start = new Date(weekStart);
-        start.setHours(9, 0, 0, 0);
-        const end = new Date(weekStart);
-        end.setHours(12, 0, 0, 0);
-        openModal({ calendar, container, start, end, attendanceTypeId: helpers.defaultAttendanceTypeId });
-    });
+    if (addBtn && !readOnly) {
+        addBtn.addEventListener("click", () => {
+            const start = new Date(weekStart);
+            start.setHours(9, 0, 0, 0);
+            const end = new Date(weekStart);
+            end.setHours(12, 0, 0, 0);
+            openModal({ calendar, container, start, end, attendanceTypeId: helpers.defaultAttendanceTypeId });
+        });
+    }
 
     const saveBtn = container.querySelector(".save-weekly-schedule");
     saveBtn?.addEventListener("click", () => {
+        if (readOnly) return;
         const saveUrl = container.dataset.saveUrl;
         const schedule = serializeEvents(calendar, helpers);
         const form = new FormData();
@@ -273,11 +311,16 @@ schedulerContainers.forEach((container) => {
         saveBtn.disabled = true;
         saveBtn.classList.add("loading");
 
+        const successMessage = container.dataset.successMessage || "Calendario salvato con successo.";
+        const successRedirect = container.dataset.successRedirect || "";
+
         axios
             .post(saveUrl, form)
             .then(() => {
-                const card = container.closest(".card");
-                if (card) card.classList.add("hidden");
+                if (successMessage) alert(successMessage);
+                if (successRedirect) {
+                    window.location.href = successRedirect;
+                }
             })
             .catch(() => alert(container.dataset.errorSave || "Errore nel salvataggio del calendario."))
             .finally(() => {
@@ -285,13 +328,13 @@ schedulerContainers.forEach((container) => {
                 saveBtn.classList.remove("loading");
             });
     });
-});
+};
 
 modalSave?.addEventListener("click", () => {
     if (!activeCalendar || !activeContainer) return;
 
     const helpers = activeContainer.__attendanceHelpers;
-    if (!helpers) return;
+    if (!helpers || activeContainer.dataset.readonly === "true") return;
     const selectedDay = modalDaySelect ? modalDaySelect.value : null;
     if (!selectedDay || !(selectedDay in dayOffsets)) return;
 
@@ -346,3 +389,12 @@ modalCancel?.addEventListener("click", () => {
     selectedEvent = null;
     modal?.close();
 });
+
+const initWeeklySchedulers = (root = document) => {
+    root.querySelectorAll(".user-weekly-scheduler").forEach((container) => {
+        initializeScheduler(container);
+    });
+};
+
+document.addEventListener("DOMContentLoaded", () => initWeeklySchedulers());
+window.initWeeklySchedulers = initWeeklySchedulers;

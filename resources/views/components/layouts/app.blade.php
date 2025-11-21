@@ -57,7 +57,14 @@
                     </div>
                 </li>
                 <!-- Sidebar content here -->
-                @if (auth()->user()->hasRole('admin'))
+                @php
+                    $loggedUser = auth()->user();
+                    $isAdmin = $loggedUser?->hasRole('admin');
+                    $isHrManager = $loggedUser?->hasRole('Responsabile HR');
+                    $isHrOperator = $loggedUser?->hasRole('Operatore HR');
+                    $isHrUser = $isHrManager || $isHrOperator;
+                @endphp
+                @if ($isAdmin)
                     <li>
                         <a href="{{ route('admin.home') }}">
                             <div class="flex items-center">
@@ -97,6 +104,14 @@
                                         </div>
                                     </a>
                                 </li>
+                                <li>
+                                    <a href="{{ route('users.roles') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-badge-check class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">Ruoli utenti</span>
+                                        </div>
+                                    </a>
+                                </li>
                             </ul>
                         </details>
                     </li>
@@ -125,6 +140,13 @@
                             <x-lucide-clock class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
 
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('admin.user-schedule-requests.index') }}">
+                            <x-lucide-calendar-clock class="h-6 w-6 text-primary" />
+                            <span class="ml-2">{{ __('navbar.schedule_requests_admin') }}</span>
                         </a>
                     </li>
 
@@ -165,6 +187,84 @@
                                         <div class="flex items-center">
                                             <x-lucide-clock class="h-6 w-6 text-primary" />
                                             <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a href="{{ route('user-schedule-request.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-calendar-clock class="h-6 w-6 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.schedule_request') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
+                    </li>
+                @elseif ($isHrUser)
+                    <li>
+                        <a href="{{ route('home') }}">
+                            <div class="flex items-center">
+                                <x-lucide-home class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.home') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('attendances.index') }}">
+
+                            <div class="flex items-center">
+                                <x-lucide-calendar class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.attendances') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('business-trips.index') }}">
+
+                            <div class="flex items-center">
+                                <x-lucide-car class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.business_trips') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('time-off-requests.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-sun class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.time_off') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('overtime-requests.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-clock class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('user-schedule-request.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-calendar-clock class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.schedule_request') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <details>
+                            <summary>
+                                <x-lucide-contact class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.personnel') }}</span>
+                            </summary>
+                            <ul>
+                                <li>
+                                    <a href="{{ route('users.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-circle-user class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.personnel_users') }}</span>
                                         </div>
                                     </a>
                                 </li>
@@ -211,6 +311,14 @@
                             <div class="flex items-center">
                                 <x-lucide-clock class="h-6 w-6 text-primary" />
                                 <span class="ml-2">{{ __('navbar.overtime_requests') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('user-schedule-request.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-calendar-clock class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.schedule_request') }}</span>
                             </div>
                         </a>
                     </li>

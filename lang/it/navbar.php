@@ -16,4 +16,6 @@ return [
     "personnel_companies" => "Aziende",
     "personnel_functions" => "Funzioni utente",
     'overtime_requests' => 'Richieste Straordinario',
+    'schedule_request' => 'Richiesta orario',
+    'schedule_requests_admin' => 'Richieste orario utenti',
 ];

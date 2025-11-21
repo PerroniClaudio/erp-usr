@@ -136,6 +136,43 @@
             </form>
         </div>
 
+        @if ($canManageRoles)
+            @php
+                $assignedRoles = collect($user->getRoleNames());
+                $availableRolesForUser = collect($availableRoles)->pluck('name')->diff($assignedRoles);
+                $badgeColors = [
+                    'admin' => 'badge-error',
+                    'Responsabile HR' => 'badge-warning',
+                    'Operatore HR' => 'badge-info',
+                    'standard' => 'badge-success',
+                ];
+            @endphp
+            <div class="card bg-base-300">
+                <div class="card-body flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg">{{ __('personnel.users_roles_label') }}</h2>
+
+                        <button type="button" class="btn btn-primary open-role-modal"
+                            data-user-id="{{ $user->id }}" data-user-name="{{ $user->name }}"
+                            data-assigned='@json($assignedRoles->values())'
+                            data-available='@json($availableRolesForUser->values())'>
+                            {{ __('personnel.users_roles_manage') }}
+                        </button>
+                    </div>
+                    <hr>
+                    <div class="flex flex-wrap gap-2">
+                        @forelse ($assignedRoles as $roleName)
+                            <span
+                                class="badge {{ $badgeColors[$roleName] ?? 'badge-ghost' }}">{{ $roleName }}</span>
+                        @empty
+                            <span
+                                class="text-base-content/60 text-sm italic">{{ __('personnel.users_roles_none_assigned') }}</span>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @php
             $defaultScheduleItems = old(
                 'schedule',
@@ -160,14 +197,15 @@
 
         <div class="card bg-base-300">
             <div class="card-body flex flex-col gap-4">
-
-                <h2 class="text-lg">Calendario di default</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg">{{ __('personnel.users_default_schedule_title') }}</h2>
+                    <a href="{{ route('users.default-schedules.calendar', $user) }}" class="btn btn-primary">
+                        {{ __('personnel.users_default_schedule_view') }}
+                    </a>
+                </div>
                 <hr>
-                <p class="text-sm ">Imposta le fasce orarie settimanali per questo utente.
+                <p class="text-sm ">{{ __('personnel.users_default_schedule_edit_intro', ['name' => $user->name]) }}
                 </p>
-
-                <a href="{{ route('users.default-schedules.calendar', $user) }}" class="btn btn-primary">Visualizza
-                    calendario</a>
             </div>
         </div>
 
@@ -462,9 +500,60 @@
 
     </div>
 
+    @if (($canManageRoles ?? false) && isset($badgeColors))
+        <dialog id="roles-modal" class="modal" data-badge-colors='@json($badgeColors)'
+            data-title-template="{{ __('personnel.users_roles_modal_title', ['name' => ':name']) }}"
+            data-error-message="{{ __('personnel.users_roles_modal_error') }}"
+            data-empty-available="{{ __('personnel.users_roles_none_available') }}"
+            data-empty-assigned="{{ __('personnel.users_roles_none_assigned') }}">
+            <div class="modal-box max-w-4xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold" id="roles-modal-title"></h3>
+                    <form method="dialog">
+                        <button class="btn btn-sm btn-circle">✕</button>
+                    </form>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="card bg-base-200">
+                        <div class="card-body gap-2">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-semibold">{{ __('personnel.users_roles_available') }}</h4>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="table table-sm">
+                                    <tbody id="available-roles-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card bg-base-200">
+                        <div class="card-body gap-2">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-semibold">{{ __('personnel.users_roles_assigned') }}</h4>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="table table-sm">
+                                    <tbody id="assigned-roles-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button>close</button>
+            </form>
+        </dialog>
+    @endif
+
 
     @push('scripts')
         @vite('resources/js/users.js')
+        @if ($canManageRoles ?? false)
+            @vite('resources/js/roles.js')
+        @endif
     @endpush
 
 

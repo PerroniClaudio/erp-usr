@@ -6,14 +6,16 @@ use App\Http\Controllers\BusinessTripController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\UserScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
-    'middleware' => ['auth', 'role:standard'],
+    'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR'],
     'prefix' => 'standard/attendances',
 ], function () {
     Route::get('/', [AttendanceController::class, 'index'])->name('attendances.index');
     Route::get('/user', [AttendanceController::class, 'getUserAttendances'])->name('attendances.user-attendances');
+    Route::get('/scheduled-slots', [AttendanceController::class, 'scheduledSlots'])->name('attendances.scheduled-slots');
     Route::get('/export-presenze', [UsersController::class, 'exportCurrentUserPresenze'])->name('attendances.export-presenze');
     Route::get('/create', [AttendanceController::class, 'create'])->name('attendances.create');
     Route::post('/', [AttendanceController::class, 'store'])->name('attendances.store');
@@ -57,7 +59,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['auth', 'role:standard'],
+    'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR'],
     'prefix' => 'standard/time-off-requests',
 ], function () {
     Route::get('/', [TimeOffRequestController::class, 'index'])->name('time-off-requests.index');
@@ -71,7 +73,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['auth', 'role:standard'],
+    'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR'],
     'prefix' => 'standard',
 ], function () {
     Route::get('/{failed_attendance}/justify-attendance', [FailedAttendanceController::class, 'justify'])->name('failed-attendances.justify');
@@ -79,7 +81,7 @@ Route::group([
 });
 
 Route::group([
-    'middleware' => ['auth', 'role:standard'],
+    'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR'],
     'prefix' => 'standard/overtime-requests',
 ], function () {
     Route::get('/', [\App\Http\Controllers\OvertimeRequestController::class, 'index'])->name('overtime-requests.index');
@@ -87,6 +89,14 @@ Route::group([
     Route::post('/', [\App\Http\Controllers\OvertimeRequestController::class, 'store'])->name('overtime-requests.store');
     Route::get('/list', [\App\Http\Controllers\OvertimeRequestController::class, 'listUserOvertimeRequests'])->name('overtime-requests.list');
     Route::get('/{overtimeRequest}', [\App\Http\Controllers\OvertimeRequestController::class, 'show'])->name('overtime-requests.show');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR'],
+    'prefix' => 'standard/user-schedule-request',
+], function () {
+    Route::get('/', [UserScheduleController::class, 'requestForm'])->name('user-schedule-request.index');
+    Route::post('/', [UserScheduleController::class, 'submitRequest'])->name('user-schedule-request.store');
 });
 
 // Routes for announcements (accessible to all authenticated users)

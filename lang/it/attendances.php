@@ -58,5 +58,9 @@ return [
     'approve_attendance' => 'Approva come Presenza',
     'approve_as_attendance_title' => 'Approva come Presenza',
     'approve_as_attendance_text' => 'Questa operazione creerà una nuova presenza con gli orari richiesti dall\'utente.',
+    'expected_schedule_title' => 'Fasce pianificate',
+    'expected_schedule_description' => 'Questi sono gli orari previsti in base al calendario per la data selezionata.',
+    'expected_schedule_empty' => 'Nessuna fascia pianificata per questo giorno.',
+    'schedule_mismatch_error' => 'Gli orari inseriti non corrispondono al calendario pianificato per la giornata scelta.',
 
 ];

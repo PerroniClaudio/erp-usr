@@ -12,9 +12,15 @@ class RoleSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
-        //
+        $roles = [
+            'admin',
+            'Responsabile HR',
+            'Operatore HR',
+            'standard',
+        ];
 
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'standard']);
+        collect($roles)->each(function (string $role) {
+            Role::firstOrCreate(['name' => $role]);
+        });
     }
 }

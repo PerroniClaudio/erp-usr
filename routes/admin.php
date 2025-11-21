@@ -6,7 +6,8 @@ use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\UsersController;
-use App\Models\WeeklyScheduleApproval;
+use App\Models\WeeklyScheduleCompletion;
+use App\Models\UserScheduleChangeRequest;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -23,7 +24,13 @@ Route::group([
         $overtimeController = new \App\Http\Controllers\OvertimeRequestController;
         $pendingOvertimeRequests = $overtimeController->getPendingOvertimeRequests();
         $weekStart = now()->startOfWeek(\Carbon\Carbon::MONDAY);
-        $approvalPending = !WeeklyScheduleApproval::whereDate('week_start', $weekStart)->whereNotNull('approved_at')->exists();
+        $completion = WeeklyScheduleCompletion::whereDate('week_start', $weekStart)->first();
+        $approvalPending = ! ($completion && $completion->completed_at);
+        $pendingScheduleRequests = UserScheduleChangeRequest::with('user')
+            ->where('status', UserScheduleChangeRequest::STATUS_PENDING)
+            ->orderBy('week_start')
+            ->limit(5)
+            ->get();
 
         return view('admin.home', [
             'usersStatus' => $usersStatus,
@@ -32,50 +39,67 @@ Route::group([
             'pendingOvertimeRequests' => $pendingOvertimeRequests,
             'approvalPending' => $approvalPending,
             'weekStart' => $weekStart,
+            'pendingScheduleRequests' => $pendingScheduleRequests,
         ]);
     })->name('admin.home');
 });
 
 Route::group([
-    'middleware' => ['auth', 'role:admin'],
+    'middleware' => ['auth'],
     'prefix' => 'admin/personnel',
 ], function () {
-    Route::resource('/groups', GroupController::class);
-    Route::get('/groups/{group}/available-users', [GroupController::class, 'availableUsers'])->name('groups.available-users');
-    Route::post('/groups/{group}/associate-users', [GroupController::class, 'associateUsers'])->name('groups.users.associate');
-    Route::delete('/groups/{group}/dissociate-users/{user}', [GroupController::class, 'dissociateUsers'])->name('groups.users.dissociate');
-    Route::get('/groups/users/available/{user}', [GroupController::class, 'availableForUser'])->name('groups.available-for-user');
-    Route::post('/groups/users/{user}/associate-groups', [GroupController::class, 'associateGroups'])->name('groups.associate-groups');
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('/groups', GroupController::class);
+        Route::get('/groups/{group}/available-users', [GroupController::class, 'availableUsers'])->name('groups.available-users');
+        Route::post('/groups/{group}/associate-users', [GroupController::class, 'associateUsers'])->name('groups.users.associate');
+        Route::delete('/groups/{group}/dissociate-users/{user}', [GroupController::class, 'dissociateUsers'])->name('groups.users.dissociate');
+        Route::get('/groups/users/available/{user}', [GroupController::class, 'availableForUser'])->name('groups.available-for-user');
+        Route::post('/groups/users/{user}/associate-groups', [GroupController::class, 'associateGroups'])->name('groups.associate-groups');
 
-    Route::resource('/companies', CompanyController::class);
-    Route::get('/companies/users/available/{user}', [CompanyController::class, 'availableForUser'])->name('companies.available-for-user');
-    Route::post('/companies/users/{user}/associate-companies', [CompanyController::class, 'associateCompanies'])->name('companies.associate-companies');
-    Route::get('/companies/{company}/available-users', [CompanyController::class, 'availableUsers'])->name('companies.available-users');
-    Route::post('/companies/{company}/associate-users', [CompanyController::class, 'associateUsers'])->name('companies.users.associate');
-    Route::delete('/companies/{company}/dissociate-users/{user}', [CompanyController::class, 'dissociateUsers'])->name('companies.users.dissociate');
+        Route::resource('/companies', CompanyController::class);
+        Route::get('/companies/users/available/{user}', [CompanyController::class, 'availableForUser'])->name('companies.available-for-user');
+        Route::post('/companies/users/{user}/associate-companies', [CompanyController::class, 'associateCompanies'])->name('companies.associate-companies');
+        Route::get('/companies/{company}/available-users', [CompanyController::class, 'availableUsers'])->name('companies.available-users');
+        Route::post('/companies/{company}/associate-users', [CompanyController::class, 'associateUsers'])->name('companies.users.associate');
+        Route::delete('/companies/{company}/dissociate-users/{user}', [CompanyController::class, 'dissociateUsers'])->name('companies.users.dissociate');
 
-    Route::get('users/search-address', [UsersController::class, 'searchAddress'])->name('users.search-address');
-    Route::get('/users', [UsersController::class, 'index'])->name('users.index');
-    Route::get('/users/{user}', [UsersController::class, 'edit'])->name('users.edit');
-    Route::get('/users/{user}/export-cedolino', [UsersController::class, 'exportPdf'])->name('users.export-cedolino');
-    Route::get('/users/{user}/export-presenze', [UsersController::class, 'exportPresenzePdf'])->name('users.export-presenze');
-    Route::get('/users/{user}/export-nota-spese', [\App\Http\Controllers\NotaSpeseController::class, 'exportMonthly'])->name('users.export-nota-spese');
-    Route::get('/users/{user}/export-anomalie', [UsersController::class, 'exportAnomaliesPdf'])->name('users.export-anomalie');
-    Route::get('/users/{user}/default-schedules/calendar', [UsersController::class, 'showDefaultSchedule'])->name('users.default-schedules.calendar');
-    Route::get('/user-schedules', [\App\Http\Controllers\UserScheduleController::class, 'index'])->name('user-schedules.index');
-    Route::post('/user-schedules', [\App\Http\Controllers\UserScheduleController::class, 'store'])->name('user-schedules.store');
-    Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
-    Route::post('/users/{user}/default-schedules', [UsersController::class, 'updateDefaultSchedules'])->name('users.default-schedules.update');
-    Route::post('/users/{user}/default-schedules/generate', [UsersController::class, 'generateDefaultSchedules'])->name('users.default-schedules.generate');
-    Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
-    Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
-    Route::get('/users/{user}/add-vehicles', [UsersController::class, 'addVehicles'])->name('users.add-vehicles');
-    Route::post('/users/{user}/store-vehicles', [UsersController::class, 'associateVehicle'])->name('users.store-vehicles');
-    Route::get('/users/{user}/vehicles/{vehicle}/edit', [UsersController::class, 'editUserVehicle'])->name('users.vehicles.edit');
-    Route::post('/users/{user}/vehicles/{vehicle}/update', [UsersController::class, 'updateUserVehicle'])->name('users.vehicles.update');
-    Route::delete('/users/{user}/vehicles/{vehicle}/destroy', [UsersController::class, 'destroyUserVehicle'])->name('users.vehicles.destroy');
-    Route::delete('/users/{user}/company/{company}/destroy', [UsersController::class, 'destroyUserCompany'])->name('users.company.destroy');
-    Route::delete('/users/{user}/group/{group}/destroy', [UsersController::class, 'destroyUserGroup'])->name('users.group.destroy');
+        Route::get('/user-schedules', [\App\Http\Controllers\UserScheduleController::class, 'index'])->name('user-schedules.index');
+        Route::get('/user-schedules/{user}', [\App\Http\Controllers\UserScheduleController::class, 'show'])->name('user-schedules.show');
+        Route::post('/user-schedules', [\App\Http\Controllers\UserScheduleController::class, 'store'])->name('user-schedules.store');
+        Route::get('/user-schedule-requests', [\App\Http\Controllers\UserScheduleController::class, 'adminRequestsIndex'])->name('admin.user-schedule-requests.index');
+        Route::get('/user-schedule-requests/{userScheduleChangeRequest}', [\App\Http\Controllers\UserScheduleController::class, 'adminRequestsShow'])->name('admin.user-schedule-requests.show');
+        Route::post('/user-schedule-requests/{userScheduleChangeRequest}/approve', [\App\Http\Controllers\UserScheduleController::class, 'adminRequestsApprove'])->name('admin.user-schedule-requests.approve');
+        Route::post('/user-schedule-requests/{userScheduleChangeRequest}/deny', [\App\Http\Controllers\UserScheduleController::class, 'adminRequestsDeny'])->name('admin.user-schedule-requests.deny');
+        Route::get('/users/{user}/export-nota-spese', [\App\Http\Controllers\NotaSpeseController::class, 'exportMonthly'])->name('users.export-nota-spese');
+        Route::get('/users/{user}/add-vehicles', [UsersController::class, 'addVehicles'])->name('users.add-vehicles');
+        Route::post('/users/{user}/store-vehicles', [UsersController::class, 'associateVehicle'])->name('users.store-vehicles');
+        Route::get('/users/{user}/vehicles/{vehicle}/edit', [UsersController::class, 'editUserVehicle'])->name('users.vehicles.edit');
+        Route::post('/users/{user}/vehicles/{vehicle}/update', [UsersController::class, 'updateUserVehicle'])->name('users.vehicles.update');
+        Route::delete('/users/{user}/vehicles/{vehicle}/destroy', [UsersController::class, 'destroyUserVehicle'])->name('users.vehicles.destroy');
+        Route::delete('/users/{user}/company/{company}/destroy', [UsersController::class, 'destroyUserCompany'])->name('users.company.destroy');
+        Route::delete('/users/{user}/group/{group}/destroy', [UsersController::class, 'destroyUserGroup'])->name('users.group.destroy');
+        Route::post('/users/{user}/assign-role', [UsersController::class, 'assignRole'])->name('users.assign-role');
+        Route::post('/users/{user}/remove-role', [UsersController::class, 'removeRole'])->name('users.remove-role');
+    });
+
+    Route::middleware('role:admin|Responsabile HR|Operatore HR')->group(function () {
+        Route::get('/users', [UsersController::class, 'index'])->name('users.index');
+        Route::get('/user-roles', [UsersController::class, 'manageRoles'])->name('users.roles');
+        Route::get('/users/{user}', [UsersController::class, 'edit'])->name('users.edit');
+        Route::get('/users/{user}/export-cedolino', [UsersController::class, 'exportPdf'])->name('users.export-cedolino');
+        Route::get('/users/{user}/export-presenze', [UsersController::class, 'exportPresenzePdf'])->name('users.export-presenze');
+        Route::get('/users/{user}/export-anomalie', [UsersController::class, 'exportAnomaliesPdf'])->name('users.export-anomalie');
+        Route::get('/users/{user}/default-schedules/calendar', [UsersController::class, 'showDefaultSchedule'])->name('users.default-schedules.calendar');
+        Route::post('/users/{user}/default-schedules', [UsersController::class, 'updateDefaultSchedules'])->name('users.default-schedules.update');
+        Route::post('/users/{user}/default-schedules/generate', [UsersController::class, 'generateDefaultSchedules'])->name('users.default-schedules.generate');
+    });
+
+    Route::middleware('role:admin|Responsabile HR')->group(function () {
+        Route::get('users/search-address', [UsersController::class, 'searchAddress'])->name('users.search-address');
+        Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
+        Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
+        Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
+    });
 });
 
 Route::group([

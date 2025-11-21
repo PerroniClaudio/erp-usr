@@ -20,6 +20,7 @@ class AttendanceFactory extends Factory {
             'time_out' => $this->faker->time('H:i'),
             'attendance_type_id' => AttendanceType::factory(),
             'hours' => $this->faker->randomFloat(2, 1, 8),
+            'inserted_by' => fn (array $attributes) => $attributes['user_id'],
         ];
     }
 }

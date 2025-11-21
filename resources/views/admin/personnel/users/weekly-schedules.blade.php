@@ -36,134 +36,130 @@
         ];
     @endphp
 
-    <div class="flex flex-col gap-4 mt-4">
-        @foreach ($users as $user)
-            @php
-                $rows = $defaultSchedulesByUser[$user->id] ?? collect();
-            @endphp
+    @php
+        $activeUser = $users->first();
+        $activeRows = $activeUser ? ($defaultSchedulesByUser[$activeUser->id] ?? collect()) : collect();
+        $activeExisting = $activeUser ? ($existingSchedulesByUser[$activeUser->id] ?? collect()) : collect();
+        $activeHasExisting = $activeExisting->isNotEmpty();
+        $activeScheduleRows = $activeHasExisting ? $activeExisting : $activeRows;
+        $activeTimeOffEntries = collect($activeUser ? ($timeOffByUser[$activeUser->id] ?? []) : []);
+    @endphp
 
-            <div class="card bg-base-300 shadow-lg">
-                <div class="card-body flex flex-col gap-4">
-                    <div class="flex items-center justify-between flex-wrap gap-3">
-                        <div class="space-y-1">
-                            <h2 class="text-xl font-semibold">{{ $user->name }}</h2>
-                            <p class="text-sm text-base-content/70">
-                                {{ __('personnel.users_weekly_schedule_intro', ['name' => $user->name]) }}
-                            </p>
-                        </div>
-                        <div class="badge badge-outline">
-                            {{ __('personnel.users_weekly_hours') }}: {{ $user->weekly_hours ?? '-' }}
-                        </div>
-                    </div>
-
-                    <div class="user-weekly-scheduler space-y-3" data-user-id="{{ $user->id }}"
-                        data-user-name="{{ $user->name }}" data-week-start="{{ $weekStart->toDateString() }}"
-                        data-schedules='@json($rows)'
-                        data-save-url="{{ route('user-schedules.store') }}"
-                        data-weekday-labels='@json($dayLabelsLong)'
-                        data-weekday-short-labels='@json($dayLabelsShort)'
-                        data-attendance-types='@json($attendanceTypesPayload)'
-                        data-default-attendance-type="{{ $defaultAttendanceTypeId }}"
-                        data-label-add="{{ __('personnel.users_weekly_schedule_modal_add') }}"
-                        data-label-edit="{{ __('personnel.users_weekly_schedule_modal_edit') }}"
-                        data-error-end="{{ __('personnel.users_default_schedule_error_end_before_start') }}"
-                        data-error-save="{{ __('personnel.users_default_schedule_save_error') }}"
-                        data-empty-text="{{ __('personnel.users_default_schedule_empty') }}">
-                        <div class="flex items-center justify-between flex-wrap gap-2">
-                            <p class="text-sm text-base-content/70">
-                                {{ __('personnel.users_weekly_schedule_hint') }}
-                            </p>
-                            <div class="flex items-center gap-2">
-                                <button type="button" class="btn btn-primary btn-sm add-slot">
-                                    <x-lucide-plus class="w-4 h-4" />
-                                    {{ __('personnel.users_default_schedule_add_slot') }}
-                                </button>
-                                <button type="button" class="btn btn-primary btn-sm save-weekly-schedule">
-                                    <x-lucide-save class="w-4 h-4" />
-                                    {{ __('personnel.users_default_schedule_save') }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 xl:grid-cols-5 gap-4">
-                            <div class="xl:col-span-3 bg-base-200 rounded-xl p-3 border border-base-300">
-                                <div class="text-sm font-semibold text-base-content/70 flex items-center gap-2 mb-2">
-                                    <x-lucide-calendar class="w-4 h-4" />
-                                    {{ __('personnel.users_weekly_schedule_calendar_title') }}
-                                </div>
-                                <div
-                                    class="user-weekly-calendar rounded-lg bg-base-100 p-2 border border-base-200 min-h-[320px]">
-                                </div>
-                            </div>
-
-                            <div class="xl:col-span-2 bg-base-200 rounded-xl p-3 border border-base-300">
-                                <div class="text-sm font-semibold text-base-content/70 flex items-center gap-2 mb-2">
-                                    <x-lucide-list-check class="w-4 h-4" />
-                                    {{ __('personnel.users_weekly_schedule_summary_title') }}
-                                </div>
-                                <div class="weekly-summary text-sm space-y-2" aria-live="polite">
-                                    <p class="text-xs text-base-content/60">
-                                        {{ __('personnel.users_default_schedule_empty') }}</p>
-                                </div>
-                            </div>
-                        </div>
+    <div class="flex flex-col lg:flex-row gap-4 mt-4">
+        <aside class="lg:w-72">
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body p-3 gap-2">
+                    <h2 class="text-sm font-semibold text-base-content/70 uppercase">{{ __('personnel.users') }}</h2>
+                    <div class="flex flex-col gap-1">
+                        @foreach ($users as $user)
+                            @php
+                                $hasExisting = isset($existingSchedulesByUser[$user->id]) && $existingSchedulesByUser[$user->id]->isNotEmpty();
+                                $hasTimeOff = ! empty($timeOffByUser[$user->id]);
+                            @endphp
+                            <button type="button"
+                                class="btn btn-ghost btn-sm justify-between w-full text-left"
+                                data-user-nav="{{ $user->id }}"
+                                data-fetch-url="{{ route('user-schedules.show', $user) }}">
+                                <span>{{ $user->name }}</span>
+                                <span class="flex items-center gap-1">
+                                    @if ($hasTimeOff)
+                                        <x-lucide-sun class="w-4 h-4 text-warning" />
+                                    @endif
+                                    @if ($hasExisting)
+                                        <x-lucide-check class="w-4 h-4 text-success" />
+                                    @endif
+                                </span>
+                            </button>
+                        @endforeach
                     </div>
                 </div>
             </div>
-        @endforeach
+        </aside>
+
+        <div class="flex-1 space-y-4" id="user-schedule-detail" data-week-start="{{ $weekStart->toDateString() }}"
+            data-active-user="{{ $activeUser->id ?? '' }}">
+            @if ($activeUser)
+                @include('admin.personnel.users.partials.weekly-schedule-card', [
+                    'user' => $activeUser,
+                    'weekStart' => $weekStart,
+                    'scheduleRows' => $activeScheduleRows,
+                    'hasExisting' => $activeHasExisting,
+                    'timeOffEntries' => $activeTimeOffEntries,
+                    'dayLabelsLong' => $dayLabelsLong,
+                    'dayLabelsShort' => $dayLabelsShort,
+                    'attendanceTypes' => $attendanceTypes,
+                    'attendanceTypesPayload' => $attendanceTypesPayload,
+                    'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
+                ])
+            @else
+                <div class="card bg-base-200">
+                    <div class="card-body">
+                        <p class="text-sm text-base-content/70">{{ __('personnel.users_default_schedule_empty') }}</p>
+                    </div>
+                </div>
+            @endif
+        </div>
     </div>
 
-    <dialog id="weekly-schedule-modal" class="modal">
-        <div class="modal-box">
-            <h3 class="font-semibold text-lg mb-2" data-modal-title></h3>
-            <div class="flex flex-col gap-3">
-                <label class="form-control">
-                    <span class="label-text text-sm">{{ __('personnel.users_default_schedule_day') }}</span>
-                    <select id="weekly-modal-day-select" class="select select-bordered w-full">
-                        <option value="monday">{{ __('personnel.users_default_schedule_monday') }}</option>
-                        <option value="tuesday">{{ __('personnel.users_default_schedule_tuesday') }}</option>
-                        <option value="wednesday">{{ __('personnel.users_default_schedule_wednesday') }}</option>
-                        <option value="thursday">{{ __('personnel.users_default_schedule_thursday') }}</option>
-                        <option value="friday">{{ __('personnel.users_default_schedule_friday') }}</option>
-                        <option value="saturday">{{ __('personnel.users_default_schedule_saturday') }}</option>
-                        <option value="sunday">{{ __('personnel.users_default_schedule_sunday') }}</option>
-                    </select>
-                </label>
-
-                <label class="form-control">
-                    <span class="label-text text-sm">{{ __('personnel.users_default_schedule_start') }}</span>
-                    <input type="time" id="weekly-modal-hour-start" class="input input-bordered w-full" />
-                </label>
-
-                <label class="form-control">
-                    <span class="label-text text-sm">{{ __('personnel.users_default_schedule_end') }}</span>
-                    <input type="time" id="weekly-modal-hour-end" class="input input-bordered w-full" />
-                </label>
-
-                <label class="form-control">
-                    <span class="label-text text-sm">{{ __('personnel.users_default_schedule_type') }}</span>
-                    <select id="weekly-modal-type" class="select select-bordered w-full">
-                        @foreach ($attendanceTypes as $attendanceType)
-                            <option value="{{ $attendanceType->id }}">
-                                {{ $attendanceType->name }} ({{ $attendanceType->acronym }})
-                            </option>
-                        @endforeach
-                    </select>
-                </label>
-            </div>
-
-            <div class="modal-action">
-                <button class="btn btn-ghost"
-                    id="weekly-modal-cancel">{{ __('personnel.users_default_schedule_cancel') }}</button>
-                <button class="btn btn-error"
-                    id="weekly-modal-delete">{{ __('personnel.users_default_schedule_delete') }}</button>
-                <button class="btn btn-primary"
-                    id="weekly-modal-save">{{ __('personnel.users_default_schedule_save') }}</button>
-            </div>
-        </div>
-    </dialog>
+    @include('admin.personnel.users.partials.weekly-schedule-modal', ['attendanceTypes' => $attendanceTypes])
 
     @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const navButtons = document.querySelectorAll('[data-user-nav]');
+                const detail = document.getElementById('user-schedule-detail');
+
+                if (!detail || !navButtons.length) return;
+
+                const setActiveButton = (userId) => {
+                    navButtons.forEach((btn) => {
+                        const isActive = btn.dataset.userNav === userId;
+                        btn.classList.toggle('btn-primary', isActive);
+                        btn.classList.toggle('btn-ghost', !isActive);
+                    });
+                };
+
+                const loadUser = (button) => {
+                    const userId = button.dataset.userNav;
+                    if (detail.dataset.activeUser === userId) {
+                        setActiveButton(userId);
+                        return;
+                    }
+
+                    const url = new URL(button.dataset.fetchUrl, window.location.origin);
+                    if (detail.dataset.weekStart) {
+                        url.searchParams.set('week_start', detail.dataset.weekStart);
+                    }
+
+                    detail.classList.add('opacity-50');
+
+                    fetch(url.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            detail.innerHTML = data.html;
+                            detail.dataset.activeUser = userId;
+                            window.initWeeklySchedulers?.(detail);
+                            setActiveButton(userId);
+                        })
+                        .catch(() => {
+                            alert('Errore nel caricamento dei dati utente.');
+                        })
+                        .finally(() => {
+                            detail.classList.remove('opacity-50');
+                        });
+                };
+
+                navButtons.forEach((button) => {
+                    button.addEventListener('click', () => loadUser(button));
+                });
+
+                setActiveButton(detail.dataset.activeUser);
+            });
+        </script>
         @vite('resources/js/user-schedules.js')
     @endpush
 </x-layouts.app>

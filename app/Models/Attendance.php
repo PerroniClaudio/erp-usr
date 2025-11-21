@@ -11,6 +11,7 @@ class Attendance extends Model {
     protected $fillable = [
         "user_id",
         "company_id",
+        "inserted_by",
         "date",
         "time_in",
         "time_out",
@@ -25,6 +26,10 @@ class Attendance extends Model {
 
     public function company() {
         return $this->belongsTo(Company::class);
+    }
+
+    public function insertedBy() {
+        return $this->belongsTo(User::class, 'inserted_by');
     }
 
 

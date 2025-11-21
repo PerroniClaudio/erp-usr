@@ -113,4 +113,5 @@ return [
     'admin_mail' => env('ADMIN_MAIL'),
     'attendance_mail' => env('ATTENDANCES_EMAIL'),
     'dev_email' => env('DEV_EMAIL'),
+    'hr_mail' => env('HR_MAIL', env('ADMIN_MAIL')),
 ];

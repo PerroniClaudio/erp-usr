@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Group;
 use App\Models\TimeOffRequest;
 use App\Models\User;
+use App\Models\UserSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -62,23 +63,31 @@ class AttendanceController extends Controller
     public function create()
     {
         $attendanceTypes = AttendanceType::all();
+        $authUser = Auth::user();
 
-        if (Auth::user()->hasRole('admin')) {
+        if ($authUser->hasRole('admin')) {
             $users = User::all();
             $companies = Company::all();
         } else {
-            $companies = Auth::user()->companies;
+            $companies = $authUser->companies;
         }
+
+        $initialDate = Carbon::today()->toDateString();
+        $expectedSchedule = $authUser->hasRole('admin')
+            ? collect()
+            : $this->getScheduledSlotsForUser($authUser->id, $initialDate)->values();
 
         return view('standard.attendances.create', [
             'attendanceTypes' => $attendanceTypes,
             'companies' => $companies,
+            'initialScheduleDate' => $initialDate,
+            'expectedSchedule' => $expectedSchedule,
         ])->with([
             'success' => session('success'),
             'error' => session('error'),
             'message' => session('message'),
             'errors' => session('errors'),
-            'users' => Auth::user()->hasRole('admin') ? $users : [],
+            'users' => $authUser->hasRole('admin') ? $users : [],
         ]);
     }
 
@@ -109,6 +118,19 @@ class AttendanceController extends Controller
 
             if ($this->isPastAttendanceNotAllowed($fields['date'])) {
                 return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
+            }
+
+            $scheduledSlots = $this->getScheduledSlotsForUser($user->id, $fields['date']);
+            if ($scheduledSlots->isNotEmpty()) {
+                $matchesSlot = $scheduledSlots->contains(function ($slot) use ($fields) {
+                    return $this->fitsScheduledSlot($fields['time_in'], $fields['time_out'], $slot);
+                });
+
+                if (! $matchesSlot) {
+                    return back()->withErrors([
+                        'message' => __('attendances.schedule_mismatch_error'),
+                    ])->withInput();
+                }
             }
         }
 
@@ -144,9 +166,29 @@ class AttendanceController extends Controller
             'time_out' => $fields['time_out'],
             'hours' => $difference,
             'attendance_type_id' => $fields['attendance_type_id'],
+            'inserted_by' => $user->id,
         ]);
 
         return redirect()->route('attendances.index')->with('success', 'Presenza registrata con successo');
+    }
+
+    public function scheduledSlots(Request $request)
+    {
+        $date = $request->input('date');
+        if (! $date) {
+            return response()->json(['schedule' => []]);
+        }
+
+        $user = $request->user();
+        $targetUserId = $user->id;
+
+        if ($user->hasRole('admin') && $request->filled('user_id')) {
+            $targetUserId = (int) $request->input('user_id');
+        }
+
+        $items = $this->getScheduledSlotsForUser($targetUserId, $date)->values();
+
+        return response()->json(['schedule' => $items]);
     }
 
     // --- Metodi di supporto privati ---
@@ -172,6 +214,54 @@ class AttendanceController extends Controller
     private function calculateHourDifference($timeIn, $timeOut)
     {
         return (strtotime($timeOut) - strtotime($timeIn)) / 3600;
+    }
+
+    private function getScheduledSlotsForUser(int $userId, ?string $date)
+    {
+        if (empty($date)) {
+            return collect();
+        }
+
+        try {
+            $targetDate = Carbon::parse($date)->toDateString();
+        } catch (\Exception $e) {
+            return collect();
+        }
+
+        return UserSchedule::with('attendanceType')
+            ->where('user_id', $userId)
+            ->whereDate('date', $targetDate)
+            ->orderBy('hour_start')
+            ->get()
+            ->map(function ($slot) {
+                $start = $slot->hour_start instanceof Carbon ? $slot->hour_start->format('H:i') : $slot->hour_start;
+                $end = $slot->hour_end instanceof Carbon ? $slot->hour_end->format('H:i') : $slot->hour_end;
+
+                return [
+                    'hour_start' => $start,
+                    'hour_end' => $end,
+                    'attendance_type' => [
+                        'name' => $slot->attendanceType?->name,
+                        'acronym' => $slot->attendanceType?->acronym,
+                        'color' => $slot->attendanceType?->color,
+                    ],
+                ];
+            });
+    }
+
+    private function fitsScheduledSlot(string $timeIn, string $timeOut, array $slot): bool
+    {
+        $slotStart = strtotime($slot['hour_start']);
+        $slotEnd = strtotime($slot['hour_end']);
+        $start = strtotime($timeIn);
+        $end = strtotime($timeOut);
+
+        $allowedStartFrom = $slotStart - 3600; // 1 hour before the slot start
+        $allowedStartUntil = $slotStart + 1800; // 30 minutes after the slot start
+
+        $startsNearSlot = $start >= $allowedStartFrom && $start <= $allowedStartUntil;
+
+        return $startsNearSlot && $end <= $slotEnd;
     }
 
     private function getTotalTimeOffHours($userId, $companyId, $date)
@@ -254,6 +344,14 @@ class AttendanceController extends Controller
         return $overlap;
     }
 
+    private function isLockedForUser(Attendance $attendance, User $user): bool
+    {
+        $attendance->loadMissing('insertedBy');
+
+        return (! $user->hasRole('admin'))
+            && ($attendance->insertedBy?->hasRole('admin') ?? false);
+    }
+
     /**
      * Display the specified resource.
      */
@@ -267,6 +365,11 @@ class AttendanceController extends Controller
      */
     public function edit(Attendance $attendance)
     {
+        $user = Auth::user();
+
+        if ($this->isLockedForUser($attendance, $user)) {
+            return redirect()->route('attendances.index')->withErrors(['message' => 'Non puoi modificare una presenza inserita da un amministratore.']);
+        }
 
         if ($attendance->date !== date('Y-m-d')) {
             return redirect()->route('attendances.index')->withErrors(['message' => 'Non è possibile modificare una presenza che non è di oggi']);
@@ -279,7 +382,7 @@ class AttendanceController extends Controller
         return view('standard.attendances.edit', [
             'attendance' => $attendance,
             'attendanceTypes' => $attendanceTypes,
-            'companies' => Auth::user()->companies,
+            'companies' => $user->companies,
         ])->with([
             'success' => session('success'),
             'error' => session('error'),
@@ -294,6 +397,10 @@ class AttendanceController extends Controller
     public function update(Request $request, Attendance $attendance)
     {
         $user = $request->user();
+
+        if ($this->isLockedForUser($attendance, $user)) {
+            return back()->withErrors(['message' => 'Non puoi modificare una presenza inserita da un amministratore.']);
+        }
 
         $fields = $request->validate([
             'date' => 'required|string',
@@ -339,6 +446,11 @@ class AttendanceController extends Controller
     public function destroy(Request $request, Attendance $attendance)
     {
         $user = $request->user();
+
+        if ($this->isLockedForUser($attendance, $user)) {
+            return back()->withErrors(['message' => 'Non puoi eliminare una presenza inserita da un amministratore.']);
+        }
+
         $attendance->delete();
 
         if ($user->hasRole('admin')) {

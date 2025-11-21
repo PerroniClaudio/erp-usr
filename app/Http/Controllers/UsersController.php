@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\UserDataUpdated;
 use App\Models\Attendance;
 use App\Models\AttendanceType;
 use App\Models\Company;
 use App\Models\Group;
 use App\Models\OvertimeRequest;
+use Spatie\Permission\Models\Role;
 use App\Models\TimeOffRequest;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -16,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -57,7 +60,15 @@ class UsersController extends Controller
         return view('admin.personnel.users.index', compact('users'));
     }
 
-    public function edit(User $user)
+    public function manageRoles()
+    {
+        $users = User::with('roles')->get();
+        $availableRoles = Role::orderBy('name')->get();
+
+        return view('admin.personnel.users.roles', compact('users', 'availableRoles'));
+    }
+
+    public function edit(Request $request, User $user)
     {
         $user->load([
             'defaultSchedules' => function ($query) {
@@ -88,7 +99,23 @@ class UsersController extends Controller
             'overtime' => 'Straordinario',
         ];
 
-        return view('admin.personnel.users.edit', compact('user', 'dayLabels', 'scheduleTypes'));
+        $currentUser = $request->user();
+        $canManageSchedules = $currentUser?->hasAnyRole(['admin', 'Responsabile HR', 'Operatore HR']) ?? false;
+        $canUpdateAnagrafica = $currentUser?->hasAnyRole(['admin', 'Responsabile HR']) ?? false;
+        $canPrintPayslips = $currentUser?->hasAnyRole(['admin', 'Responsabile HR', 'Operatore HR']) ?? false;
+        $canManageRoles = $currentUser?->hasRole('admin') ?? false;
+        $availableRoles = $canManageRoles ? Role::orderBy('name')->get() : collect();
+
+        return view('admin.personnel.users.edit', compact(
+            'user',
+            'dayLabels',
+            'scheduleTypes',
+            'canManageSchedules',
+            'canUpdateAnagrafica',
+            'canPrintPayslips',
+            'canManageRoles',
+            'availableRoles',
+        ));
     }
 
     public function showDefaultSchedule(User $user)
@@ -764,7 +791,36 @@ class UsersController extends Controller
             'employee_code' => 'nullable|string|max:50',
         ]);
 
-        $user->update($request->all());
+        $payload = $request->only([
+            'title',
+            'cfp',
+            'birth_date',
+            'company_name',
+            'vat_number',
+            'mobile_number',
+            'phone_number',
+            'category',
+            'weekly_hours',
+            'badge_code',
+            'employee_code',
+        ]);
+
+        $original = $user->getOriginal();
+        $user->fill($payload);
+        $dirty = $user->getDirty();
+
+        if (! empty($dirty)) {
+            $user->save();
+            $changes = collect($dirty)->map(function ($value, $field) use ($original) {
+                return [
+                    'field' => $field,
+                    'old' => $original[$field] ?? null,
+                    'new' => $value,
+                ];
+            })->values()->all();
+
+            $this->sendUserDataUpdateNotifications($user, $changes, $request->user());
+        }
 
         return redirect()->route('users.edit', $user->id)->with('success', __('personnel.users_updated'));
     }
@@ -812,6 +868,42 @@ class UsersController extends Controller
         return redirect()->route('users.edit', $user)->with('success', 'Calendario aggiornato.');
     }
 
+    public function assignRole(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'role' => 'required|string|exists:roles,name',
+        ]);
+
+        $user->assignRole($validated['role']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'ok',
+                'roles' => $user->getRoleNames(),
+            ]);
+        }
+
+        return redirect()->route('users.edit', $user)->with('success', 'Ruolo assegnato.');
+    }
+
+    public function removeRole(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'role' => 'required|string|exists:roles,name',
+        ]);
+
+        $user->removeRole($validated['role']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'ok',
+                'roles' => $user->getRoleNames(),
+            ]);
+        }
+
+        return redirect()->route('users.edit', $user)->with('success', 'Ruolo rimosso.');
+    }
+
     public function generateDefaultSchedules(User $user)
     {
         $user->ensureDefaultSchedule();
@@ -838,6 +930,23 @@ class UsersController extends Controller
             'message' => __('personnel.users_updated'),
             'user' => $user,
         ]);
+    }
+
+    private function sendUserDataUpdateNotifications(User $user, array $changes, ?User $performedBy = null): void
+    {
+        if (empty($changes)) {
+            return;
+        }
+
+        $hrEmail = config('mail.hr_mail');
+
+        if (! empty($hrEmail)) {
+            Mail::to($hrEmail)->send(new UserDataUpdated($user, $changes, $performedBy, true));
+        }
+
+        if (! empty($user->email)) {
+            Mail::to($user->email)->send(new UserDataUpdated($user, $changes, $performedBy));
+        }
     }
 
     public function updateLocation(Request $request, User $user)

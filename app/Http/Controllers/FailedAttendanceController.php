@@ -9,6 +9,7 @@ use App\Models\TimeOffRequest;
 use App\Models\TimeOffType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 class FailedAttendanceController extends Controller {
@@ -223,6 +224,7 @@ class FailedAttendanceController extends Controller {
             'hours' => $morningHours,
             'status' => 1, // Approvata
             'attendance_type_id' => $attendanceType ? $attendanceType->id : null,
+            'inserted_by' => Auth::id(),
         ]);
 
         // Se ci sono orari pomeridiani, crea una seconda attendance
@@ -236,6 +238,7 @@ class FailedAttendanceController extends Controller {
                 'hours' => $afternoonHours,
                 'status' => 1, // Approvata
                 'attendance_type_id' => $attendanceType ? $attendanceType->id : null,
+                'inserted_by' => Auth::id(),
             ]);
         }
     }

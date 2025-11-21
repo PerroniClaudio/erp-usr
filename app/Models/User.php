@@ -189,6 +189,11 @@ class User extends Authenticatable
         return $this->hasMany(UserSchedule::class);
     }
 
+    public function scheduleChangeRequests()
+    {
+        return $this->hasMany(UserScheduleChangeRequest::class);
+    }
+
     public function viewedAnnouncements()
     {
         return $this->belongsToMany(Announcement::class, 'announcement_user')->withTimestamps();
