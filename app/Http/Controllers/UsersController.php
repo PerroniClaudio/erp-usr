@@ -1102,6 +1102,7 @@ class UsersController extends Controller
      */
     public function searchAddress(Request $request)
     {
+        
 
         // 2. Costruzione della query per Nominatim (utilizzando il parametro 'q')
         // Combiniamo i campi in una singola stringa indirizzo

@@ -82,6 +82,10 @@ Route::group([
         Route::post('/users/{user}/remove-role', [UsersController::class, 'removeRole'])->name('users.remove-role');
     });
 
+     Route::middleware('role:admin|Responsabile HR')->group(function () {
+            Route::get('/users/search-address', [UsersController::class, 'searchAddress'])->name('users.search-address');
+    });
+
     Route::middleware('role:admin|Responsabile HR|Operatore HR')->group(function () {
         Route::get('/users', [UsersController::class, 'index'])->name('users.index');
         Route::get('/user-roles', [UsersController::class, 'manageRoles'])->name('users.roles');
@@ -95,7 +99,6 @@ Route::group([
     });
 
     Route::middleware('role:admin|Responsabile HR')->group(function () {
-        Route::get('users/search-address', [UsersController::class, 'searchAddress'])->name('users.search-address');
         Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
         Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
         Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
