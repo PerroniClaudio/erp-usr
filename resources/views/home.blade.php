@@ -31,6 +31,15 @@
                 </p>
             </div>
         </a>
+        <a href="{{ route('standard.profile.edit') }}" class="card bg-base-200 shadow-xl hover:shadow-2xl">
+            <div class="card-body">
+                <x-lucide-circle-user class="h-6 w-6 text-primary" />
+                <h2 class="card-title">{{ __('navbar.profile') }}</h2>
+                <p>
+                    {{ __('navbar.profile_description') }}
+                </p>
+            </div>
+        </a>
 
         @unless ($failedAttendances->isEmpty())
             <div class="card bg-base-200 shadow-xl hover:shadow-2xl md:col-span-3">

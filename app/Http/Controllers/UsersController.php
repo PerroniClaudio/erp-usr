@@ -351,6 +351,63 @@ class UsersController extends Controller
         return $this->exportPresenzePdf($user, $request);
     }
 
+    public function editProfile(Request $request)
+    {
+        $user = $request->user();
+
+        return view('standard.profile.edit', [
+            'user' => $user,
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'title' => 'required|string|max:50',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'cfp' => 'required|string|max:16',
+            'birth_date' => 'required|date',
+            'company_name' => 'nullable|string|max:100',
+            'vat_number' => 'nullable|string|max:16',
+            'mobile_number' => 'nullable|string|max:15',
+            'phone_number' => 'nullable|string|max:15',
+        ]);
+
+        $payload = $request->only([
+            'title',
+            'name',
+            'email',
+            'cfp',
+            'birth_date',
+            'company_name',
+            'vat_number',
+            'mobile_number',
+            'phone_number',
+        ]);
+
+        $original = $user->getOriginal();
+        $user->fill($payload);
+        $dirty = $user->getDirty();
+
+        if (! empty($dirty)) {
+            $user->save();
+            $changes = collect($dirty)->map(function ($value, $field) use ($original) {
+                return [
+                    'field' => $field,
+                    'old' => $original[$field] ?? null,
+                    'new' => $value,
+                ];
+            })->values()->all();
+
+            $this->sendUserDataUpdateNotifications($user, $changes, $user);
+        }
+
+        return redirect()->route('standard.profile.edit')->with('success', __('personnel.users_updated'));
+    }
+
     public function exportAnomaliesPdf(User $user, Request $request)
     {
         $request->validate([
@@ -913,7 +970,7 @@ class UsersController extends Controller
 
     public function updateResidence(Request $request, User $user)
     {
-        $request->validate([
+        $validated = $request->validate([
             'address' => 'required|string|max:255',
             'city' => 'required|string|max:100',
             'street_number' => 'required|string|max:10',
@@ -923,13 +980,44 @@ class UsersController extends Controller
             'longitude' => 'required|numeric',
         ]);
 
-        $user->update($request->all());
+        $user->update($validated);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => __('personnel.users_updated'),
-            'user' => $user,
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => __('personnel.users_updated'),
+                'user' => $user,
+            ]);
+        }
+
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_updated'));
+    }
+
+    public function updateProfileResidence(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'street_number' => 'required|string|max:10',
+            'postal_code' => 'required|string|max:10',
+            'province' => 'required|string|max:50',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
         ]);
+
+        $user->update($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => __('personnel.users_updated'),
+                'user' => $user,
+            ]);
+        }
+
+        return redirect()->route('standard.profile.edit')->with('success', __('personnel.users_updated'));
     }
 
     private function sendUserDataUpdateNotifications(User $user, array $changes, ?User $performedBy = null): void
@@ -951,7 +1039,7 @@ class UsersController extends Controller
 
     public function updateLocation(Request $request, User $user)
     {
-        $request->validate([
+        $validated = $request->validate([
             'location_address' => 'required|string|max:255',
             'location_city' => 'required|string|max:100',
             'location_street_number' => 'required|string|max:10',
@@ -961,13 +1049,44 @@ class UsersController extends Controller
             'location_longitude' => 'required|numeric',
         ]);
 
-        $user->update($request->all());
+        $user->update($validated);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => __('personnel.users_updated'),
-            'user' => $user,
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => __('personnel.users_updated'),
+                'user' => $user,
+            ]);
+        }
+
+        return redirect()->route('users.edit', $user)->with('success', __('personnel.users_updated'));
+    }
+
+    public function updateProfileLocation(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'location_address' => 'required|string|max:255',
+            'location_city' => 'required|string|max:100',
+            'location_street_number' => 'required|string|max:10',
+            'location_postal_code' => 'required|string|max:10',
+            'location_province' => 'required|string|max:50',
+            'location_latitude' => 'required|numeric',
+            'location_longitude' => 'required|numeric',
         ]);
+
+        $user->update($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => __('personnel.users_updated'),
+                'user' => $user,
+            ]);
+        }
+
+        return redirect()->route('standard.profile.edit')->with('success', __('personnel.users_updated'));
     }
 
     public function addVehicles(User $user)

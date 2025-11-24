@@ -99,6 +99,17 @@ Route::group([
     Route::post('/', [UserScheduleController::class, 'submitRequest'])->name('user-schedule-request.store');
 });
 
+Route::group([
+    'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR|admin'],
+    'prefix' => 'standard/profile',
+], function () {
+    Route::get('/', [UsersController::class, 'editProfile'])->name('standard.profile.edit');
+    Route::put('/personal-data', [UsersController::class, 'updateProfile'])->name('standard.profile.update');
+    Route::post('/residence', [UsersController::class, 'updateProfileResidence'])->name('standard.profile.residence');
+    Route::post('/location', [UsersController::class, 'updateProfileLocation'])->name('standard.profile.location');
+    Route::get('/search-address', [UsersController::class, 'searchAddress'])->name('standard.profile.search-address');
+});
+
 // Routes for announcements (accessible to all authenticated users)
 Route::group([
     'middleware' => ['auth'],

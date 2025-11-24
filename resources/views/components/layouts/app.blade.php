@@ -165,6 +165,14 @@
                             </summary>
                             <ul>
                                 <li>
+                                    <a href="{{ route('standard.profile.edit') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-circle-user class="h-6 w-6 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.profile') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="{{ route('attendances.index') }}">
                                         <div class="flex items-center">
                                             <x-lucide-calendar class="h-6 w-6 text-primary" />
@@ -208,6 +216,14 @@
                             <div class="flex items-center">
                                 <x-lucide-home class="h-6 w-6 text-primary" />
                                 <span class="ml-2">{{ __('navbar.home') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('standard.profile.edit') }}">
+                            <div class="flex items-center">
+                                <x-lucide-circle-user class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.profile') }}</span>
                             </div>
                         </a>
                     </li>
@@ -277,6 +293,14 @@
                             <div class="flex items-center">
                                 <x-lucide-home class="h-6 w-6 text-primary" />
                                 <span class="ml-2">{{ __('navbar.home') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('standard.profile.edit') }}">
+                            <div class="flex items-center">
+                                <x-lucide-circle-user class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.profile') }}</span>
                             </div>
                         </a>
                     </li>
