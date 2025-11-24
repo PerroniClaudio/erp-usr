@@ -90,6 +90,13 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            $user->ensureDefaultSchedule();
+        });
+    }
+
     public function companies()
     {
         return $this->belongsToMany(Company::class, 'user_companies', 'user_id', 'company_id');
@@ -166,16 +173,16 @@ class User extends Authenticatable
         foreach ($workDays as $day) {
             $entries[] = [
                 'day' => $day,
-                'hour_start' => '08:00',
-                'hour_end' => '12:00',
+                'hour_start' => '08:30',
+                'hour_end' => '12:30',
                 'total_hours' => 4,
                 'attendance_type_id' => $defaultAttendanceTypeId,
             ];
 
             $entries[] = [
                 'day' => $day,
-                'hour_start' => '13:00',
-                'hour_end' => '17:00',
+                'hour_start' => '13:30',
+                'hour_end' => '17:30',
                 'total_hours' => 4,
                 'attendance_type_id' => $defaultAttendanceTypeId,
             ];
@@ -202,7 +209,10 @@ class User extends Authenticatable
     public function unreadAnnouncements()
     {
         return Announcement::active()
-            ->whereNotIn('id', $this->viewedAnnouncements()->pluck('id'))
+            ->whereNotIn(
+                'id',
+                $this->viewedAnnouncements()->pluck('announcements.id') // qualify to avoid ambiguous column with join
+            )
             ->orderBy('created_at', 'desc');
     }
 }

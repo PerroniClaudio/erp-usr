@@ -50,6 +50,18 @@ const parseJson = (value, fallback) => {
     }
 };
 
+const setNavStatus = (userId, isComplete) => {
+    const button = document.querySelector(`[data-user-nav="${userId}"]`);
+    if (!button) return;
+    button.dataset.hasExisting = isComplete ? "1" : "0";
+    const dot = button.querySelector("[data-status-dot]");
+    if (!dot) return;
+    dot.classList.toggle("bg-success/80", isComplete);
+    dot.classList.toggle("ring-success/10", isComplete);
+    dot.classList.toggle("bg-error/80", !isComplete);
+    dot.classList.toggle("ring-error/10", !isComplete);
+};
+
 const createAttendanceHelpers = (container) => {
     const attendanceTypes = parseJson(container.dataset.attendanceTypes, []);
     const map = new Map(attendanceTypes.map((type) => [String(type.id), type]));
@@ -317,6 +329,7 @@ const initializeScheduler = (container) => {
         axios
             .post(saveUrl, form)
             .then(() => {
+                setNavStatus(container.dataset.userId, true);
                 if (successMessage) alert(successMessage);
                 if (successRedirect) {
                     window.location.href = successRedirect;

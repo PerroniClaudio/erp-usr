@@ -3,11 +3,19 @@
         <h1 class="text-4xl font-semibold">{{ __('personnel.users_default_schedule_title') }}</h1>
 
 
-        <a href="{{ route('users.edit', $user) }}" class="btn btn-primary">{{ __('personnel.users_default_schedule_back') }}</a>
+        <a href="{{ route('users.edit', $user) }}"
+            class="btn btn-primary">{{ __('personnel.users_default_schedule_back') }}</a>
 
     </div>
 
     <hr>
+
+    <div id="default-schedule-toast" class="toast toast-bottom toast-end hidden">
+        <div class="alert alert-success">
+            <x-lucide-check class="w-4 h-4" />
+            <span>{{ __('personnel.users_default_schedule_save_success') }}</span>
+        </div>
+    </div>
 
     <div class="flex items-center justify-between">
         <p class="text-base-content/70">{{ __('personnel.users_default_schedule_intro', ['name' => $user->name]) }}</p>
@@ -15,10 +23,14 @@
             @if ($schedules->isEmpty())
                 <form method="POST" action="{{ route('users.default-schedules.generate', $user) }}">
                     @csrf
-                    <button class="btn btn-secondary" type="submit">{{ __('personnel.users_default_schedule_generate') }}</button>
+                    <button class="btn btn-secondary"
+                        type="submit">{{ __('personnel.users_default_schedule_generate') }}</button>
                 </form>
             @endif
-            <button class="btn btn-secondary" id="add-work-slot">{{ __('personnel.users_default_schedule_add_slot') }}</button>
+            <button class="btn btn-secondary"
+                id="add-work-slot">{{ __('personnel.users_default_schedule_add_slot') }}</button>
+            <button class="btn btn-primary"
+                id="save-schedule">{{ __('personnel.users_default_schedule_save') }}</button>
         </div>
     </div>
 
@@ -27,8 +39,7 @@
         <div class="card-body flex flex-col gap-4">
             <div id="default-schedule-calendar" data-schedules='@json($schedules)'
                 data-save-url="{{ route('users.default-schedules.update', $user) }}"
-                data-initial-date="{{ $initialDate }}"
-                data-attendance-types='@json($attendanceTypesPayload)'
+                data-initial-date="{{ $initialDate }}" data-attendance-types='@json($attendanceTypesPayload)'
                 data-default-attendance-type="{{ $defaultAttendanceTypeId }}"
                 data-monday-label="{{ __('personnel.users_default_schedule_monday') }}"
                 data-tuesday-label="{{ __('personnel.users_default_schedule_tuesday') }}"
@@ -45,14 +56,11 @@
                 data-saturday-short-label="{{ __('personnel.users_default_schedule_saturday_short') }}"
                 data-sunday-short-label="{{ __('personnel.users_default_schedule_sunday_short') }}">
             </div>
-            <div class="flex justify-end gap-2">
-                <button class="btn btn-primary" id="save-schedule">{{ __('personnel.users_default_schedule_save') }}</button>
-            </div>
+
         </div>
     </div>
 
-    <dialog id="schedule-modal" class="modal"
-        data-title-add="{{ __('personnel.users_default_schedule_modal_add') }}"
+    <dialog id="schedule-modal" class="modal" data-title-add="{{ __('personnel.users_default_schedule_modal_add') }}"
         data-title-edit="{{ __('personnel.users_default_schedule_modal_edit') }}"
         data-error-end-before-start="{{ __('personnel.users_default_schedule_error_end_before_start') }}"
         data-error-save="{{ __('personnel.users_default_schedule_save_error') }}">
@@ -95,9 +103,12 @@
             </div>
 
             <div class="modal-action">
-                <button class="btn btn-ghost" id="modal-cancel">{{ __('personnel.users_default_schedule_cancel') }}</button>
-                <button class="btn btn-error" id="modal-delete">{{ __('personnel.users_default_schedule_delete') }}</button>
-                <button class="btn btn-primary" id="modal-save">{{ __('personnel.users_default_schedule_save') }}</button>
+                <button class="btn btn-ghost"
+                    id="modal-cancel">{{ __('personnel.users_default_schedule_cancel') }}</button>
+                <button class="btn btn-error"
+                    id="modal-delete">{{ __('personnel.users_default_schedule_delete') }}</button>
+                <button class="btn btn-primary"
+                    id="modal-save">{{ __('personnel.users_default_schedule_save') }}</button>
             </div>
         </div>
     </dialog>

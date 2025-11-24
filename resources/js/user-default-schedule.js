@@ -88,6 +88,7 @@ if (calendarEl) {
     const modalSave = document.getElementById("modal-save");
     const modalCancel = document.getElementById("modal-cancel");
     const modalDelete = document.getElementById("modal-delete");
+    const toast = document.getElementById("default-schedule-toast");
 
     const weekdayMap = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     const weekdayShortLabels = [
@@ -107,6 +108,12 @@ if (calendarEl) {
         event.setProp("backgroundColor", color);
         event.setProp("borderColor", color);
         event.setProp("textColor", "#1f2937");
+    };
+
+    const showToast = () => {
+        if (!toast) return;
+        toast.classList.remove("hidden");
+        setTimeout(() => toast.classList.add("hidden"), 3000);
     };
 
     const combineDateTime = (date, timeStr) => {
@@ -187,7 +194,10 @@ if (calendarEl) {
 
         axios
             .post(saveUrl, form)
-            .then(() => window.location.reload())
+            .then(() => {
+                localStorage.setItem("defaultScheduleSaved", "1");
+                window.location.reload();
+            })
             .catch((error) => {
                 console.error(error);
                 alert(modal?.dataset.errorSave || "Errore nel salvataggio del calendario.");
@@ -259,4 +269,9 @@ if (calendarEl) {
         selectedEvent = null;
         modal?.close();
     });
+
+    if (localStorage.getItem("defaultScheduleSaved")) {
+        localStorage.removeItem("defaultScheduleSaved");
+        showToast();
+    }
 }

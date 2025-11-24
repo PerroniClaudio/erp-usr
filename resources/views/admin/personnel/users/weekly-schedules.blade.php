@@ -1,18 +1,41 @@
 <x-layouts.app>
     <div class="flex items-center justify-between">
         <h1 class="text-3xl font-semibold">{{ __('personnel.users_weekly_schedule_title') }}</h1>
-        <div class="flex items-center gap-2">
-            <form method="GET" action="{{ route('user-schedules.index') }}" class="flex items-center gap-2">
-                <input type="date" name="week_start" value="{{ $weekStart->toDateString() }}"
-                    class="input input-bordered" />
-                <button class="btn btn-secondary"
-                    type="submit">{{ __('personnel.users_default_schedule_go') }}</button>
-            </form>
-        </div>
     </div>
     <hr>
 
-    <p class="text-base-content/70 mt-2">{{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}</p>
+    <div class="card bg-base-200 shadow-sm mt-4">
+        <div class="card-body flex flex-col gap-4">
+            <div class="space-y-1">
+                <p class="text-xs uppercase font-semibold text-base-content/60">
+                    {{ __('personnel.users_weekly_schedule_week_label') }}
+                </p>
+                <p class="text-lg font-semibold">
+                    {{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}
+                </p>
+                <p class="text-sm text-base-content/70">
+                    {{ __('personnel.users_weekly_schedule_week_help') }}
+                </p>
+            </div>
+            <div class="w-full md:w-1/3">
+                <form method="GET" action="{{ route('user-schedules.index') }}"
+                    class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center">
+                    <label class="form-control w-full">
+
+                        <input type="date" name="week_start" value="{{ $weekStart->toDateString() }}"
+                            class="input input-bordered w-full" />
+                    </label>
+                    <div class="flex sm:items-end">
+                        <button class="btn btn-secondary w-full sm:w-auto"
+                            type="submit">{{ __('personnel.users_default_schedule_go') }}</button>
+                    </div>
+                    <p class="text-xs text-base-content/60 sm:col-span-2">
+                        {{ __('personnel.users_weekly_schedule_week_selector_hint') }}
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
 
     @php
         $orderedDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -38,11 +61,11 @@
 
     @php
         $activeUser = $users->first();
-        $activeRows = $activeUser ? ($defaultSchedulesByUser[$activeUser->id] ?? collect()) : collect();
-        $activeExisting = $activeUser ? ($existingSchedulesByUser[$activeUser->id] ?? collect()) : collect();
+        $activeRows = $activeUser ? $defaultSchedulesByUser[$activeUser->id] ?? collect() : collect();
+        $activeExisting = $activeUser ? $existingSchedulesByUser[$activeUser->id] ?? collect() : collect();
         $activeHasExisting = $activeExisting->isNotEmpty();
         $activeScheduleRows = $activeHasExisting ? $activeExisting : $activeRows;
-        $activeTimeOffEntries = collect($activeUser ? ($timeOffByUser[$activeUser->id] ?? []) : []);
+        $activeTimeOffEntries = collect($activeUser ? $timeOffByUser[$activeUser->id] ?? [] : []);
     @endphp
 
     <div class="flex flex-col lg:flex-row gap-4 mt-4">
@@ -53,20 +76,22 @@
                     <div class="flex flex-col gap-1">
                         @foreach ($users as $user)
                             @php
-                                $hasExisting = isset($existingSchedulesByUser[$user->id]) && $existingSchedulesByUser[$user->id]->isNotEmpty();
-                                $hasTimeOff = ! empty($timeOffByUser[$user->id]);
+                                $hasExisting =
+                                    isset($existingSchedulesByUser[$user->id]) &&
+                                    $existingSchedulesByUser[$user->id]->isNotEmpty();
+                                $hasTimeOff = !empty($timeOffByUser[$user->id]);
                             @endphp
-                            <button type="button"
-                                class="btn btn-ghost btn-sm justify-between w-full text-left"
-                                data-user-nav="{{ $user->id }}"
+                            <button type="button" class="btn btn-ghost btn-sm justify-between w-full text-left"
+                                data-user-nav="{{ $user->id }}" data-has-existing="{{ $hasExisting ? '1' : '0' }}"
                                 data-fetch-url="{{ route('user-schedules.show', $user) }}">
-                                <span>{{ $user->name }}</span>
-                                <span class="flex items-center gap-1">
+                                <span class="flex items-center gap-2">
+                                    <span class="status-dot inline-flex h-2.5 w-2.5 rounded-full ring-4 {{ $hasExisting ? 'bg-success/80 ring-success/10' : 'bg-error/80 ring-error/10' }}"
+                                        data-status-dot aria-hidden="true"></span>
+                                    <span>{{ $user->name }}</span>
+                                </span>
+                                <span class="flex items-center gap-1 text-base-content/80">
                                     @if ($hasTimeOff)
                                         <x-lucide-sun class="w-4 h-4 text-warning" />
-                                    @endif
-                                    @if ($hasExisting)
-                                        <x-lucide-check class="w-4 h-4 text-success" />
                                     @endif
                                 </span>
                             </button>
@@ -101,7 +126,9 @@
         </div>
     </div>
 
-    @include('admin.personnel.users.partials.weekly-schedule-modal', ['attendanceTypes' => $attendanceTypes])
+    @include('admin.personnel.users.partials.weekly-schedule-modal', [
+        'attendanceTypes' => $attendanceTypes,
+    ])
 
     @push('scripts')
         <script>
@@ -134,10 +161,10 @@
                     detail.classList.add('opacity-50');
 
                     fetch(url.toString(), {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    })
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        })
                         .then((response) => response.json())
                         .then((data) => {
                             detail.innerHTML = data.html;
