@@ -56,6 +56,7 @@
                             <tbody id="days-table-body">
                                 <!-- Rows will be added here dynamically -->
                                 @foreach ($requests as $request)
+                                    @continue($request->isInvalidDate())
                                     <tr class="day-row" data-key="{{ $request->id }}">
                                         <td>
                                             <fieldset class="fieldset">

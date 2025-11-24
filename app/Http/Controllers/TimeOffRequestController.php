@@ -132,11 +132,13 @@ class TimeOffRequestController extends Controller
                 ->where('status', '<>', '4')
                 ->where('date_from', '>=', $startDate)
                 ->where('date_to', '<=', $endDate)
+                ->excludeMidnightOnly()
                 ->orderBy('id', 'asc')
                 ->get();
         } else {
             $requests = TimeOffRequest::with(['type', 'user'])
                 ->where('status', '<>', '4')
+                ->excludeMidnightOnly()
                 ->orderBy('id', 'asc')
                 ->get();
         }
@@ -594,6 +596,7 @@ class TimeOffRequestController extends Controller
             ->where('status', '<>', '4')
             ->where('date_from', '>=', $startDate)
             ->where('date_to', '<=', $endDate)
+            ->excludeMidnightOnly()
             ->when($time_off_type_id, function ($query, $time_off_type_id) {
                 return $query->where('time_off_type_id', $time_off_type_id);
             })

@@ -3,7 +3,6 @@
     <div id="profile-page" data-search-url="{{ route('standard.profile.search-address') }}">
         <div class="flex flex-col gap-2">
             <h1 class="text-3xl font-semibold">Profilo utente</h1>
-            <p class="text-base-content/70">Aggiorna i tuoi dati anagrafici e gli indirizzi di residenza e recapito.</p>
         </div>
 
         <hr>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class TimeOffRequest extends Model
 {
@@ -89,5 +90,21 @@ class TimeOffRequest extends Model
         $lastName = $name_parts[1] ?? '';
 
         return $name.' '.$lastName;
+    }
+
+    public function scopeExcludeMidnightOnly($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereTime('date_from', '<>', '00:00:00')
+                ->orWhereTime('date_to', '<>', '00:00:00');
+        });
+    }
+
+    public function isInvalidDate(): bool
+    {
+        $start = Carbon::parse($this->date_from);
+        $end = Carbon::parse($this->date_to);
+
+        return $start->format('H:i:s') === '00:00:00' && $end->format('H:i:s') === '00:00:00';
     }
 }
