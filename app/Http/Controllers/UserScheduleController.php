@@ -21,15 +21,10 @@ class UserScheduleController extends Controller
     public function index(Request $request)
     {
         $currentWeekStart = Carbon::now()->startOfWeek(Carbon::MONDAY);
-        $minimumWeekStart = $currentWeekStart->copy()->addWeek();
 
         $weekStart = $request->has('week_start')
             ? Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)
-            : $minimumWeekStart->copy();
-
-        if ($weekStart->lte($currentWeekStart)) {
-            $weekStart = $minimumWeekStart->copy();
-        }
+            : $currentWeekStart->copy()->addWeek();
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
 
@@ -365,9 +360,16 @@ class UserScheduleController extends Controller
     {
         $user = $request->user();
 
+        $currentWeekStart = Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $minimumWeekStart = $currentWeekStart->copy()->addWeek();
+
         $weekStart = $request->has('week_start')
             ? Carbon::parse($request->input('week_start'))->startOfWeek(Carbon::MONDAY)
-            : Carbon::now()->startOfWeek(Carbon::MONDAY);
+            : $minimumWeekStart->copy();
+
+        if ($weekStart->lte($currentWeekStart)) {
+            $weekStart = $minimumWeekStart->copy();
+        }
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
 
