@@ -72,7 +72,6 @@
     <div class="header">
         <div class="company-info">IFORTECH S.R.L.</div>
         <div class="company-info">Via Pisa, 250 - Sesto San Giovanni - Milano - 20099</div>
-        <div class="company-info">Strada 4 palazzo Q5 – 3° piano, Rozzano - Milano - 20089</div>
         <div class="company-info">E-mail: info@ifortech.com / Web: www.ifortech.com</div>
         <div class="company-info">P. IVA 07927140967 / Cod. fiscale: 07927140967</div>
     </div>

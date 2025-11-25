@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BusinessTripController;
+use App\Http\Controllers\DailyTravelController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\UsersController;
@@ -56,6 +57,19 @@ Route::group([
     Route::get('/{businessTrip}/transfers/{transfer}/edit', [BusinessTripController::class, 'editTransfer'])->name('business-trips.transfers.edit');
     Route::put('/{businessTrip}/transfers/{transfer}', [BusinessTripController::class, 'updateTransfer'])->name('business-trips.transfers.update');
     Route::delete('/{businessTrip}/transfers/{transfer}', [BusinessTripController::class, 'destroyTransfer'])->name('business-trips.transfers.destroy');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR|admin'],
+    'prefix' => 'standard/daily-travels',
+], function () {
+    Route::get('/', [DailyTravelController::class, 'index'])->name('daily-travels.index');
+    Route::get('/pdf-batch', [DailyTravelController::class, 'pdfBatch'])->name('daily-travels.pdf-batch');
+    Route::get('/create', [DailyTravelController::class, 'create'])->name('daily-travels.create');
+    Route::post('/', [DailyTravelController::class, 'store'])->name('daily-travels.store');
+    Route::get('/{dailyTravel}/pdf', [DailyTravelController::class, 'pdf'])->name('daily-travels.pdf');
+    Route::get('/{dailyTravel}', [DailyTravelController::class, 'show'])->name('daily-travels.show');
+    Route::delete('/{dailyTravel}', [DailyTravelController::class, 'destroy'])->name('daily-travels.destroy');
 });
 
 Route::group([

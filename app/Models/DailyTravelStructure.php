@@ -33,4 +33,8 @@ class DailyTravelStructure extends Model
     {
         return $this->hasMany(DailyTravelStep::class);
     }
+    public function dailyTravels()
+    {
+        return $this->hasMany(DailyTravel::class);
+    }
 }

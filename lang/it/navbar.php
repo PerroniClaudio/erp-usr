@@ -18,6 +18,7 @@ return [
     'overtime_requests' => 'Richieste Straordinario',
     'schedule_request' => 'Richiesta orario',
     'schedule_requests_admin' => 'Richieste orario utenti',
+    'daily_travels' => 'Viaggi giornalieri',
     'profile' => 'Profilo',
     'profile_description' => 'Aggiorna i tuoi dati personali',
 ];

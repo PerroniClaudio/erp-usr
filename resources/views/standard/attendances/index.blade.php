@@ -2,7 +2,7 @@
 
     <div class="flex justify-between items-center">
         <h1 class="text-4xl">{{ __('attendances.attendances') }}</h1>
-        <div class="flex items-center gap-2">
+        <div class="hidden lg:flex items-center gap-2">
             <button type="button" class="btn btn-primary" onclick="openModal('presenze')">
                 {{ __('personnel.users_export_presenze_user') }}
             </button>
@@ -13,6 +13,15 @@
     </div>
 
     <hr>
+
+    <div class="flex lg:hidden flex-col gap-2">
+        <button type="button" class="btn btn-primary" onclick="openModal('presenze')">
+            {{ __('personnel.users_export_presenze_user') }}
+        </button>
+        <a href="{{ route('attendances.create') }}" class="btn btn-primary">
+            {{ __('attendances.new_attendance') }}
+        </a>
+    </div>
 
     <div>
         <div id="calendar" class="max-w-full"></div>
