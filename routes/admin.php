@@ -87,6 +87,8 @@ Route::group([
         Route::post('/daily-trip-structure/{user}/{company}/edit-vehicle', [\App\Http\Controllers\DailyTravelStructureController::class, 'updateVehicle'])->name('admin.user.daily-trip-structure.edit-vehicle');
         Route::post('/daily-trip-structure/{user}/{company}/steps', [\App\Http\Controllers\DailyTravelStructureController::class, 'storeStep'])->name('admin.user.daily-trip-structure.steps.store');
         Route::post('/daily-trip-structure/{user}/{company}/steps/reorder', [\App\Http\Controllers\DailyTravelStructureController::class, 'reorderSteps'])->name('admin.user.daily-trip-structure.steps.reorder');
+        Route::put('/daily-trip-structure/{user}/{company}/steps/{step}', [\App\Http\Controllers\DailyTravelStructureController::class, 'updateStep'])->name('admin.user.daily-trip-structure.steps.update');
+        Route::delete('/daily-trip-structure/{user}/{company}/steps/{step}', [\App\Http\Controllers\DailyTravelStructureController::class, 'destroyStep'])->name('admin.user.daily-trip-structure.steps.destroy');
     });
 
      Route::middleware('role:admin|Responsabile HR')->group(function () {

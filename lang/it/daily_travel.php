@@ -30,4 +30,10 @@ return [
     'steps_validate' => 'Convalida',
     'steps_save' => 'Salva',
     'close' => 'Chiudi',
+    'distance_summary_title' => 'Distanze tra le tappe',
+    'distance_summary_path' => 'Percorso',
+    'distance_summary_distance' => 'Distanza',
+    'distance_summary_empty' => 'Aggiungi almeno due tappe per visualizzare le distanze.',
+    'map_title' => 'Percorso su mappa',
+    'map_placeholder' => 'La mappa verrà mostrata qui.',
 ];
