@@ -39,7 +39,7 @@
 
         <div class="card bg-base-300">
             <div class="card-body">
-                <h3 class="card-title">Dati viaggio</h3>
+                <h3 class="card-title">{{ __('daily_travel.travel_data_title') }}</h3>
                 <hr>
                 @if ($vehicles->isEmpty())
                     <p class="text-sm text-gray-500">{{ __('daily_travel.user_no_vehicles_associated') }}</p>
@@ -131,7 +131,7 @@
         <div class="card bg-base-300">
             <div class="card-body">
                 <div class="flex items-center justify-between">
-                    <h3 class="card-title m-0 p-0">Tappe</h3>
+                    <h3 class="card-title m-0 p-0">{{ __('daily_travel.steps_title') }}</h3>
                     <button type="button" class="btn btn-sm btn-primary" id="add_step_button">
                         <x-lucide-plus class="w-4 h-4" />
                     </button>
@@ -145,11 +145,11 @@
                             <tr>
                                 <th class="w-12"></th>
                                 <th>#</th>
-                                <th>Indirizzo</th>
-                                <th>Città</th>
-                                <th>Provincia</th>
-                                <th>CAP</th>
-                                <th>Azioni</th>
+                                <th>{{ __('daily_travel.steps_address') }}</th>
+                                <th>{{ __('daily_travel.steps_city') }}</th>
+                                <th>{{ __('daily_travel.steps_province') }}</th>
+                                <th>{{ __('daily_travel.steps_zip') }}</th>
+                                <th>{{ __('daily_travel.steps_actions') }}</th>
                             </tr>
                         </thead>
                         <tbody id="steps_table_body"
@@ -172,8 +172,9 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-sm text-gray-500">Nessuna tappa
-                                        disponibile.</td>
+                                    <td colspan="6" class="text-center text-sm text-gray-500">
+                                        {{ __('daily_travel.steps_empty') }}
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -188,9 +189,9 @@
         data-store-url="{{ route('admin.user.daily-trip-structure.steps.store', [$user, $company]) }}">
         <div class="modal-box">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold">Nuova tappa</h3>
+                <h3 class="text-lg font-bold">{{ __('daily_travel.steps_new_title') }}</h3>
                 <form method="dialog">
-                    <button class="btn btn-ghost" aria-label="Chiudi">
+                    <button class="btn btn-ghost" aria-label="{{ __('daily_travel.close') }}">
                         <x-lucide-x class="w-4 h-4" />
                     </button>
                 </form>
@@ -202,10 +203,12 @@
                 <div class="join w-full">
                     <div class="flex-1">
                         <label class="input validator join-item w-full">
-                            <input type="text" id="step-address-search-input" placeholder="Via Garibaldi 22" />
+                            <input type="text" id="step-address-search-input"
+                                placeholder="{{ __('daily_travel.steps_address_placeholder') }}" />
                         </label>
                     </div>
-                    <button class="btn btn-primary join-item" id="validate-step-address-button">Convalida</button>
+                    <button class="btn btn-primary join-item"
+                        id="validate-step-address-button">{{ __('daily_travel.steps_validate') }}</button>
                 </div>
             </div>
 
@@ -261,9 +264,9 @@
 
 
             <div class="modal-action">
-                <button class="btn btn-primary" id="save-step-button">Salva</button>
+                <button class="btn btn-primary" id="save-step-button">{{ __('daily_travel.steps_save') }}</button>
                 <form method="dialog">
-                    <button class="btn">Chiudi</button>
+                    <button class="btn">{{ __('daily_travel.close') }}</button>
                 </form>
             </div>
         </div>

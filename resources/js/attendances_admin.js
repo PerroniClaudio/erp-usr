@@ -42,9 +42,9 @@ function renderCalendar() {
                 company_id: companyFilter ? companyFilter.value : "",
             });
 
-            fetch(`/admin/attendance/list?${params}`)
-                .then((response) => response.json())
-                .then((data) => {
+            axios
+                .get(`/admin/attendance/list?${params}`)
+                .then(({ data }) => {
                     successCallback(data.events); // Assuming the API returns an `events` array
                 })
                 .catch((error) => {

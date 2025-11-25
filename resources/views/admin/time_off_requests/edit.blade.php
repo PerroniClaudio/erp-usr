@@ -283,18 +283,11 @@
             select.disabled = true;
             select.className = originalClass + ' loading';
 
-            fetch(`/admin/time-off-requests/${requestId}/update-single-type`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        time_off_type_id: typeId
-                    })
+            axios
+                .patch(`/admin/time-off-requests/${requestId}/update-single-type`, {
+                    time_off_type_id: typeId
                 })
-                .then(response => response.json())
-                .then(data => {
+                .then(({ data }) => {
                     select.disabled = false;
                     select.className = originalClass;
 

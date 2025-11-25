@@ -24,11 +24,11 @@
         let currentIndex = 0;
 
         // Carica gli annunci non letti
-        fetch('/standard/announcements/unread')
-            .then(response => response.json())
-            .then(announcements => {
-                if (announcements.length > 0) {
-                    currentAnnouncements = announcements;
+        axios
+            .get('/standard/announcements/unread')
+            .then(({ data }) => {
+                if (data.length > 0) {
+                    currentAnnouncements = data;
                     showNextAnnouncement();
                 }
             })
@@ -63,16 +63,9 @@
         }
 
         function markAnnouncementAsRead(announcementId) {
-            fetch(`/standard/announcements/${announcementId}/mark-as-read`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                            'content')
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
+            axios
+                .post(`/standard/announcements/${announcementId}/mark-as-read`)
+                .then(({ data }) => {
                     if (data.success) {
                         const modal = document.getElementById('announcement-modal');
                         modal.close();

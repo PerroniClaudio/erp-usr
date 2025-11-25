@@ -55,17 +55,19 @@ if (rolesModal) {
             ? `/admin/personnel/users/${currentUserId}/assign-role`
             : `/admin/personnel/users/${currentUserId}/remove-role`;
 
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ role }),
-        });
-
-        if (!res.ok) {
+        try {
+            await axios.post(
+                url,
+                { role },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                }
+            );
+        } catch (error) {
             // eslint-disable-next-line no-alert
             alert(errorMessage);
             return;

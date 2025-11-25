@@ -14,11 +14,11 @@ if (calendarEl) {
         handleWindowResize: true,
         events: function (fetchInfo, successCallback, failureCallback) {
             let page = new Date(fetchInfo.start).getMonth() + 1; // Use the month as the page number
-            fetch(
-                `/standard/attendances/user?page=${page}&start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`
-            )
-                .then((response) => response.json())
-                .then((data) => {
+            axios
+                .get(
+                    `/standard/attendances/user?page=${page}&start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`
+                )
+                .then(({ data }) => {
                     successCallback(data.events); // Assuming the API returns an `events` array
                 })
                 .catch((error) => {

@@ -56,16 +56,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams({ address: searchInput.value });
 
         try {
-            const response = await fetch(
+            const { data } = await axios.get(
                 `${searchUrl}?${params.toString()}`,
                 { headers: { Accept: "application/json" } }
             );
-
-            if (!response.ok) {
-                throw response;
-            }
-
-            const data = await response.json();
             const { address_details, latitude, longitude } = data.content;
 
             setFieldValue('.step-form[name="address"]', address_details.road);
@@ -89,11 +83,11 @@ document.addEventListener("DOMContentLoaded", () => {
             let message =
                 "Impossibile recuperare i dati dell'indirizzo. Riprova.";
 
-            if (error instanceof Response) {
-                if (error.status === 404) {
+            if (axios.isAxiosError(error) && error.response) {
+                if (error.response.status === 404) {
                     message =
                         "Indirizzo non trovato. Controlla l'input e riprova.";
-                } else if (error.status >= 500) {
+                } else if (error.response.status >= 500) {
                     message = "Errore del server. Riprova più tardi.";
                 }
             }
@@ -122,26 +116,27 @@ document.addEventListener("DOMContentLoaded", () => {
         clearError();
 
         try {
-            const response = await fetch(storeUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-CSRF-TOKEN": csrfToken,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                throw response;
-            }
+            await axios.post(
+                storeUrl,
+                payload,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN": csrfToken,
+                    },
+                }
+            );
 
             window.location.reload();
         } catch (error) {
             let message =
                 "Impossibile salvare la tappa. Verifica i campi e riprova.";
 
-            if (error instanceof Response && error.status === 422) {
+            if (
+                axios.isAxiosError(error) &&
+                error.response?.status === 422
+            ) {
                 message = "Compila correttamente i campi obbligatori.";
             }
 
@@ -182,19 +177,17 @@ document.addEventListener("DOMContentLoaded", () => {
         ).map((row) => Number(row.dataset.stepId));
 
         try {
-            const response = await fetch(reorderUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "X-CSRF-TOKEN": csrfToken,
-                },
-                body: JSON.stringify({ order }),
-            });
-
-            if (!response.ok) {
-                throw response;
-            }
+            await axios.post(
+                reorderUrl,
+                { order },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN": csrfToken,
+                    },
+                }
+            );
         } catch (error) {
             console.error("Errore nel salvataggio dell'ordine tappe", error);
         }

@@ -3,28 +3,24 @@ import "./bootstrap";
 // Utility per il refresh del token CSRF
 window.refreshCsrfToken = async function () {
     try {
-        const response = await fetch("/refresh-csrf-token", {
-            method: "GET",
+        const { data } = await axios.get("/refresh-csrf-token", {
             headers: {
                 "X-Requested-With": "XMLHttpRequest",
             },
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            if (data.csrf_token) {
-                // Aggiorna il meta tag
-                const metaTag = document.head.querySelector(
-                    'meta[name="csrf-token"]'
-                );
-                if (metaTag) {
-                    metaTag.setAttribute("content", data.csrf_token);
-                }
-                // Aggiorna l'header di Axios
-                window.axios.defaults.headers.common["X-CSRF-TOKEN"] =
-                    data.csrf_token;
-                return data.csrf_token;
+        if (data?.csrf_token) {
+            // Aggiorna il meta tag
+            const metaTag = document.head.querySelector(
+                'meta[name="csrf-token"]'
+            );
+            if (metaTag) {
+                metaTag.setAttribute("content", data.csrf_token);
             }
+            // Aggiorna l'header di Axios
+            window.axios.defaults.headers.common["X-CSRF-TOKEN"] =
+                data.csrf_token;
+            return data.csrf_token;
         }
     } catch (error) {
         console.error("Error refreshing CSRF token:", error);

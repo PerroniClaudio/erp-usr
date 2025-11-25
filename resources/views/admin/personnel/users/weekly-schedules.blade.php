@@ -160,13 +160,13 @@
 
                     detail.classList.add('opacity-50');
 
-                    fetch(url.toString(), {
+                    axios
+                        .get(url.toString(), {
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest',
                             },
                         })
-                        .then((response) => response.json())
-                        .then((data) => {
+                        .then(({ data }) => {
                             detail.innerHTML = data.html;
                             detail.dataset.activeUser = userId;
                             window.initWeeklySchedulers?.(detail);

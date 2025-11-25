@@ -45,9 +45,9 @@ function renderCalendar() {
                 type_id: typesFilter ? typesFilter.value : "",
             });
 
-            fetch(`/admin/time-off-requests/list?${params}`)
-                .then((response) => response.json())
-                .then((data) => {
+            axios
+                .get(`/admin/time-off-requests/list?${params}`)
+                .then(({ data }) => {
                     successCallback(data.events); // Assuming the API returns an `events` array
                 })
                 .catch((error) => {

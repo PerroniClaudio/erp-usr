@@ -15,10 +15,9 @@ openModalButton.addEventListener("click", async () => {
 async function fetchUnassociatedUsers() {
     const groupId = document.getElementById("group_id").value;
 
-    const response = await fetch(
+    const { data } = await axios.get(
         `/admin/personnel/groups/${groupId}/available-users`
     );
-    const data = await response.json();
     unassociatedUsers = data.users;
     renderUnassociatedUsers();
 }
