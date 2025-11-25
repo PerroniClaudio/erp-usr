@@ -339,6 +339,30 @@
         </tbody>
     </table>
 
+    @if ($anomaliesData['overtimeRequests']->count() > 0)
+        <div class="section-title">STRAORDINARI</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Data/Ora Inizio</th>
+                    <th>Data/Ora Fine</th>
+                    <th>Ore</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($anomaliesData['overtimeRequests']->sortBy('date') as $overtime)
+                    <tr>
+                        <td><strong>{{ $overtime->overtimeType->name ?? 'Straordinario' }}</strong></td>
+                        <td>{{ \Carbon\Carbon::parse($overtime->date)->format('d/m/Y') }} {{ $overtime->time_in ? \Carbon\Carbon::parse($overtime->time_in)->format('H:i') : '-' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($overtime->date)->format('d/m/Y') }} {{ $overtime->time_out ? \Carbon\Carbon::parse($overtime->time_out)->format('H:i') : '-' }}</td>
+                        <td>{{ number_format($overtime->hours ?? (\Carbon\Carbon::parse($overtime->time_in)->diffInMinutes(\Carbon\Carbon::parse($overtime->time_out)) / 60), 1) }}h</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
     <!-- Time Off Details -->
     @if ($anomaliesData['timeOffRequests']->count() > 0)
         <div class="section-title">PERMESSI E FERIE</div>

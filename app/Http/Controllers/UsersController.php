@@ -296,9 +296,14 @@ class UsersController extends Controller
             ->orderBy('time_in')
             ->get();
 
-        if ($attendances->isEmpty()) {
-            return redirect()->back()->with('error', 'Nessuna presenza trovata per l\'utente selezionato nel mese e anno specificati.');
-        }
+        // Otteniamo gli straordinari approvati dell'utente per il mese specificato
+        $overtimeRequests = OvertimeRequest::with(['company', 'overtimeType'])
+            ->where('user_id', $user->id)
+            ->whereBetween('date', [$primoGiorno, $ultimoGiorno])
+            ->where('status', 2)
+            ->orderBy('date')
+            ->orderBy('time_in')
+            ->get();
 
         // Otteniamo le richieste di ferie/permessi dell'utente per il mese specificato
         $timeOffRequests = TimeOffRequest::where('user_id', $user->id)
@@ -307,11 +312,15 @@ class UsersController extends Controller
             ->orderBy('date_from')
             ->get();
 
+        if ($attendances->isEmpty() && $timeOffRequests->isEmpty() && $overtimeRequests->isEmpty()) {
+            return redirect()->back()->with('error', 'Nessuna presenza trovata per l\'utente selezionato nel mese e anno specificati.');
+        }
+
         // Prepariamo i dati delle presenze per il PDF
-        $presenze = $this->preparePresenzeData($attendances, $timeOffRequests, $user, $primoGiorno, $ultimoGiorno);
+        $presenze = $this->preparePresenzeData($attendances, $timeOffRequests, $overtimeRequests, $user, $primoGiorno, $ultimoGiorno);
 
         // Calcoliamo il riepilogo
-        $riepilogo = $this->calcolaRiepilogo($attendances, $timeOffRequests);
+        $riepilogo = $this->calcolaRiepilogo($attendances, $timeOffRequests, $overtimeRequests);
 
         // Calcoliamo i buoni pasto (un buono per ogni giorno lavorato in sede)
         $buoni_pasto = $presenze->filter(function ($presenza) {
@@ -467,7 +476,7 @@ class UsersController extends Controller
         return $pdf->download('anomalie_'.$user->name.'_'.$mese.'_'.$anno.'.pdf');
     }
 
-    private function preparePresenzeData($attendances, $timeOffRequests, $user, $primoGiorno, $ultimoGiorno)
+    private function preparePresenzeData($attendances, $timeOffRequests, $overtimeRequests, $user, $primoGiorno, $ultimoGiorno)
     {
         $presenze = new Collection;
 
@@ -495,16 +504,37 @@ class UsersController extends Controller
 
         // Aggiungiamo le ferie e i permessi
         foreach ($timeOffRequests as $request) {
+            $data = Carbon::parse($request->date_from);
             $presenze->push((object) [
                 'id' => $request->id,
                 'persona' => $user->name,
                 'azienda' => 'IFORTECH S.R.L.',
                 'tipologia' => $request->type->name,
                 'data' => $data,
-                'data_formattata' => Carbon::parse($request->date_from)->format('d-m-Y'),
-                'ora_inizio' => Carbon::parse($request->date_from)->format('H:i'),
+                'data_formattata' => $data->format('d-m-Y'),
+                'ora_inizio' => $data->format('H:i'),
                 'ora_fine' => Carbon::parse($request->date_to)->format('H:i'),
-                'ore' => number_format(Carbon::parse($request->date_from)->diffInMinutes(Carbon::parse($request->date_to)) / 60, 2),
+                'ore' => number_format($data->diffInMinutes(Carbon::parse($request->date_to)) / 60, 2),
+                'annullata' => false,
+                'giornata' => null,
+            ]);
+        }
+
+        // Aggiungiamo gli straordinari approvati
+        foreach ($overtimeRequests as $overtime) {
+            $data = Carbon::parse($overtime->date);
+            $giorno_settimana = $this->getGiornoSettimanaItaliano($data->format('D'));
+
+            $presenze->push((object) [
+                'id' => $overtime->id,
+                'persona' => $user->name,
+                'azienda' => $overtime->company->name ?? 'IFORTECH S.R.L.',
+                'tipologia' => $overtime->overtimeType->name ?? 'Straordinario',
+                'data' => $data,
+                'data_formattata' => $data->format('d-m-Y').' '.$giorno_settimana,
+                'ora_inizio' => Carbon::parse($overtime->time_in)->format('H:i'),
+                'ora_fine' => Carbon::parse($overtime->time_out)->format('H:i'),
+                'ore' => number_format($overtime->hours ?? 0, 2),
                 'annullata' => false,
                 'giornata' => null,
             ]);
@@ -517,7 +547,7 @@ class UsersController extends Controller
         ]);
     }
 
-    private function calcolaRiepilogo($presenze, $permessi)
+    private function calcolaRiepilogo($presenze, $permessi, $overtimeRequests)
     {
         $riepilogo = [
             'lavorato' => ['ore' => 0, 'giorni' => 0],
@@ -585,7 +615,37 @@ class UsersController extends Controller
             $riepilogo[$key]['giorni'] += floatval(str_replace(',', '.', $ore)) / 8; // Consideriamo 8 ore come un giorno lavorativo
         }
 
+        foreach ($overtimeRequests as $overtime) {
+            $key = $this->mapOvertimeToRiepilogoKey($overtime);
+
+            $oreRaw = $overtime->hours ?? (Carbon::parse($overtime->time_in)->diffInMinutes(Carbon::parse($overtime->time_out)) / 60);
+            $ore = number_format($oreRaw, 2);
+
+            $riepilogo[$key]['ore'] += floatval(str_replace(',', '.', $ore));
+            $riepilogo[$key]['giorni'] += floatval(str_replace(',', '.', $ore)) / 8; // Consideriamo 8 ore come un giorno lavorativo
+        }
+
         return $riepilogo;
+    }
+
+    private function mapOvertimeToRiepilogoKey($overtimeRequest)
+    {
+        $acronym = strtoupper($overtimeRequest->overtimeType->acronym ?? '');
+        $name = strtolower($overtimeRequest->overtimeType->name ?? '');
+
+        if ($acronym === 'STN' || str_contains($name, 'notturno')) {
+            return 'straordinario_notturno';
+        }
+
+        if ($acronym === 'STF' || str_contains($name, 'festivo')) {
+            return 'straordinario_festivo';
+        }
+
+        if ($acronym === 'STNF' || (str_contains($name, 'notturno') && str_contains($name, 'festivo'))) {
+            return 'straordinario_festivo';
+        }
+
+        return 'straordinario';
     }
 
     private function getGiornoSettimanaItaliano($giornoEn)
@@ -623,6 +683,13 @@ class UsersController extends Controller
         $attendances = Attendance::where('user_id', $user->id)
             ->whereBetween('date', [$dateFrom, $dateTo])
             ->with('attendanceType')
+            ->get();
+
+        // Ottieni tutti gli straordinari approvati dell'utente nel periodo
+        $overtimeRequests = OvertimeRequest::with(['overtimeType', 'company'])
+            ->where('user_id', $user->id)
+            ->where('status', 2)
+            ->whereBetween('date', [$dateFrom, $dateTo])
             ->get();
 
         // Ottieni tutti i permessi approvati dell'utente nel periodo
@@ -663,6 +730,7 @@ class UsersController extends Controller
                 $actualWeekEnd,
                 $attendances,
                 $timeOffRequests,
+                $overtimeRequests,
                 $festiveDays
             );
 
@@ -684,7 +752,7 @@ class UsersController extends Controller
         }
 
         // Calcolo ore totali effettive
-        $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests);
+        $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests);
         $totalDifference = $totalActualHours - $totalExpectedHours;
 
         // Verifica anomalie
@@ -707,6 +775,7 @@ class UsersController extends Controller
             'weeklyData' => $weeklyData,
             'attendances' => $attendances,
             'timeOffRequests' => $timeOffRequests,
+            'overtimeRequests' => $overtimeRequests,
         ];
     }
 
@@ -763,7 +832,7 @@ class UsersController extends Controller
     /**
      * Calcola le ore lavorate in una settimana specifica
      */
-    private function calculateWeeklyHours($user, $weekStart, $weekEnd, $attendances, $timeOffRequests, $festiveDays): float
+    private function calculateWeeklyHours($user, $weekStart, $weekEnd, $attendances, $timeOffRequests, $overtimeRequests, $festiveDays): float
     {
         $weeklyHours = 0;
 
@@ -803,13 +872,24 @@ class UsersController extends Controller
             $weeklyHours += $actualStart->diffInMinutes($actualEnd) / 60;
         }
 
+        // Ore da straordinari
+        $weekOvertimes = $overtimeRequests->filter(function ($overtime) use ($weekStart, $weekEnd) {
+            $date = Carbon::parse($overtime->date);
+
+            return $date->between($weekStart, $weekEnd);
+        });
+
+        foreach ($weekOvertimes as $overtime) {
+            $weeklyHours += $this->resolveOvertimeHours($overtime);
+        }
+
         return round($weeklyHours, 2);
     }
 
     /**
      * Calcola il totale delle ore effettive nel periodo
      */
-    private function calculateTotalActualHours($attendances, $timeOffRequests): float
+    private function calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests): float
     {
         $totalHours = 0;
 
@@ -829,7 +909,28 @@ class UsersController extends Controller
             $totalHours += $timeOffStart->diffInMinutes($timeOffEnd) / 60;
         }
 
+        // Ore da straordinari
+        foreach ($overtimeRequests as $overtime) {
+            $totalHours += $this->resolveOvertimeHours($overtime);
+        }
+
         return round($totalHours, 2);
+    }
+
+    private function resolveOvertimeHours($overtimeRequest): float
+    {
+        if ($overtimeRequest->hours !== null) {
+            return (float) $overtimeRequest->hours;
+        }
+
+        if ($overtimeRequest->time_in && $overtimeRequest->time_out) {
+            $start = Carbon::parse($overtimeRequest->time_in);
+            $end = Carbon::parse($overtimeRequest->time_out);
+
+            return $start->diffInMinutes($end) / 60;
+        }
+
+        return 0.0;
     }
 
     public function updateData(Request $request, User $user)

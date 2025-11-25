@@ -295,9 +295,47 @@
                                             </tbody>
                                         </table>
                                     @else
-                                        <p class="text-sm opacity-75">{{ __('anomalies.weekly.time_off_empty') }}</p>
-                                    @endif
-                                </div>
+                                    <p class="text-sm opacity-75">{{ __('anomalies.weekly.time_off_empty') }}</p>
+                                @endif
+                            </div>
+
+                            <div class="space-y-2">
+                                <h3 class="font-semibold">Straordinari</h3>
+                                @php
+                                    $weekOvertimes = $anomaliesData['overtimeRequests']
+                                        ->filter(fn($ot) => \Carbon\Carbon::parse($ot->date)->between($week['week_start'], $week['week_end']));
+                                @endphp
+                                @if ($weekOvertimes->count() > 0)
+                                    <div class="overflow-x-auto">
+                                        <table class="table table-xs">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>Tipo</th>
+                                                    <th>Inizio</th>
+                                                    <th>Fine</th>
+                                                    <th class="text-right">Ore</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($weekOvertimes->sortBy('date') as $overtime)
+                                                    <tr>
+                                                        <td>{{ \Carbon\Carbon::parse($overtime->date)->format('d/m/Y') }}</td>
+                                                        <td>{{ $overtime->overtimeType->name ?? 'Straordinario' }}</td>
+                                                        <td>{{ $overtime->time_in ? \Carbon\Carbon::parse($overtime->time_in)->format('H:i') : '-' }}</td>
+                                                        <td>{{ $overtime->time_out ? \Carbon\Carbon::parse($overtime->time_out)->format('H:i') : '-' }}</td>
+                                                        <td class="text-right">
+                                                            {{ number_format($overtime->hours ?? (\Carbon\Carbon::parse($overtime->time_in)->diffInMinutes(\Carbon\Carbon::parse($overtime->time_out)) / 60), 1) }}h
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <p class="text-sm opacity-75">Nessuno straordinario registrato.</p>
+                                @endif
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -343,6 +381,44 @@
                                             aria-label="{{ __('anomalies.actions.edit_time_off_aria', ['date' => \Carbon\Carbon::parse($timeOff->date_from)->format('d/m/Y H:i')]) }}">
                                             <x-lucide-pencil class="h-4 w-4" />
                                         </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($anomaliesData['overtimeRequests']->count() > 0)
+        <div class="card bg-base-300">
+            <div class="card-body">
+                <h2 class="card-title flex items-center gap-2">
+                    <x-lucide-clock-3 class="h-5 w-5" />
+                    Straordinari
+                </h2>
+
+                <hr>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Data/Ora Inizio</th>
+                                <th>Data/Ora Fine</th>
+                                <th class="text-right">Ore</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($anomaliesData['overtimeRequests']->sortBy('date') as $overtime)
+                                <tr>
+                                    <td class="font-medium">{{ $overtime->overtimeType->name ?? 'Straordinario' }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($overtime->date)->format('d/m/Y') }} {{ $overtime->time_in ? \Carbon\Carbon::parse($overtime->time_in)->format('H:i') : '-' }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($overtime->date)->format('d/m/Y') }} {{ $overtime->time_out ? \Carbon\Carbon::parse($overtime->time_out)->format('H:i') : '-' }}</td>
+                                    <td class="text-right">
+                                        {{ number_format($overtime->hours ?? (\Carbon\Carbon::parse($overtime->time_in)->diffInMinutes(\Carbon\Carbon::parse($overtime->time_out)) / 60), 1) }}h
                                     </td>
                                 </tr>
                             @endforeach
