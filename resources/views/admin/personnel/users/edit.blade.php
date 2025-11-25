@@ -351,7 +351,7 @@
                     </div>
                 </div>
 
-                <p class="text-error label"></p>
+                <p class="text-error label residence-error"></p>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <fieldset class="fieldset">
@@ -435,7 +435,7 @@
                     </div>
                 </div>
 
-                <p class="text-error label"></p>
+                <p class="text-error label location-error"></p>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <fieldset class="fieldset">

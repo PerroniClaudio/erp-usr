@@ -65,7 +65,15 @@
                     <tr>
                         <td>{{ $company->name }}</td>
                         <td>
-
+                            <a
+                                href="{{ route('admin.user.daily-trip-structure.edit', [
+                                    'user' => $user->id,
+                                    'company' => $company->id,
+                                ]) }}">
+                                <button class="btn btn-sm btn-primary">
+                                    <x-lucide-map-pin class="w-4 h-4" />
+                                </button>
+                            </a>
 
                             <form
                                 action="{{ route('users.company.destroy', [
@@ -75,9 +83,6 @@
                                 method="POST" class="inline-block">
                                 @csrf
                                 @method('DELETE')
-
-
-
                                 <button type="submit" class="btn btn-sm btn-warning">
                                     <x-lucide-trash-2 class="w-4 h-4" />
                                 </button>

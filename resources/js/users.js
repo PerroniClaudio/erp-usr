@@ -3,17 +3,16 @@ import axios from "axios";
 const user_id = document.querySelector("#user_id").value;
 
 // Configura la ricerca dell'indirizzo associando input, pulsante e classe del form
-const setupAddressSearch = (inputId, buttonId, formClass) => {
+const setupAddressSearch = (inputId, buttonId, formClass, errorSelector) => {
     const addressInput = document.getElementById(inputId);
     const addressSearch = document.getElementById(buttonId);
+    const errorLabel = document.querySelector(errorSelector);
 
     // Rimuove tutti i messaggi di errore visualizzati
     const clearErrorMessages = () => {
-        document
-            .querySelectorAll(".text-error.label")
-            .forEach((errorElement) => {
-                errorElement.innerHTML = "";
-            });
+        if (errorLabel) {
+            errorLabel.textContent = "";
+        }
     };
 
     // Pulisce i campi dell'indirizzo nel form
@@ -80,7 +79,8 @@ const setupAddressSearch = (inputId, buttonId, formClass) => {
 
     // Gestisce la risposta di errore del server e mostra un messaggio di errore appropriato
     const handleErrorResponse = (error) => {
-        const errorLabel = document.querySelector(".text-error.label");
+        if (!errorLabel) return;
+
         if (error.response) {
             switch (error.response.status) {
                 case 404:
@@ -101,32 +101,36 @@ const setupAddressSearch = (inputId, buttonId, formClass) => {
     };
 
     // Aggiunge un listener al pulsante per avviare la ricerca dell'indirizzo
-    addressSearch.addEventListener("click", () => {
-        const params = new URLSearchParams({ address: addressInput.value });
+    if (addressSearch && addressInput) {
+        addressSearch.addEventListener("click", () => {
+            const params = new URLSearchParams({ address: addressInput.value });
 
-        axios
-            .get(`/admin/personnel/users/search-address?${params}`)
-            .then((response) => {
-                clearErrorMessages();
-                clearAddressFields();
-                handleSuccessResponse(response.data);
-            })
-            .catch(handleErrorResponse);
-    });
+            axios
+                .get(`/admin/personnel/users/search-address?${params}`)
+                .then((response) => {
+                    clearErrorMessages();
+                    clearAddressFields();
+                    handleSuccessResponse(response.data);
+                })
+                .catch(handleErrorResponse);
+        });
+    }
 };
 
 // Configura la ricerca per il form di residenza
 setupAddressSearch(
     "address-search-input",
     "validate-address-button",
-    "residence-form"
+    "residence-form",
+    ".residence-error"
 );
 
 // Configura la ricerca per il form del recapito
 setupAddressSearch(
     "location-address-search-input",
     "validate-location-address-button",
-    "location-form"
+    "location-form",
+    ".location-error"
 );
 
 const submitButtonResidence = document.getElementById(

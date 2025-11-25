@@ -80,6 +80,13 @@ Route::group([
         Route::delete('/users/{user}/group/{group}/destroy', [UsersController::class, 'destroyUserGroup'])->name('users.group.destroy');
         Route::post('/users/{user}/assign-role', [UsersController::class, 'assignRole'])->name('users.assign-role');
         Route::post('/users/{user}/remove-role', [UsersController::class, 'removeRole'])->name('users.remove-role');
+
+        //Viaggi giornalieri 
+
+        Route::get('/daily-trip-structure/{user}/{company}', [\App\Http\Controllers\DailyTravelStructureController::class, 'edit'])->name('admin.user.daily-trip-structure.edit');
+        Route::post('/daily-trip-structure/{user}/{company}/edit-vehicle', [\App\Http\Controllers\DailyTravelStructureController::class, 'updateVehicle'])->name('admin.user.daily-trip-structure.edit-vehicle');
+        Route::post('/daily-trip-structure/{user}/{company}/steps', [\App\Http\Controllers\DailyTravelStructureController::class, 'storeStep'])->name('admin.user.daily-trip-structure.steps.store');
+        Route::post('/daily-trip-structure/{user}/{company}/steps/reorder', [\App\Http\Controllers\DailyTravelStructureController::class, 'reorderSteps'])->name('admin.user.daily-trip-structure.steps.reorder');
     });
 
      Route::middleware('role:admin|Responsabile HR')->group(function () {
