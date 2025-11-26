@@ -1,5 +1,8 @@
 import axios from "axios";
 
+let chartInstance = null;
+let chartModulePromise = null;
+
 function debounce(fn, delay = 400) {
     let timeout;
     return (...args) => {
@@ -46,6 +49,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const monthFilter = document.getElementById("month-filter");
     const monthEndpoint =
         document.getElementById("time-off-overview")?.dataset.monthUrl;
+    const usageEndpoint =
+        document.getElementById("time-off-overview")?.dataset.usageUrl;
+    const usageCanvas = document.getElementById("time-off-usage-chart");
+    const loadChartJs = async () => {
+        if (!chartModulePromise) {
+            chartModulePromise = import("chart.js/auto");
+        }
+        return chartModulePromise;
+    };
 
     const updateLabel = (element, hours) => {
         if (!element) return;
@@ -114,6 +126,90 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fetchResiduals = debounce(requestResiduals, 400);
 
+    const renderUsageChart = async (chartData) => {
+        if (!usageCanvas || !chartData) return;
+        const { Chart } = await loadChartJs();
+
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        chartInstance = new Chart(usageCanvas.getContext("2d"), {
+            type: "line",
+            data: {
+                labels: chartData.labels || [],
+                datasets: [
+                    {
+                        label: "Monte Ferie",
+                        data: chartData.ferie_amounts || [],
+                        borderColor: "#dc2626",
+                        backgroundColor: "rgba(220, 38, 38, 0.12)",
+                        tension: 0.2,
+                        fill: true,
+                        borderDash: [6, 4],
+                    },
+                    {
+                        label: "Monte ROL",
+                        data: chartData.rol_amounts || [],
+                        borderColor: "#1d4ed8",
+                        backgroundColor: "rgba(29, 78, 216, 0.12)",
+                        tension: 0.2,
+                        fill: true,
+                        borderDash: [6, 4],
+                    },
+                    {
+                        label: "Ferie",
+                        data: chartData.ferie || [],
+                        borderColor: "#ef4444",
+                        backgroundColor: "rgba(239, 68, 68, 0.2)",
+                        tension: 0.2,
+                        fill: true,
+                    },
+                    {
+                        label: "ROL",
+                        data: chartData.rol || [],
+                        borderColor: "#3b82f6",
+                        backgroundColor: "rgba(59, 130, 246, 0.2)",
+                        tension: 0.2,
+                        fill: true,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "top",
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => `${value}h`,
+                        },
+                    },
+                },
+            },
+        });
+    };
+
+    const fetchUsage = async () => {
+        if (!usageEndpoint || !referenceDateInput?.value) return;
+
+        const payload = {
+            user_id: userId,
+            reference_date: referenceDateInput.value,
+        };
+
+        try {
+            const { data } = await axios.post(usageEndpoint, payload);
+            await renderUsageChart(data);
+        } catch (error) {
+            console.error("Errore nel recupero del trend mensile", error);
+        }
+    };
+
     const updateReferenceDateForMonth = (month) => {
         const baseDate = referenceDateInput?.value
             ? new Date(referenceDateInput.value)
@@ -165,6 +261,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!selectedMonth) return;
             updateReferenceDateForMonth(selectedMonth);
             await fetchMonthAmounts(selectedMonth);
+            await requestResiduals();
+            await fetchUsage();
         });
     }
 
@@ -191,6 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 await axios.post(storeEndpoint, payload);
                 await requestResiduals();
+                await fetchUsage();
                 modal.close();
             } catch (error) {
                 console.error("Errore nel salvataggio del monte ore", error);
@@ -199,5 +298,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Prima valorizzazione alla apertura pagina
-    fetchResiduals();
+    const initialMonth = monthFilter ? Number(monthFilter.value) : null;
+    if (initialMonth) {
+        updateReferenceDateForMonth(initialMonth);
+        fetchMonthAmounts(initialMonth).then(() => {
+            requestResiduals();
+            fetchUsage();
+        });
+    } else {
+        fetchResiduals();
+        fetchUsage();
+    }
 });

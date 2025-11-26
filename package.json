@@ -20,6 +20,7 @@
         "@fullcalendar/interaction": "^6.1.17",
         "@fullcalendar/list": "^6.1.17",
         "@fullcalendar/timegrid": "^6.1.17",
+        "chart.js": "^4.5.1",
         "fast-glob": "^3.3.3"
     }
 }

@@ -108,6 +108,7 @@ Route::group([
         Route::post('/users/{user}/default-schedules/generate', [UsersController::class, 'generateDefaultSchedules'])->name('users.default-schedules.generate');
         Route::post('/time-off-amounts/calculate', [TimeOffAmountController::class, 'calculateResidual'])->name('time-off-amounts.calculate');
         Route::post('/time-off-amounts/monthly', [TimeOffAmountController::class, 'getMonthlyAmounts'])->name('time-off-amounts.monthly');
+        Route::post('/time-off-amounts/usage', [TimeOffAmountController::class, 'getMonthlyUsage'])->name('time-off-amounts.usage');
         Route::post('/time-off-amounts', [TimeOffAmountController::class, 'store'])->name('time-off-amounts.store');
     });
 

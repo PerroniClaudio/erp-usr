@@ -22,7 +22,8 @@
         </fieldset>
 
         <div class="grid xl:grid-cols-2 gap-4 mt-4" id="time-off-overview"
-            data-month-url="{{ route('time-off-amounts.monthly') }}">
+            data-month-url="{{ route('time-off-amounts.monthly') }}"
+            data-usage-url="{{ route('time-off-amounts.usage') }}">
             <div class="flex flex-col gap-4">
                 <div class="grid grid-cols-2 gap-4">
                     <fieldset class="fieldset">
@@ -69,6 +70,15 @@
                             </p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <h4 class="text-lg font-semibold mb-2">{{ __('personnel.users_time_off_trend_title') }}</h4>
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <canvas id="time-off-usage-chart" height="120"></canvas>
                 </div>
             </div>
         </div>

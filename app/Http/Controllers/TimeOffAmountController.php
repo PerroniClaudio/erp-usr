@@ -67,6 +67,93 @@ class TimeOffAmountController extends Controller
         ]);
     }
 
+    public function getMonthlyUsage(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'reference_date' => ['required', 'date'],
+        ]);
+
+        $referenceDate = Carbon::parse($validated['reference_date']);
+        $year = $referenceDate->year;
+        $limitMonth = $referenceDate->month;
+
+        $periodStart = $referenceDate->copy()->startOfYear();
+        $periodEnd = $referenceDate->copy()->endOfMonth();
+
+        $typeIds = TimeOffType::whereIn('name', ['Ferie', 'Rol'])->pluck('id', 'name');
+
+        $requests = TimeOffRequest::where('user_id', $validated['user_id'])
+            ->where('status', 2)
+            ->where(function ($query) use ($periodStart, $periodEnd) {
+                $query->whereBetween('date_from', [$periodStart, $periodEnd])
+                    ->orWhereBetween('date_to', [$periodStart, $periodEnd])
+                    ->orWhere(function ($q) use ($periodStart, $periodEnd) {
+                        $q->where('date_from', '<=', $periodStart)
+                            ->where('date_to', '>=', $periodEnd);
+                    });
+            })
+            ->whereIn('time_off_type_id', $typeIds)
+            ->get();
+
+        $amountsByMonth = TimeOffAmount::where('user_id', $validated['user_id'])
+            ->whereYear('reference_date', $year)
+            ->get()
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->reference_date)->month;
+            });
+
+        $labels = [];
+        $ferieData = [];
+        $rolData = [];
+        $ferieAmounts = [];
+        $rolAmounts = [];
+
+        for ($month = 1; $month <= $limitMonth; $month++) {
+            $monthStart = Carbon::create($year, $month, 1)->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+
+            $ferieTotal = 0.0;
+            $rolTotal = 0.0;
+
+            foreach ($requests as $request) {
+                $requestStart = Carbon::parse($request->date_from);
+                $requestEnd = Carbon::parse($request->date_to);
+
+                if ($requestEnd->lt($monthStart) || $requestStart->gt($monthEnd)) {
+                    continue;
+                }
+
+                $start = $requestStart->lt($monthStart) ? $monthStart : $requestStart;
+                $end = $requestEnd->gt($monthEnd) ? $monthEnd : $requestEnd;
+
+                $hours = $this->calculateRequestHours($request, $start, $end);
+
+                if ($request->time_off_type_id == ($typeIds['Ferie'] ?? null)) {
+                    $ferieTotal += $hours;
+                } elseif ($request->time_off_type_id == ($typeIds['Rol'] ?? null)) {
+                    $rolTotal += $hours;
+                }
+            }
+
+            $amountRecord = $amountsByMonth->get($month)?->sortByDesc('reference_date')->first();
+
+            $labels[] = $monthStart->locale('it')->shortMonthName;
+            $ferieData[] = round($ferieTotal, 1);
+            $rolData[] = round($rolTotal, 1);
+            $ferieAmounts[] = $amountRecord?->time_off_amount ? round((float) $amountRecord->time_off_amount, 1) : 0.0;
+            $rolAmounts[] = $amountRecord?->rol_amount ? round((float) $amountRecord->rol_amount, 1) : 0.0;
+        }
+
+        return response()->json([
+            'labels' => $labels,
+            'ferie' => $ferieData,
+            'rol' => $rolData,
+            'ferie_amounts' => $ferieAmounts,
+            'rol_amounts' => $rolAmounts,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

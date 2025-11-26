@@ -263,4 +263,5 @@ return [
     "users_time_off_add_rol_amount" => "Monte Rol (ore)",
     "users_time_off_save" => "Salva",
     "users_time_off_close" => "Chiudi",
+    "users_time_off_trend_title" => "Andamento utilizzo ferie/ROL",
 ];
