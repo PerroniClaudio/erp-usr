@@ -278,6 +278,14 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('daily-travels.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-route class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.daily_travels') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
                         <details>
                             <summary>
                                 <x-lucide-contact class="h-6 w-6 text-primary" />
