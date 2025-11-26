@@ -131,6 +131,17 @@
                             placeholder="{{ __('personnel.users_employee_code') }}" />
                     </fieldset>
 
+                    @if ($canManageRoles)
+                        <fieldset class="fieldset col-span-2">
+                            <legend class="fieldset-legend">{{ __('personnel.users_business_trips_access') }}</legend>
+                            <label class="label cursor-pointer justify-start gap-3">
+                                <input type="checkbox" name="business_trips_access" value="1" class="toggle toggle-primary"
+                                    {{ old('business_trips_access', $user->hasRole('admin') || $user->can('business-trips.access')) ? 'checked' : '' }}>
+                                <span class="label-text">{{ __('personnel.users_business_trips_access_help') }}</span>
+                            </label>
+                        </fieldset>
+                    @endif
+
                     <button id="submit-button-personal-data" type="submit" class="hidden"></button>
                 </div>
             </form>

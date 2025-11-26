@@ -63,6 +63,7 @@
                     $isHrManager = $loggedUser?->hasRole('Responsabile HR');
                     $isHrOperator = $loggedUser?->hasRole('Operatore HR');
                     $isHrUser = $isHrManager || $isHrOperator;
+                    $canAccessBusinessTrips = $isAdmin || $loggedUser?->can('business-trips.access');
                 @endphp
                 @if ($isAdmin)
                     <li>
@@ -122,10 +123,12 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('business-trips.index') }}">
-                            <x-lucide-car class="h-6 w-6 text-primary" />
-                            <span class="ml-2">{{ __('navbar.business_trips') }}</span>
-                        </a>
+                        @if ($canAccessBusinessTrips)
+                            <a href="{{ route('business-trips.index') }}">
+                                <x-lucide-car class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.business_trips') }}</span>
+                            </a>
+                        @endif
                     </li>
                     <li>
                         <a href="{{ route('admin.time-off.index') }}">
@@ -244,15 +247,17 @@
                             </div>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('business-trips.index') }}">
+                    @if ($canAccessBusinessTrips)
+                        <li>
+                            <a href="{{ route('business-trips.index') }}">
 
-                            <div class="flex items-center">
-                                <x-lucide-car class="h-6 w-6 text-primary" />
-                                <span class="ml-2">{{ __('navbar.business_trips') }}</span>
-                            </div>
-                        </a>
-                    </li>
+                                <div class="flex items-center">
+                                    <x-lucide-car class="h-6 w-6 text-primary" />
+                                    <span class="ml-2">{{ __('navbar.business_trips') }}</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endif
                     <li>
                         <a href="{{ route('time-off-requests.index') }}">
                             <div class="flex items-center">
@@ -329,15 +334,17 @@
                             </div>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('business-trips.index') }}">
+                    @if ($canAccessBusinessTrips)
+                        <li>
+                            <a href="{{ route('business-trips.index') }}">
 
-                            <div class="flex items-center">
-                                <x-lucide-car class="h-6 w-6 text-primary" />
-                                <span class="ml-2">{{ __('navbar.business_trips') }}</span>
-                            </div>
-                        </a>
-                    </li>
+                                <div class="flex items-center">
+                                    <x-lucide-car class="h-6 w-6 text-primary" />
+                                    <span class="ml-2">{{ __('navbar.business_trips') }}</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endif
                     <li>
                         <a href="{{ route('time-off-requests.index') }}">
                             <div class="flex items-center">

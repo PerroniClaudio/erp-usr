@@ -21,11 +21,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Permission;
 
 class UsersController extends Controller
 {
     //
 
+    private const BUSINESS_TRIPS_PERMISSION = 'business-trips.access';
     private $vehicleTypes;
 
     private $ownershipTypes;
@@ -947,6 +949,7 @@ class UsersController extends Controller
             'weekly_hours' => 'required|integer|min:0',
             'badge_code' => 'nullable|string|max:50',
             'employee_code' => 'nullable|string|max:50',
+            'business_trips_access' => 'nullable|boolean',
         ]);
 
         $payload = $request->only([
@@ -978,6 +981,18 @@ class UsersController extends Controller
             })->values()->all();
 
             $this->sendUserDataUpdateNotifications($user, $changes, $request->user());
+        }
+
+        $canManageBusinessTrips = $request->user()?->hasRole('admin');
+        if ($canManageBusinessTrips) {
+            $businessTripsPermission = Permission::findOrCreate(self::BUSINESS_TRIPS_PERMISSION);
+            $grantAccess = $user->hasRole('admin') ? true : $request->boolean('business_trips_access');
+
+            if ($grantAccess) {
+                $user->givePermissionTo($businessTripsPermission);
+            } else {
+                $user->revokePermissionTo($businessTripsPermission);
+            }
         }
 
         return redirect()->route('users.edit', $user->id)->with('success', __('personnel.users_updated'));

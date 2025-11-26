@@ -65,6 +65,8 @@ return [
     "users_vat_number" => "Partita IVA",
     "users_badge_code" => "Codice badge",
     "users_employee_code" => "Codice dipendente",
+    "users_business_trips_access" => "Accesso al modulo trasferte",
+    "users_business_trips_access_help" => "Consenti a questo utente di creare e gestire trasferte.",
     "users_time_off" => "Ferie",
     "users_time_off_accrued" => "Ferie maturate",
     "users_time_off_amount" => "Monte ferie",
