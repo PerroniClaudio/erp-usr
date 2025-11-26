@@ -5,6 +5,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
+use App\Http\Controllers\TimeOffAmountController;
 use App\Http\Controllers\UsersController;
 use App\Models\WeeklyScheduleCompletion;
 use App\Models\UserScheduleChangeRequest;
@@ -105,6 +106,9 @@ Route::group([
         Route::get('/users/{user}/default-schedules/calendar', [UsersController::class, 'showDefaultSchedule'])->name('users.default-schedules.calendar');
         Route::post('/users/{user}/default-schedules', [UsersController::class, 'updateDefaultSchedules'])->name('users.default-schedules.update');
         Route::post('/users/{user}/default-schedules/generate', [UsersController::class, 'generateDefaultSchedules'])->name('users.default-schedules.generate');
+        Route::post('/time-off-amounts/calculate', [TimeOffAmountController::class, 'calculateResidual'])->name('time-off-amounts.calculate');
+        Route::post('/time-off-amounts/monthly', [TimeOffAmountController::class, 'getMonthlyAmounts'])->name('time-off-amounts.monthly');
+        Route::post('/time-off-amounts', [TimeOffAmountController::class, 'store'])->name('time-off-amounts.store');
     });
 
     Route::middleware('role:admin|Responsabile HR')->group(function () {

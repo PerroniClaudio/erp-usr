@@ -135,7 +135,8 @@
                         <fieldset class="fieldset col-span-2">
                             <legend class="fieldset-legend">{{ __('personnel.users_business_trips_access') }}</legend>
                             <label class="label cursor-pointer justify-start gap-3">
-                                <input type="checkbox" name="business_trips_access" value="1" class="toggle toggle-primary"
+                                <input type="checkbox" name="business_trips_access" value="1"
+                                    class="toggle toggle-primary"
                                     {{ old('business_trips_access', $user->hasRole('admin') || $user->can('business-trips.access')) ? 'checked' : '' }}>
                                 <span class="label-text">{{ __('personnel.users_business_trips_access_help') }}</span>
                             </label>
@@ -220,124 +221,7 @@
             </div>
         </div>
 
-        <div class="card bg-base-300">
-            <div class="card-body">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg">{{ __('personnel.users_time_off_and_rol') }}</h2>
-                    <div class="btn btn-primary"
-                        onclick="document.getElementById('submit-button-personal-data').click()">
-                        <x-lucide-save class="h-4 w-4" />
-                    </div>
-                </div>
-
-                <hr>
-
-                <div class="card bg-base-100">
-                    <div class="card-body">
-                        <div class="card-title">
-                            {{ __('personnel.users_time_off') }}
-                        </div>
-
-                        <hr>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_time_off_accrued') }}</legend>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_days') }}</p>
-                                    </div>
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_hours') }}</p>
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_time_off_amount') }}</legend>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_days') }}</p>
-                                    </div>
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_hours') }}</p>
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_time_off_used') }}</legend>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_days') }}</p>
-                                    </div>
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_hours') }}</p>
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_time_off_remaining') }}
-                                </legend>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_days') }}</p>
-                                    </div>
-                                    <div>
-                                        <input type="text" class="input" placeholder="0" />
-                                        <p class="label">{{ __('personnel.users_hours') }}</p>
-                                    </div>
-                                </div>
-                            </fieldset>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card bg-base-100">
-                    <div class="card-body">
-                        <div class="card-title">
-                            {{ __('personnel.users_rol') }}
-                        </div>
-
-                        <hr>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_rol_accrued') }}</legend>
-                                <input type="number" class="input w-full" value="0" />
-                                <p class="label">{{ __('personnel.users_hours') }}</p>
-                            </fieldset>
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_rol_amount') }}</legend>
-                                <input type="number" class="input w-full" value="0" />
-                                <p class="label">{{ __('personnel.users_hours') }}</p>
-                            </fieldset>
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_rol_used') }}</legend>
-                                <input type="number" class="input w-full" value="0" />
-                                <p class="label">{{ __('personnel.users_hours') }}</p>
-                            </fieldset>
-                            <fieldset class="fieldset">
-                                <legend class="fieldset-legend">{{ __('personnel.users_rol_remaining') }}</legend>
-                                <input type="number" class="input w-full" value="0" />
-                                <p class="label">{{ __('personnel.users_hours') }}</p>
-                            </fieldset>
-                        </div>
-
-                    </div>
-                </div>
-
-
-            </div>
-        </div>
+        <x-users.time-off :user="$user" />
 
         <div class="card bg-base-300 ">
             <div class="card-body">
@@ -505,7 +389,6 @@
         </div>
 
         <x-users.vehicles :user="$user" />
-
         <x-users.companies :user="$user" />
         <x-users.groups :user="$user" />
 

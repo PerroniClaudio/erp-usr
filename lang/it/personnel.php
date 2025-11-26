@@ -244,4 +244,23 @@ return [
     "users_weekly_schedule_existing_note" => "Calendario già programmato per questa settimana. Salvando sovrascriverai la pianificazione esistente.",
     "users_weekly_schedule_timeoff_title" => "Ferie e permessi programmati",
     "users_weekly_schedule_timeoff_empty" => "Nessuna assenza programmata in questa settimana.",
+
+    "users_time_off_and_rol_management" => "Gestione ferie e Rol",
+    "users_time_off_and_rol_select_month" => "Seleziona mese",
+    "users_time_off_total_label" => "Monte Ferie",
+    "users_time_off_used_label" => "Ferie Usufruite",
+    "users_time_off_remaining_label" => "Ferie Residue",
+    "users_time_off_hours" => ":hours ore",
+    "users_rol_total_label" => "Monte Rol",
+    "users_rol_used_label" => "Rol Usufruiti",
+    "users_rol_remaining_label" => "Rol Residui",
+    "users_rol_hours" => ":hours ore",
+    "users_time_off_add_title" => "Aggiungi monte ferie/Rol",
+
+    "users_time_off_add_insert_date" => "Data di inserimento",
+    "users_time_off_add_reference_date" => "Data di riferimento",
+    "users_time_off_add_time_off_amount" => "Monte ferie (ore)",
+    "users_time_off_add_rol_amount" => "Monte Rol (ore)",
+    "users_time_off_save" => "Salva",
+    "users_time_off_close" => "Chiudi",
 ];
