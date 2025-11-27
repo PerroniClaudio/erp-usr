@@ -173,3 +173,15 @@ Route::group([
     Route::put('/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'update'])->name('admin.announcements.update');
     Route::delete('/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'destroy'])->name('admin.announcements.destroy');
 });
+
+Route::group([
+    'middleware' => ['auth', 'role:admin'],
+    'prefix' => 'admin/files',
+], function(){
+
+    // Settori 
+
+    Route::resource('/sectors', \App\Http\Controllers\FileObjectSectorController::class)->names('admin.sectors');
+
+
+});
