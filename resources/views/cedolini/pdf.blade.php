@@ -116,6 +116,8 @@
                     'LM' => 'LICENZA MATRIMONIO',
                     'OV' => 'ORE VIAGGIO',
                     'CIL' => 'CORSO INTRA-LAVORATIVO',
+                    'CP' => 'CONGEDO PARENTALE',
+                    'L104' => 'PERMESSO LEGGE 104',
                 ];
 
                 $datiGiorni = [];
@@ -264,6 +266,8 @@
                     <ul style="list-style: none; padding-left: 0; margin: 0;">
                         <li><strong>MA</strong> - MALATTIA</li>
                         <li><strong>LM</strong> - LICENZA MATRIMONIO</li>
+                        <li><strong>CP</strong> - CONGEDO PARENTALE</li>
+                        <li><strong>L104</strong> - PERMESSO LEGGE 104</li>
 
                     </ul>
                 </td>

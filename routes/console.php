@@ -37,6 +37,22 @@ Artisan::command("attendance:check", function () {
     \App\Jobs\CheckAttendances::dispatch()->onQueue('default');
 })->purpose('Check attendances and send notifications if needed');
 
+Artisan::command('attendance:add-new-types', function () {
+    $types = [
+        ['name' => 'Congedo Parentale', 'acronym' => 'CP'],
+        ['name' => 'Permesso Legge 104', 'acronym' => 'L104'],
+    ];
+
+    foreach ($types as $type) {
+        \App\Models\AttendanceType::updateOrCreate(
+            ['name' => $type['name']],
+            ['acronym' => $type['acronym']]
+        );
+    }
+
+    $this->info('Nuovi tipi di presenza aggiunti/aggiornati.');
+})->purpose('Aggiunge i nuovi tipi di AttendanceType in produzione');
+
 Artisan::command("logs:rotate", function () {
     \App\Jobs\RotateLogs::dispatch()->onQueue('default');
     $this->info("Log rotation job dispatched.");

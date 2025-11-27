@@ -561,10 +561,13 @@ class UsersController extends Controller
             'corso_intra' => ['ore' => 0, 'giorni' => 0],
             'corso_extra' => ['ore' => 0, 'giorni' => 0],
             'malattia' => ['ore' => 0, 'giorni' => 0],
+            'congedo_parentale' => ['ore' => 0, 'giorni' => 0],
+            'permesso_legge_104' => ['ore' => 0, 'giorni' => 0],
         ];
 
         foreach ($presenze as $presenza) {
 
+            $key = null;
             switch ($presenza->attendanceType->name) {
                 case 'Lavoro in sede':
                 case 'Lavoro c/o cliente':
@@ -589,6 +592,16 @@ class UsersController extends Controller
                 case 'Malattia':
                     $key = 'malattia';
                     break;
+                case 'Congedo Parentale':
+                    $key = 'congedo_parentale';
+                    break;
+                case 'Permesso Legge 104':
+                    $key = 'permesso_legge_104';
+                    break;
+            }
+
+            if (! $key) {
+                continue;
             }
 
             $ore = number_format(Carbon::parse($presenza->time_in)->diffInMinutes(Carbon::parse($presenza->time_out)) / 60, 2);

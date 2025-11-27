@@ -107,7 +107,9 @@ class TimeOffRequestController extends Controller
         DB::commit();
 
         \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\TimeOffRequest($batch_id, $user, false));
-        \Illuminate\Support\Facades\Mail::to(config('mail.admin_mail'))->send(new \App\Mail\TimeOffRequest($batch_id, $user, true));
+        \Illuminate\Support\Facades\Mail::to(config('mail.hr_mail'))
+            ->cc(config('mail.admin_mail'))
+            ->send(new \App\Mail\TimeOffRequest($batch_id, $user, true));
 
         return redirect()->route('time-off-requests.index')->with('success', 'Richieste di permesso create con successo');
     }
@@ -184,8 +186,8 @@ class TimeOffRequestController extends Controller
         ]);
     }
 
-    private const MINIMUM_NOTICE_DAYS = 3;
-    private const NOTICE_ERROR_MESSAGE = 'Le richieste di ferie o permessi devono avere almeno 3 giorni di preavviso.';
+    private const MINIMUM_NOTICE_DAYS = 5;
+    private const NOTICE_ERROR_MESSAGE = 'Le richieste di ferie o permessi devono avere almeno 5 giorni lavorativi di preavviso.';
 
     private function violatesMinimumNotice(User $user, string $requestedStartDate): bool
     {
@@ -194,7 +196,7 @@ class TimeOffRequestController extends Controller
         }
 
         $requestedStart = Carbon::parse($requestedStartDate)->startOfDay();
-        $minimumAllowedDate = Carbon::now()->startOfDay()->addDays(self::MINIMUM_NOTICE_DAYS);
+        $minimumAllowedDate = Carbon::now()->startOfDay()->addWeekdays(self::MINIMUM_NOTICE_DAYS);
 
         return $requestedStart->lt($minimumAllowedDate);
     }

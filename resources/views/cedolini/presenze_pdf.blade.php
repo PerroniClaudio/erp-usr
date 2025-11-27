@@ -122,6 +122,8 @@
                 <th>CORSO INTRA<br>(incluse in<br>lavorato)</th>
                 <th>CORSO EXTRA</th>
                 <th>MALATTIA</th>
+                <th>CONGEDO<br>PARENTALE</th>
+                <th>PERMESSO<br>LEGGE 104</th>
             </tr>
         </thead>
         <tbody>
@@ -135,6 +137,8 @@
                 <td>{{ $riepilogo['corso_intra']['ore'] }}</td>
                 <td>{{ $riepilogo['corso_extra']['ore'] }}</td>
                 <td>{{ $riepilogo['malattia']['ore'] }}</td>
+                <td>{{ $riepilogo['congedo_parentale']['ore'] }}</td>
+                <td>{{ $riepilogo['permesso_legge_104']['ore'] }}</td>
             </tr>
             <tr>
                 <td>{{ number_format($riepilogo['lavorato']['giorni'], 3) }}</td>
@@ -146,6 +150,8 @@
                 <td>{{ number_format($riepilogo['corso_intra']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['corso_extra']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['malattia']['giorni'], 3) }}</td>
+                <td>{{ number_format($riepilogo['congedo_parentale']['giorni'], 3) }}</td>
+                <td>{{ number_format($riepilogo['permesso_legge_104']['giorni'], 3) }}</td>
             </tr>
         </tbody>
     </table>

@@ -76,6 +76,14 @@ class AttendanceTypeSeeder extends Seeder {
                 'name' => 'Malattia',
                 'acronym' => 'MA',
             ],
+            [
+                'name' => 'Congedo Parentale',
+                'acronym' => 'CP',
+            ],
+            [
+                'name' => 'Permesso Legge 104',
+                'acronym' => 'L104',
+            ],
         ];
 
         foreach ($attendanceTypes as $attendanceType) {

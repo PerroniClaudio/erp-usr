@@ -109,15 +109,15 @@ class AttendanceController extends Controller
         // Validazioni specifiche per utenti non admin
         if (! $user->hasRole('admin')) {
             if ($this->isTimeOutBeforeTimeIn($fields['time_in'], $fields['time_out'])) {
-                return back()->withErrors(['message' => 'L\'orario di fine non può essere maggiore di quello di inizio']);
+                return back()->withErrors(['message' => __('attendance_errors.time_out_before_time_in')]);
             }
 
             if ($this->isDateInFuture($fields['date'])) {
-                return back()->withErrors(['message' => 'Non è possibile creare presenze nel futuro']);
+                return back()->withErrors(['message' => __('attendance_errors.future_date_not_allowed')]);
             }
 
             if ($this->isPastAttendanceNotAllowed($fields['date'])) {
-                return back()->withErrors(['message' => 'Non è possibile creare presenze nel passato']);
+                return back()->withErrors(['message' => __('attendance_errors.past_attendance_not_allowed')]);
             }
 
             $scheduledSlots = $this->getScheduledSlotsForUser($user->id, $fields['date']);
@@ -135,27 +135,30 @@ class AttendanceController extends Controller
         }
 
         $user_id = $user->hasRole('admin') ? $request->input('user_id') : $user->id;
+        $attendancesOfDay = $this->getAttendancesOfDay($user_id, $fields['company_id'], $fields['date']);
 
         $difference = $this->calculateHourDifference($fields['time_in'], $fields['time_out']);
 
-        if ($difference > 4) {
-            return back()->withErrors(['message' => 'Una presenza non può durare più di 4 ore']);
+        $isFirstAttendance = $this->isFirstAttendanceOfDay($fields['time_in'], $attendancesOfDay);
+        $maxAllowedHours = $isFirstAttendance ? 6 : 4;
+
+        if ($difference > $maxAllowedHours) {
+            return back()->withErrors(['message' => __('attendance_errors.attendance_hours_limit')]);
         }
 
         $totalTimeOffHours = $this->getTotalTimeOffHours($user_id, $fields['company_id'], $fields['date']);
-        $attendancesOfDay = $this->getAttendancesOfDay($user_id, $fields['company_id'], $fields['date']);
         $totalAttendanceHours = $attendancesOfDay->sum('hours') + $difference;
 
         if (($totalAttendanceHours + $totalTimeOffHours) > 8) {
-            return back()->withErrors(['message' => 'La somma di ore di presenza e permesso/ferie non può superare le 8 ore nella stessa giornata']);
+            return back()->withErrors(['message' => __('attendance_errors.attendance_timeoff_total_limit')]);
         }
 
         if ($this->hasAttendanceOverlap($attendancesOfDay, $fields['time_in'], $fields['time_out'])) {
-            return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad un\'altra presenza già registrata per la stessa giornata.']);
+            return back()->withErrors(['message' => __('attendance_errors.attendance_overlap')]);
         }
 
         if ($this->hasTimeOffOverlap($fields['date'], $fields['time_in'], $fields['time_out'], $user_id)) {
-            return back()->withErrors(['message' => 'La presenza inserita si sovrappone ad una richiesta di permesso/ferie già registrata per la stessa giornata.']);
+            return back()->withErrors(['message' => __('attendance_errors.timeoff_overlap')]);
         }
 
         Attendance::create([
@@ -344,6 +347,21 @@ class AttendanceController extends Controller
         return $overlap;
     }
 
+    private function isFirstAttendanceOfDay(string $timeIn, $attendances, ?int $excludeAttendanceId = null): bool
+    {
+        if ($excludeAttendanceId !== null) {
+            $attendances = $attendances->reject(function ($attendance) use ($excludeAttendanceId) {
+                return $attendance->id === $excludeAttendanceId;
+            });
+        }
+
+        $earliestExistingStart = $attendances->min(function ($attendance) {
+            return strtotime($attendance->time_in);
+        });
+
+        return $earliestExistingStart === null || strtotime($timeIn) <= $earliestExistingStart;
+    }
+
     private function isLockedForUser(Attendance $attendance, User $user): bool
     {
         $attendance->loadMissing('insertedBy');
@@ -368,11 +386,11 @@ class AttendanceController extends Controller
         $user = Auth::user();
 
         if ($this->isLockedForUser($attendance, $user)) {
-            return redirect()->route('attendances.index')->withErrors(['message' => 'Non puoi modificare una presenza inserita da un amministratore.']);
+            return redirect()->route('attendances.index')->withErrors(['message' => __('attendance_errors.locked_admin_insert')]);
         }
 
         if ($attendance->date !== date('Y-m-d')) {
-            return redirect()->route('attendances.index')->withErrors(['message' => 'Non è possibile modificare una presenza che non è di oggi']);
+            return redirect()->route('attendances.index')->withErrors(['message' => __('attendance_errors.edit_not_today')]);
         }
 
         $attendanceTypes = AttendanceType::all();
@@ -399,7 +417,7 @@ class AttendanceController extends Controller
         $user = $request->user();
 
         if ($this->isLockedForUser($attendance, $user)) {
-            return back()->withErrors(['message' => 'Non puoi modificare una presenza inserita da un amministratore.']);
+            return back()->withErrors(['message' => __('attendance_errors.locked_admin_insert')]);
         }
 
         $fields = $request->validate([
@@ -411,21 +429,27 @@ class AttendanceController extends Controller
         ]);
 
         if (strtotime($fields['time_out']) < strtotime($fields['time_in'])) {
-            return back()->withErrors(['message' => 'L\'orario di fine non può essere maggiore di quello di inizio']);
+            return back()->withErrors(['message' => __('attendance_errors.time_out_before_time_in')]);
         }
 
         if (strtotime($fields['date']) > strtotime(date('Y-m-d'))) {
-            return back()->withErrors(['message' => 'Non è possibile creare presenze nel futuro']);
+            return back()->withErrors(['message' => __('attendance_errors.future_date_not_allowed')]);
         }
+
+        $targetUserId = $user->hasRole('admin') ? $attendance->user_id : $user->id;
+        $attendancesOfDay = $this->getAttendancesOfDay($targetUserId, $fields['company_id'], $fields['date']);
 
         $difference = (strtotime($fields['time_out']) - strtotime($fields['time_in'])) / 3600;
 
-        if ($difference > 4) {
-            return back()->withErrors(['message' => 'Una presenza non può durare più di 4 ore']);
+        $isFirstAttendance = $this->isFirstAttendanceOfDay($fields['time_in'], $attendancesOfDay, $attendance->id);
+        $maxAllowedHours = $isFirstAttendance ? 6 : 4;
+
+        if ($difference > $maxAllowedHours) {
+            return back()->withErrors(['message' => __('attendance_errors.attendance_hours_limit')]);
         }
 
         $attendance->update([
-            'user_id' => $user->hasRole('admin') ? $attendance->user_id : $user->id,
+            'user_id' => $targetUserId,
             'company_id' => $fields['company_id'],
             'date' => $fields['date'],
             'time_in' => $fields['time_in'],
@@ -448,7 +472,7 @@ class AttendanceController extends Controller
         $user = $request->user();
 
         if ($this->isLockedForUser($attendance, $user)) {
-            return back()->withErrors(['message' => 'Non puoi eliminare una presenza inserita da un amministratore.']);
+            return back()->withErrors(['message' => __('attendance_errors.delete_locked_admin_insert')]);
         }
 
         $attendance->delete();
