@@ -24,4 +24,5 @@ return [
     'documents' => 'Documentale',
     'files_sector' => 'Settori',
     'files_documents' => 'Documenti',
+    'files_protocols' => 'Protocolli',
 ];

@@ -61,6 +61,8 @@
                 <thead>
                     <th class="w-1/2">{{ __('files.files_table_header_name') }}</th>
                     <th>{{ __('files.files_table_header_sector') }}</th>
+                    <th>{{ __('files.files_table_header_protocol') }}</th>
+                    <th>{{ __('files.files_table_header_valid_at') }}</th>
                     <th>{{ __('files.files_table_header_type') }}</th>
                     <th>{{ __('files.files_table_header_size') }}</th>
                     <th>{{ __('files.files_table_header_uploaded_at') }}</th>
@@ -69,7 +71,7 @@
                 <tbody>
                     @unless ($folders->isNotEmpty() || $files->isNotEmpty())
                         <tr>
-                            <td colspan="6" class="text-center text-gray-500">
+                            <td colspan="8" class="text-center text-gray-500">
                                 {{ __('files.files_table_no_files_or_folders') }}
                             </td>
                         </tr>
@@ -77,7 +79,7 @@
                         @foreach ($folders as $folder)
                             <tr class="hover:bg-base-200 cursor-pointer"
                                 data-folder-hash="{{ base64_encode($folder->relative_path) }}">
-                                <td colspan="6">
+                                <td colspan="8">
                                     <div class="flex items-center">
                                         <x-lucide-folder class="w-6 h-6 mr-2 text-yellow-400" />
                                         <span>{{ $folder->name ?? basename($folder->storage_path) }}</span>
@@ -118,13 +120,23 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="div badge text-white"
+                                    <div class="badge text-white"
                                         style="background-color: {{ $file->sector ? $file->sector->color : 'gray' }}">
                                         {{ $file->sector ? $file->sector->acronym : __('files.files_table_no_sector') }}
                                     </div>
                                 </td>
+                                <td>
+                                    @if ($file->protocol_number)
+                                        <div class="badge badge-outline">{{ $file->protocol_number }}</div>
+                                    @else
+                                        <span class="text-sm text-base-content/60">{{ __('files.files_table_no_protocol') }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ $file->valid_at ? $file->valid_at->locale('it')->isoFormat('DD/MM/YYYY') : __('files.files_table_no_valid_date') }}
+                                </td>
                                 <td>{{ $file->mime_type }}</td>
-                                <td>{{ $file->humanFileSize($file->size) }}</td>
+                                <td>{{ $file->humanFileSize() }}</td>
                                 <td>{{ $file->created_at->locale('it')->isoFormat('DD/MM/YYYY HH:mm') }}</td>
                                 <td></td>
                             </tr>
@@ -156,7 +168,7 @@
                 <fieldset class="fieldset">
                     <legend class="fieldset-legend">{{ __('files.files_upload_modal_select_sector') }}</legend>
                     <select class="select w-full" name="file_object_sector_id"
-                        value="{{ old('file_object_sector_id') }}">
+                        value="{{ old('file_object_sector_id') }}" required>
                         @foreach ($sectors as $sector)
                             <option value="{{ $sector->id }}"
                                 {{ old('file_object_sector_id') == $sector->id ? 'selected' : '' }}>
@@ -167,8 +179,25 @@
                 </fieldset>
 
                 <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('files.files_upload_modal_select_protocol') }}</legend>
+                    <select class="select w-full" name="protocol_id" value="{{ old('protocol_id') }}" required>
+                        @foreach ($protocols as $protocol)
+                            <option value="{{ $protocol->id }}" {{ old('protocol_id') == $protocol->id ? 'selected' : '' }}>
+                                {{ $protocol->name }} ({{ strtoupper($protocol->acronym) }})
+                            </option>
+                        @endforeach
+                    </select>
+                </fieldset>
+
+                <fieldset class="fieldset">
                     <legend class="fieldset-legend">{{ __('files.files_upload_modal_select_file') }}</legend>
                     <input type="file" name="file" class="file-input w-full" required />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('files.files_upload_valid_at_label') }}</legend>
+                    <input type="date" name="valid_at" class="input w-full"
+                        value="{{ old('valid_at', now()->format('Y-m-d')) }}">
                 </fieldset>
 
                 <fieldset class="fieldset">

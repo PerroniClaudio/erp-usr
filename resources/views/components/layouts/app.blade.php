@@ -132,7 +132,15 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ route('groups.index') }}">
+                                    <a href="{{ route('admin.protocols.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-hash class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.files_protocols') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.files.index') }}">
                                         <div class="flex items-center">
                                             <x-lucide-folder class="h-4 w-4 text-primary" />
                                             <span class="ml-2">{{ __('navbar.files_documents') }}</span>

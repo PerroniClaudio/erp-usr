@@ -182,6 +182,7 @@ Route::group([
     // Settori 
 
     Route::resource('/sectors', \App\Http\Controllers\FileObjectSectorController::class)->names('admin.sectors');
+    Route::resource('/protocols', \App\Http\Controllers\ProtocolController::class)->names('admin.protocols');
     Route::get('/index', [\App\Http\Controllers\FileObjectController::class, 'index'])->name('admin.files.index');
     Route::get('/folder/{hash}', [\App\Http\Controllers\FileObjectController::class, 'viewFolder'])->name('admin.files.folder');
     Route::post('/upload', [\App\Http\Controllers\FileObjectController::class, 'uploadFile'])->name('admin.files.upload');
