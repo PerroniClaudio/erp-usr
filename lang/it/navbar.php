@@ -27,4 +27,5 @@ return [
     'files_sector' => 'Settori',
     'files_documents' => 'Documenti',
     'files_protocols' => 'Protocolli',
+    'files_search' => 'Ricerca documenti',
 ];

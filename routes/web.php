@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FileObjectController;
 use App\Models\Vehicle;
 use App\Services\AttendanceCheckService;
 use Illuminate\Support\Facades\Auth;
@@ -63,6 +64,16 @@ Route::get('/vehicles/search', function () {
 Route::get('/refresh-csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 })->middleware(['auth'])->name('csrf.refresh');
+
+Route::group([
+    'middleware' => ['auth'],
+    'prefix' => 'files',
+], function () {
+    Route::get('/{fileObject}/download', [FileObjectController::class, 'download'])->name('files.download');
+    Route::delete('/{fileObject}', [FileObjectController::class, 'destroy'])->name('files.destroy');
+    Route::get('/{fileObject}/versions', [FileObjectController::class, 'versions'])->name('files.versions');
+    Route::post('/{fileObject}/versions', [FileObjectController::class, 'uploadVersion'])->name('files.versions.upload');
+});
 
 require __DIR__.'/auth.php';
 require __DIR__.'/standard.php';

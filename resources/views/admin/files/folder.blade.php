@@ -2,9 +2,13 @@
 
     @vite('resources/js/file_explorer.js')
 
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center flex-wrap gap-2">
         <h1 class="text-4xl">{{ __('files.files_index_title') }}</h1>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap justify-end">
+            <a class="btn btn-ghost" href="{{ route('admin.files.search') }}">
+                <x-lucide-search class="w-4 h-4" />
+                {{ __('files.files_search_button') }}
+            </a>
             <button class="btn btn-outline" onclick="create_folder_modal.showModal()">
                 <x-lucide-folder-plus class="w-4 h-4" />
                 {{ __('files.files_create_folder_button') }}
@@ -26,20 +30,16 @@
                             Pagina principale
                         </a>
                     </li>
-                    @php
-                        $aliases = [
-                            'public' => 'File pubblici',
-                            'personnel' => 'File dipendenti',
-                            'attachments' => 'Allegati',
-                        ];
-                    @endphp
                     @foreach ($folder_steps as $index => $step)
                         @if ($step == '/' || $step == '')
                             @continue
                         @endif
 
                         @php
-                            $displayName = $aliases[$step] ?? $step;
+                            $displayName = $folder_aliases[$step] ?? $step;
+                            if ($index > 0 && $folder_steps[$index - 1] === 'personnel') {
+                                $displayName = $personnel_names[$step] ?? $displayName;
+                            }
                         @endphp
 
                         @if ($index + 1 === count($folder_steps))
@@ -119,6 +119,11 @@
 
                                     </div>
                                 </td>
+                                @php
+                                    $currentUser = auth()->user();
+                                    $canDownload = $currentUser->hasRole('admin') || $file->is_public || $file->user_id === $currentUser->id;
+                                    $canDelete = $currentUser->hasRole('admin') || $file->user_id === $currentUser->id;
+                                @endphp
                                 <td>
                                     <div class="badge text-white"
                                         style="background-color: {{ $file->sector ? $file->sector->color : 'gray' }}">
@@ -138,7 +143,44 @@
                                 <td>{{ $file->mime_type }}</td>
                                 <td>{{ $file->humanFileSize() }}</td>
                                 <td>{{ $file->created_at->locale('it')->isoFormat('DD/MM/YYYY HH:mm') }}</td>
-                                <td></td>
+                                <td>
+                                    @if ($canDownload || $canDelete)
+                                        <div class="dropdown dropdown-end">
+                                            <button type="button" tabindex="0" class="btn btn-ghost btn-xs">
+                                                <x-lucide-ellipsis-vertical class="w-4 h-4" />
+                                            </button>
+                                            <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow">
+                                                @if ($canDownload)
+                                                    <li>
+                                                        <a href="{{ route('files.download', $file) }}" class="flex items-center gap-2">
+                                                            <x-lucide-download class="w-4 h-4" />
+                                                            <span>{{ __('files.files_download_button') }}</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="{{ route('files.versions', $file) }}" class="flex items-center gap-2">
+                                                            <x-lucide-history class="w-4 h-4" />
+                                                            <span>{{ __('files.files_versioning_button') }}</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+                                                @if ($canDelete)
+                                                    <li>
+                                                        <form action="{{ route('files.destroy', $file) }}" method="POST"
+                                                            onsubmit="return confirm('{{ __('files.files_delete_confirm') }}')" class="w-full">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="flex items-center gap-2 text-error w-full text-left">
+                                                                <x-lucide-trash-2 class="w-4 h-4" />
+                                                                <span>{{ __('files.files_delete_button') }}</span>
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                @endif
+                                            </ul>
+                                        </div>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     @endunless

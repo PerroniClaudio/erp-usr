@@ -197,13 +197,19 @@ Route::group([
     'prefix' => 'admin/files',
 ], function(){
 
-    // Settori 
-
+    // Settori e protocolli (solo admin)
     Route::resource('/sectors', \App\Http\Controllers\FileObjectSectorController::class)->names('admin.sectors');
     Route::resource('/protocols', \App\Http\Controllers\ProtocolController::class)->names('admin.protocols');
+
+});
+
+Route::group([
+    'middleware' => ['auth'],
+    'prefix' => 'admin/files',
+], function(){
     Route::get('/index', [\App\Http\Controllers\FileObjectController::class, 'index'])->name('admin.files.index');
+    Route::get('/search', [\App\Http\Controllers\FileObjectController::class, 'search'])->name('admin.files.search');
     Route::get('/folder/{hash}', [\App\Http\Controllers\FileObjectController::class, 'viewFolder'])->name('admin.files.folder');
     Route::post('/upload', [\App\Http\Controllers\FileObjectController::class, 'uploadFile'])->name('admin.files.upload');
     Route::post('/create-folder', [\App\Http\Controllers\FileObjectController::class, 'createFolder'])->name('admin.files.create-folder');
-
 });

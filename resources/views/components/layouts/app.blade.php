@@ -156,6 +156,14 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <a href="{{ route('admin.files.search') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-search class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.files_search') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="{{ route('admin.files.index') }}">
                                         <div class="flex items-center">
                                             <x-lucide-folder class="h-4 w-4 text-primary" />
@@ -233,6 +241,14 @@
                                         </div>
                                     </a>
                                 </li>
+                                <li>
+                                    <a href="{{ route('admin.files.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-folder class="h-6 w-6 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.files_documents') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
 
                                 <li>
                                     <a href="{{ route('time-off-requests.index') }}">
@@ -285,6 +301,14 @@
                             <div class="flex items-center">
                                 <x-lucide-circle-user class="h-6 w-6 text-primary" />
                                 <span class="ml-2">{{ __('navbar.profile') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.files.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-folder class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.files_documents') }}</span>
                             </div>
                         </a>
                     </li>
@@ -372,6 +396,14 @@
                             <div class="flex items-center">
                                 <x-lucide-circle-user class="h-6 w-6 text-primary" />
                                 <span class="ml-2">{{ __('navbar.profile') }}</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.files.index') }}">
+                            <div class="flex items-center">
+                                <x-lucide-folder class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.files_documents') }}</span>
                             </div>
                         </a>
                     </li>
