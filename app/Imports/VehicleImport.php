@@ -17,10 +17,12 @@ class VehicleImport implements ToCollection, WithChunkReading {
                 continue; // Salta le righe con price_per_km nullo
             }
 
-            $fringe_benefit_25 = $row[2] * 0.25 * 15000;
-            $fringe_benefit_30 = $row[2] * 0.30 * 15000;
-            $fringe_benefit_50 = $row[2] * 0.50 * 15000;
-            $fringe_benefit_60 = $row[2] * 0.60 * 15000;
+            $pricePerKm = round((float) $row[2], 4);
+
+            $fringe_benefit_25 = $pricePerKm * 0.25 * 15000;
+            $fringe_benefit_30 = $pricePerKm * 0.30 * 15000;
+            $fringe_benefit_50 = $pricePerKm * 0.50 * 15000;
+            $fringe_benefit_60 = $pricePerKm * 0.60 * 15000;
 
             Vehicle::updateOrCreate(
                 [
@@ -28,7 +30,7 @@ class VehicleImport implements ToCollection, WithChunkReading {
                     'model' => $row[1],
                 ],
                 [
-                    'price_per_km' => $row[2],
+                    'price_per_km' => $pricePerKm,
                     'fringe_benefit_25' => $fringe_benefit_25,
                     'fringe_benefit_30' => $fringe_benefit_30,
                     'fringe_benefit_50' => $fringe_benefit_50,

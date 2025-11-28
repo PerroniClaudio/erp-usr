@@ -125,6 +125,22 @@
                             value="{{ old('mileage_update_date', $joinedVehicle->pivot->mileage_update_date) }}" />
                     </fieldset>
 
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('personnel.users_vehicles_price_per_km') }}</legend>
+                        <input type="number" step="0.0001" min="0" name="price_per_km" id="price_per_km"
+                            class="input w-full"
+                            placeholder="{{ __('personnel.users_vehicles_price_per_km_placeholder') }}"
+                            value="{{ old('price_per_km', number_format($vehicle->price_per_km ?? 0, 4, '.', '')) }}" />
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('personnel.users_vehicles_price_per_km_update_date') }}
+                        </legend>
+                        <input type="date" name="price_per_km_update_date" id="price_per_km_update_date"
+                            class="input w-full"
+                            value="{{ old('price_per_km_update_date', optional($vehicle->last_update)->toDateString()) }}" />
+                    </fieldset>
+
                     <button type="submit" class="lg:hidden btn btn-primary w-full"
                         id="submit-button">{{ __('personnel.users_vehicles_save') }}</button>
                 </div>
@@ -160,6 +176,41 @@
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($history->update_date)->format('d/m/Y') }}</td>
                             <td>{{ $history->mileage }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+    <div class="card bg-base-300">
+        <div class="card-body">
+
+            <h2 class="card-title">{{ __('personnel.users_vehicles_price_per_km_history') }}</h2>
+
+            <hr>
+
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>{{ __('personnel.users_vehicles_price_per_km_history_date') }}</th>
+                        <th>{{ __('personnel.users_vehicles_price_per_km_history_value') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @unless ($pricePerKmUpdates->count())
+                        <tr>
+                            <td colspan="2" class="text-center">
+                                {{ __('personnel.users_vehicles_price_per_km_history_no_updates') }}
+                            </td>
+                        </tr>
+                    @endunless
+                    @foreach ($pricePerKmUpdates as $history)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($history->update_date)->format('d/m/Y') }}</td>
+                            <td>{{ number_format($history->price_per_km, 4, ',', '') }}</td>
                         </tr>
                     @endforeach
                 </tbody>

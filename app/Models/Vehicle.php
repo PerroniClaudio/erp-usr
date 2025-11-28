@@ -32,6 +32,7 @@ class Vehicle extends Model {
 
     protected $casts = [
         'last_update' => 'datetime',
+        'price_per_km' => 'decimal:4',
     ];
 
     public function users() {
@@ -50,7 +51,43 @@ class Vehicle extends Model {
         return $this->hasMany(MileageUpdate::class);
     }
 
+    public function pricePerKmUpdates() {
+        return $this->hasMany(PricePerKmUpdate::class);
+    }
+
     public function businessTripsTransfers() {
         return $this->belongsToMany(BusinessTripTransfer::class);
+    }
+
+    public function setPricePerKmAttribute($value) {
+        if ($value === null) {
+            $this->attributes['price_per_km'] = null;
+
+            return;
+        }
+
+        $this->attributes['price_per_km'] = round((float) $value, 4);
+    }
+
+    protected static function booted() {
+        static::created(function (Vehicle $vehicle) {
+            if ($vehicle->price_per_km !== null) {
+                $vehicle->pricePerKmUpdates()->create([
+                    'user_id' => auth()->id(),
+                    'price_per_km' => $vehicle->price_per_km,
+                    'update_date' => $vehicle->last_update?->toDateString() ?? now()->toDateString(),
+                ]);
+            }
+        });
+
+        static::updated(function (Vehicle $vehicle) {
+            if ($vehicle->wasChanged('price_per_km') && $vehicle->price_per_km !== null) {
+                $vehicle->pricePerKmUpdates()->create([
+                    'user_id' => auth()->id(),
+                    'price_per_km' => $vehicle->price_per_km,
+                    'update_date' => $vehicle->last_update?->toDateString() ?? now()->toDateString(),
+                ]);
+            }
+        });
     }
 }

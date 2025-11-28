@@ -239,7 +239,7 @@
                     <div class="join w-full">
                         <div class="flex-1">
                             <label class="input validator join-item w-full">
-                                <input type="text" id="address-search-input" placeholder="Via Garibaldi 22" />
+                                <input type="text" id="address-search-input" placeholder="Cerca indirizzo" />
                             </label>
                         </div>
                         <button class="btn btn-primary join-item" id="validate-address-button">Convalida</button>
@@ -322,7 +322,7 @@
                         <div class="flex-1">
                             <label class="input validator join-item w-full">
                                 <input type="text" id="location-address-search-input"
-                                    placeholder="Via Garibaldi 22" />
+                                    placeholder="Cerca indirizzo" />
                             </label>
                         </div>
                         <button class="btn btn-primary join-item"

@@ -136,7 +136,7 @@
                     <div>
                         <div class="join w-full">
                             <input type="text" id="profile-residence-search" class="input join-item w-full"
-                                placeholder="Via Garibaldi 22" autocomplete="off">
+                                placeholder="Cerca indirizzo" autocomplete="off">
                             <button type="button" class="btn btn-primary join-item"
                                 data-search="residence">Convalida</button>
                         </div>
@@ -218,7 +218,7 @@
                     <div>
                         <div class="join w-full">
                             <input type="text" id="profile-location-search" class="input join-item w-full"
-                                placeholder="Via Garibaldi 22" autocomplete="off">
+                                placeholder="Cerca indirizzo" autocomplete="off">
                             <button type="button" class="btn btn-primary join-item"
                                 data-search="location">Convalida</button>
                         </div>

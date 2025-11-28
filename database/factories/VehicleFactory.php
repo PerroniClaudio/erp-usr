@@ -14,7 +14,7 @@ class VehicleFactory extends Factory {
             'brand' => $this->faker->company(),
             'model' => $this->faker->word(),
             'plate_number' => $this->faker->bothify('??####??'),
-            'price_per_km' => $this->faker->randomFloat(2, 0.1, 1.5),
+            'price_per_km' => $this->faker->randomFloat(4, 0.1, 1.5),
         ];
     }
 }

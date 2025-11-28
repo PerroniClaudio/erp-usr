@@ -506,7 +506,7 @@ class UsersController extends Controller
 
         // Aggiungiamo le ferie e i permessi
         foreach ($timeOffRequests as $request) {
-            $data = Carbon::parse($request->date_from);
+            $data = $this->parseDateTime($request->date_from);
             $presenze->push((object) [
                 'id' => $request->id,
                 'persona' => $user->name,
@@ -515,8 +515,8 @@ class UsersController extends Controller
                 'data' => $data,
                 'data_formattata' => $data->format('d-m-Y'),
                 'ora_inizio' => $data->format('H:i'),
-                'ora_fine' => Carbon::parse($request->date_to)->format('H:i'),
-                'ore' => number_format($data->diffInMinutes(Carbon::parse($request->date_to)) / 60, 2),
+                'ora_fine' => $this->parseDateTime($request->date_to)->format('H:i'),
+                'ore' => number_format($data->diffInMinutes($this->parseDateTime($request->date_to)) / 60, 2),
                 'annullata' => false,
                 'giornata' => null,
             ]);
@@ -622,8 +622,8 @@ class UsersController extends Controller
                     break;
             }
 
-            $start_date = Carbon::parse($permesso->date_from);
-            $end_date = Carbon::parse($permesso->date_to);
+            $start_date = $this->parseDateTime($permesso->date_from);
+            $end_date = $this->parseDateTime($permesso->date_to);
             $ore = number_format($start_date->diffInMinutes($end_date) / 60, 2);
 
             $riepilogo[$key]['ore'] += floatval(str_replace(',', '.', $ore));
@@ -868,8 +868,8 @@ class UsersController extends Controller
 
         // Ore da permessi (ferie, rol, etc.)
         $weekTimeOffs = $timeOffRequests->filter(function ($timeOff) use ($weekStart, $weekEnd) {
-            $timeOffStart = Carbon::parse($timeOff->date_from);
-            $timeOffEnd = Carbon::parse($timeOff->date_to);
+            $timeOffStart = $this->parseDateTime($timeOff->date_from);
+            $timeOffEnd = $this->parseDateTime($timeOff->date_to);
 
             return $timeOffStart->between($weekStart, $weekEnd) ||
                    $timeOffEnd->between($weekStart, $weekEnd) ||
@@ -877,8 +877,8 @@ class UsersController extends Controller
         });
 
         foreach ($weekTimeOffs as $timeOff) {
-            $timeOffStart = Carbon::parse($timeOff->date_from);
-            $timeOffEnd = Carbon::parse($timeOff->date_to);
+            $timeOffStart = $this->parseDateTime($timeOff->date_from);
+            $timeOffEnd = $this->parseDateTime($timeOff->date_to);
 
             // Calcola solo la porzione nella settimana corrente
             $actualStart = $timeOffStart->lt($weekStart) ? $weekStart : $timeOffStart;
@@ -919,8 +919,8 @@ class UsersController extends Controller
 
         // Ore da permessi
         foreach ($timeOffRequests as $timeOff) {
-            $timeOffStart = Carbon::parse($timeOff->date_from);
-            $timeOffEnd = Carbon::parse($timeOff->date_to);
+            $timeOffStart = $this->parseDateTime($timeOff->date_from);
+            $timeOffEnd = $this->parseDateTime($timeOff->date_to);
             $totalHours += $timeOffStart->diffInMinutes($timeOffEnd) / 60;
         }
 
@@ -946,6 +946,38 @@ class UsersController extends Controller
         }
 
         return 0.0;
+    }
+
+    private function parseDateTime($value): Carbon
+    {
+        if ($value instanceof Carbon) {
+            return $value;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return Carbon::instance($value);
+        }
+
+        $valueString = trim((string) $value);
+        $formats = [
+            'Y-m-d H:i:s',
+            'Y-m-d H:i',
+            'Y-m-d',
+            'd/m/Y H:i:s',
+            'd/m/Y H:i',
+            'd/m/Y',
+        ];
+
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $valueString);
+            } catch (\Exception $e) {
+                // prova il prossimo formato
+                continue;
+            }
+        }
+
+        return Carbon::parse($valueString);
     }
 
     public function updateData(Request $request, User $user)
@@ -1275,6 +1307,7 @@ class UsersController extends Controller
 
         $joinedVehicle = $user->vehicles()->where('vehicles.id', $vehicle->id)->first();
         $mileageUpdates = $vehicle->mileageUpdates()->where('user_id', $user->id)->orderBy('update_date', 'desc')->get();
+        $pricePerKmUpdates = $vehicle->pricePerKmUpdates()->orderBy('update_date', 'desc')->get();
 
         return view('admin.personnel.users.vehicles.edit', [
             'user' => $user,
@@ -1284,6 +1317,7 @@ class UsersController extends Controller
             'ownershipTypes' => $this->ownershipTypes,
             'purchaseTypes' => $this->purchaseTypes,
             'mileageUpdates' => $mileageUpdates,
+            'pricePerKmUpdates' => $pricePerKmUpdates,
         ]);
     }
 
@@ -1299,6 +1333,8 @@ class UsersController extends Controller
             'contract_end_date' => 'nullable|date',
             'mileage' => 'nullable|numeric',
             'mileage_update_date' => 'nullable|date',
+            'price_per_km' => 'nullable|numeric',
+            'price_per_km_update_date' => 'nullable|date',
         ]);
 
         $vehicle = Vehicle::find($request->vehicle_id);
@@ -1325,6 +1361,12 @@ class UsersController extends Controller
             'mileage' => $request->mileage,
             'mileage_update_date' => $request->mileage_update_date,
         ]);
+
+        if ($request->filled('price_per_km')) {
+            $vehicle->price_per_km = $request->price_per_km;
+            $vehicle->last_update = $request->price_per_km_update_date ?? now();
+            $vehicle->save();
+        }
 
         return redirect()->route('users.edit', $user)->with('success', __('personnel.users_vehicles_updated'));
     }
