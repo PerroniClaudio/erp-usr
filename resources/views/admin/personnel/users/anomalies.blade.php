@@ -302,8 +302,11 @@
                             <div class="space-y-2">
                                 <h3 class="font-semibold">Straordinari</h3>
                                 @php
-                                    $weekOvertimes = $anomaliesData['overtimeRequests']
-                                        ->filter(fn($ot) => \Carbon\Carbon::parse($ot->date)->between($week['week_start'], $week['week_end']));
+                                    $weekOvertimes = $anomaliesData['overtimeRequests']->filter(function ($ot) use ($weekStart, $weekEnd) {
+                                        $otDate = \Carbon\Carbon::parse($ot->date);
+
+                                        return $otDate->between($weekStart, $weekEnd);
+                                    });
                                 @endphp
                                 @if ($weekOvertimes->count() > 0)
                                     <div class="overflow-x-auto">
