@@ -60,8 +60,11 @@
                                             <option value="">{{ __('daily_travel.select_vehicle_placeholder') }}
                                             </option>
                                             @foreach ($vehicles as $vehicle)
-                                                <option value="{{ $vehicle->id }}"
-                                                    data-price="{{ $vehicle->price_per_km }}"
+                                            <option value="{{ $vehicle->id }}"
+                                                    @php
+                                                        $latestVehiclePrice = $vehicle->pricePerKmUpdates->first()?->price_per_km ?? $vehicle->price_per_km;
+                                                    @endphp
+                                                    data-price="{{ $latestVehiclePrice }}"
                                                     @selected($dailyTravelStructure->vehicle_id === $vehicle->id)>
                                                     {{ $vehicle->pivot->plate_number }} - {{ $vehicle->brand }}
                                                     {{ $vehicle->model }}
@@ -78,9 +81,13 @@
                                             <span
                                                 class="label-text">{{ __('daily_travel.vehicle_cost_per_km') }}</span>
                                         </div>
-                                        <input type="number" step="0.01" min="0" name="cost_per_km"
+                                        @php
+                                            $structureVehiclePrice = $dailyTravelStructure->vehicle?->pricePerKmUpdates->first()?->price_per_km ?? $dailyTravelStructure->vehicle?->price_per_km ?? 0;
+                                            $defaultCostPerKm = $dailyTravelStructure->cost_per_km ?? $structureVehiclePrice;
+                                        @endphp
+                                        <input type="number" step="0.0001" min="0" name="cost_per_km"
                                             id="cost_per_km" class="input input-bordered w-full"
-                                            value="{{ old('cost_per_km') ?? number_format($dailyTravelStructure->cost_per_km ?? ($dailyTravelStructure->vehicle->price_per_km ?? 0), 2, '.', '') }}"
+                                            value="{{ old('cost_per_km') ?? number_format((float) $defaultCostPerKm, 4, '.', '') }}"
                                             placeholder="{{ __('daily_travel.vehicle_cost_per_km_placeholder') }}">
                                         @error('cost_per_km')
                                             <span class="text-error text-sm">{{ $message }}</span>
@@ -100,19 +107,6 @@
                                             value="{{ old('economic_value', number_format($dailyTravelStructure->economic_value ?? 0, 2, '.', '')) }}"
                                             placeholder="{{ __('daily_travel.economic_value_placeholder') }}">
                                         @error('economic_value')
-                                            <span class="text-error text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </label>
-
-                                    <label class="form-control w-full" for="travel_minutes">
-                                        <div class="label">
-                                            <span class="label-text">{{ __('daily_travel.travel_minutes') }}</span>
-                                        </div>
-                                        <input type="number" min="0" name="travel_minutes" id="travel_minutes"
-                                            class="input input-bordered w-full"
-                                            value="{{ old('travel_minutes', $dailyTravelStructure->travel_minutes ?? 0) }}"
-                                            placeholder="{{ __('daily_travel.travel_minutes_placeholder') }}">
-                                        @error('travel_minutes')
                                             <span class="text-error text-sm">{{ $message }}</span>
                                         @enderror
                                     </label>
@@ -149,6 +143,7 @@
                                 <th>{{ __('daily_travel.steps_city') }}</th>
                                 <th>{{ __('daily_travel.steps_province') }}</th>
                                 <th>{{ __('daily_travel.steps_zip') }}</th>
+                                <th>{{ __('daily_travel.steps_time_difference') }}</th>
                                 <th>{{ __('daily_travel.steps_actions') }}</th>
                             </tr>
                         </thead>
@@ -159,6 +154,7 @@
                                     data-address="{{ $step->address }}" data-city="{{ $step->city }}"
                                     data-province="{{ $step->province }}" data-zip="{{ $step->zip_code }}"
                                     data-lat="{{ $step->latitude }}" data-lng="{{ $step->longitude }}"
+                                    data-time-difference="{{ $step->time_difference }}"
                                     data-update-url="{{ route('admin.user.daily-trip-structure.steps.update', [$user, $company, $step]) }}"
                                     data-delete-url="{{ route('admin.user.daily-trip-structure.steps.destroy', [$user, $company, $step]) }}">
                                     <td class="text-center">
@@ -169,6 +165,7 @@
                                     <td>{{ $step->city }}</td>
                                     <td>{{ $step->province }}</td>
                                     <td>{{ $step->zip_code }}</td>
+                                    <td>{{ $step->time_difference }}</td>
                                     <td>
                                         <div class="flex gap-2">
                                             <button type="button"
@@ -186,7 +183,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-sm text-gray-500">
+                                    <td colspan="7" class="text-center text-sm text-gray-500">
                                         {{ __('daily_travel.steps_empty') }}
                                     </td>
                                 </tr>
@@ -321,6 +318,12 @@
                     <input type="text" name="longitude" class="input w-full step-form" value=""
                         placeholder="{{ __('personnel.users_longitude') }}" disabled />
                 </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.steps_time_difference') }}</legend>
+                    <input type="number" min="0" name="time_difference" id="step_time_difference"
+                        class="input w-full" value="0" />
+                </fieldset>
             </div>
 
 
@@ -405,6 +408,12 @@
                     <legend class="fieldset-legend">{{ __('personnel.users_longitude') }}</legend>
                     <input type="text" name="longitude" class="input w-full edit-step-input"
                         data-field="longitude" placeholder="{{ __('personnel.users_longitude') }}" disabled />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.steps_time_difference') }}</legend>
+                    <input type="number" min="0" name="time_difference" id="edit_step_time_difference"
+                        class="input w-full" data-field="time_difference" value="0" />
                 </fieldset>
             </div>
 

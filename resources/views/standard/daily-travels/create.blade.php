@@ -52,7 +52,6 @@
                 data-vehicle-none="{{ __('daily_travel.preview_vehicle_none') }}"
                 data-cost-per-km-label="{{ __('daily_travel.preview_cost_per_km') }}"
                 data-economic-value-label="{{ __('daily_travel.preview_economic_value') }}"
-                data-travel-minutes-label="{{ __('daily_travel.preview_travel_minutes') }}"
                 data-steps-title="{{ __('daily_travel.preview_steps_title') }}"
                 data-steps-empty="{{ __('daily_travel.preview_steps_empty') }}"
                 data-step-label="{{ __('daily_travel.preview_step_label', ['number' => ':number']) }}"

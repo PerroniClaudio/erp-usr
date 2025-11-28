@@ -22,6 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const editSearchButton = document.getElementById(
         "edit-validate-step-address-button"
     );
+    const timeDifferenceInput = document.getElementById("step_time_difference");
+    const editTimeDifferenceInput = document.getElementById(
+        "edit_step_time_difference"
+    );
     const csrfToken =
         document.querySelector('meta[name="csrf-token"]')?.content ?? "";
 
@@ -122,6 +126,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const handleSave = async () => {
         if (!storeUrl || !csrfToken) return;
 
+        const timeDifferenceValue = Number.parseInt(
+            timeDifferenceInput?.value ?? "0",
+            10
+        );
+
         const payload = {
             address: getFieldValue(".step-form", "address"),
             city: getFieldValue(".step-form", "city"),
@@ -129,6 +138,10 @@ document.addEventListener("DOMContentLoaded", () => {
             zip_code: getFieldValue(".step-form", "zip_code"),
             latitude: getFieldValue(".step-form", "latitude"),
             longitude: getFieldValue(".step-form", "longitude"),
+            time_difference:
+                Number.isFinite(timeDifferenceValue) && timeDifferenceValue >= 0
+                    ? timeDifferenceValue
+                    : 0,
         };
 
         clearError(errorLabel);
@@ -166,6 +179,9 @@ document.addEventListener("DOMContentLoaded", () => {
         addStepButton.addEventListener("click", () => {
             clearError(errorLabel);
             resetFields(stepFields());
+            if (timeDifferenceInput) {
+                timeDifferenceInput.value = "0";
+            }
             addStepModal.showModal();
         });
     }
@@ -266,9 +282,26 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedStepRow = row;
         editStepError.textContent = "";
         resetFields(editStepFields());
+        enableFields(editStepFields());
 
         if (editSearchInput) {
             editSearchInput.value = row.dataset.address ?? "";
+        }
+
+        setFieldValue(".edit-step-input", "address", row.dataset.address);
+        setFieldValue(".edit-step-input", "city", row.dataset.city);
+        setFieldValue(".edit-step-input", "province", row.dataset.province);
+        setFieldValue(".edit-step-input", "zip_code", row.dataset.zip);
+        setFieldValue(".edit-step-input", "latitude", row.dataset.lat);
+        setFieldValue(".edit-step-input", "longitude", row.dataset.lng);
+
+        if (editTimeDifferenceInput) {
+            const parsed = Number.parseInt(
+                row.dataset.timeDifference ?? "0",
+                10
+            );
+            editTimeDifferenceInput.value =
+                Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
         }
 
         editStepModal.showModal();
@@ -287,6 +320,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!updateUrl || !csrfToken) return;
 
         editStepError.textContent = "";
+        const parsedTimeDifference = Number.parseInt(
+            editTimeDifferenceInput?.value ?? "0",
+            10
+        );
 
         const payload = {
             address: getFieldValue(".edit-step-input", "address"),
@@ -295,6 +332,10 @@ document.addEventListener("DOMContentLoaded", () => {
             zip_code: getFieldValue(".edit-step-input", "zip_code"),
             latitude: getFieldValue(".edit-step-input", "latitude"),
             longitude: getFieldValue(".edit-step-input", "longitude"),
+            time_difference:
+                Number.isFinite(parsedTimeDifference) && parsedTimeDifference >= 0
+                    ? parsedTimeDifference
+                    : 0,
         };
 
         if (
@@ -385,7 +426,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (price !== undefined) {
                 const numeric = Number(price);
                 costPerKmInput.value = Number.isFinite(numeric)
-                    ? numeric.toFixed(2)
+                    ? numeric.toFixed(4)
                     : "";
             }
         });

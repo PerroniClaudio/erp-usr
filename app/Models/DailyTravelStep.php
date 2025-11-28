@@ -11,6 +11,7 @@ class DailyTravelStep extends Model
     protected $fillable = [
         'daily_travel_structure_id',
         'step_number',
+        'time_difference',
         'address',
         'city',
         'province',

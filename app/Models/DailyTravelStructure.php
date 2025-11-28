@@ -14,7 +14,10 @@ class DailyTravelStructure extends Model
         'vehicle_id',
         'cost_per_km',
         'economic_value',
-        'travel_minutes',
+    ];
+
+    protected $casts = [
+        'cost_per_km' => 'decimal:4',
     ];
 
     public function user()

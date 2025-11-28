@@ -42,17 +42,12 @@
                     <div>
                         <p class="text-xs uppercase text-base-content/60">{{ __('daily_travel.preview_cost_per_km') }}
                         </p>
-                        <p class="font-semibold">€ {{ number_format((float) $structure?->cost_per_km, 2) }}</p>
+                        <p class="font-semibold">€ {{ number_format((float) $structure?->cost_per_km, 4) }}</p>
                     </div>
                     <div>
                         <p class="text-xs uppercase text-base-content/60">
                             {{ __('daily_travel.preview_economic_value') }}</p>
                         <p class="font-semibold">€ {{ number_format((float) $structure?->economic_value, 2) }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs uppercase text-base-content/60">
-                            {{ __('daily_travel.preview_travel_minutes') }}</p>
-                        <p class="font-semibold">{{ $structure?->travel_minutes }}</p>
                     </div>
                 </div>
             </div>

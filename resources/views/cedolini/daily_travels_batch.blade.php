@@ -63,6 +63,8 @@
                 <th>Azienda</th>
                 <th>Km totali</th>
                 <th>Costo km</th>
+                <th>Tempo tappe (min)</th>
+                <th>Indennità tempo spostamento</th>
                 <th>Valore economico</th>
                 <th>Totale</th>
             </tr>
@@ -74,6 +76,8 @@
                     <td>{{ $data['travel']->company?->name }}</td>
                     <td>{{ number_format($data['distance'], 2, ',', '.') }}</td>
                     <td>€ {{ number_format($data['distance_cost'], 2, ',', '.') }}</td>
+                    <td>{{ $data['time_difference'] }}</td>
+                    <td>€ {{ number_format($data['indemnity'], 2, ',', '.') }}</td>
                     <td>€ {{ number_format($data['economic_value'], 2, ',', '.') }}</td>
                     <td>€ {{ number_format($data['total'], 2, ',', '.') }}</td>
                 </tr>
@@ -87,6 +91,8 @@
             <tr>
                 <th>Km totali</th>
                 <th>Costo km</th>
+                <th>Tempo tappe (min)</th>
+                <th>Indennità tempo spostamento</th>
                 <th>Valore economico</th>
                 <th>Totale</th>
             </tr>
@@ -95,6 +101,8 @@
             <tr>
                 <td>{{ number_format($totals['distance'], 2, ',', '.') }}</td>
                 <td>€ {{ number_format($totals['distance_cost'], 2, ',', '.') }}</td>
+                <td>{{ $totals['time_difference'] }}</td>
+                <td>€ {{ number_format($totals['indemnity'], 2, ',', '.') }}</td>
                 <td>€ {{ number_format($totals['economic_value'], 2, ',', '.') }}</td>
                 <td>€ {{ number_format($totals['grand_total'], 2, ',', '.') }}</td>
             </tr>

@@ -38,7 +38,6 @@ class DailyTravelController extends Controller
                 $structure->company_id => [
                     'cost_per_km' => (float) $structure->cost_per_km,
                     'economic_value' => (float) $structure->economic_value,
-                    'travel_minutes' => (int) $structure->travel_minutes,
                     'vehicle' => $structure->vehicle ? [
                         'id' => $structure->vehicle->id,
                         'label' => trim($structure->vehicle->brand.' '.$structure->vehicle->model),
@@ -52,6 +51,7 @@ class DailyTravelController extends Controller
                         'zip_code' => $step->zip_code,
                         'latitude' => (float) $step->latitude,
                         'longitude' => (float) $step->longitude,
+                        'time_difference' => (int) $step->time_difference,
                     ])->values(),
                 ],
             ];
@@ -234,6 +234,7 @@ class DailyTravelController extends Controller
         $travelsData = $dailyTravels->map(function (DailyTravel $travel) {
             $steps = $travel->structure?->steps ?? collect();
             $distance = 0;
+            $timeDifference = 0;
             for ($i = 0; $i < $steps->count() - 1; $i++) {
                 $from = $steps[$i];
                 $to = $steps[$i + 1];
@@ -248,15 +249,22 @@ class DailyTravelController extends Controller
                 }
             }
 
+            $timeDifference = $steps->sum(fn ($step) => (int) ($step->time_difference ?? 0));
+
             $costPerKm = (float) ($travel->structure?->cost_per_km ?? 0);
             $economicValue = (float) ($travel->structure?->economic_value ?? 0);
             $distanceCost = $distance * $costPerKm;
-            $total = $distanceCost + $economicValue;
+            $timeCost = $costPerKm * $timeDifference;
+            $indemnity = $distanceCost + $timeCost;
+            $total = $indemnity + $economicValue;
 
             return [
                 'travel' => $travel,
                 'distance' => $distance,
                 'distance_cost' => $distanceCost,
+                'time_difference' => $timeDifference,
+                'time_cost' => $timeCost,
+                'indemnity' => $indemnity,
                 'economic_value' => $economicValue,
                 'total' => $total,
             ];
@@ -265,6 +273,9 @@ class DailyTravelController extends Controller
         $totals = [
             'distance' => $travelsData->sum('distance'),
             'distance_cost' => $travelsData->sum('distance_cost'),
+            'time_difference' => $travelsData->sum('time_difference'),
+            'time_cost' => $travelsData->sum('time_cost'),
+            'indemnity' => $travelsData->sum('indemnity'),
             'economic_value' => $travelsData->sum('economic_value'),
             'grand_total' => $travelsData->sum('total'),
         ];

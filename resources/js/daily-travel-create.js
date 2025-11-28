@@ -16,7 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
         vehicleNone: preview.dataset.vehicleNone || "",
         costPerKm: preview.dataset.costPerKmLabel || "",
         economicValue: preview.dataset.economicValueLabel || "",
-        travelMinutes: preview.dataset.travelMinutesLabel || "",
         stepsTitle: preview.dataset.stepsTitle || "",
         stepsEmpty: preview.dataset.stepsEmpty || "",
         stepLabel: preview.dataset.stepLabel || "",
@@ -28,10 +27,13 @@ document.addEventListener("DOMContentLoaded", () => {
         currency: preview.dataset.currencySymbol || "€",
     };
 
-    const formatCurrency = (value) => {
+    const formatCurrency = (value, decimals = 2) => {
         const numeric = Number(value ?? 0);
+        const safeDecimals = Number.isInteger(decimals) ? decimals : 2;
         return `${labels.currency} ${
-            Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00"
+            Number.isFinite(numeric)
+                ? numeric.toFixed(safeDecimals)
+                : Number(0).toFixed(safeDecimals)
         }`;
     };
 
@@ -78,15 +80,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div>
                         <p class="text-xs uppercase text-base-content/60">${labels.costPerKm}</p>
-                        <p class="font-semibold">${formatCurrency(structure.cost_per_km)}</p>
+                        <p class="font-semibold">${formatCurrency(structure.cost_per_km, 4)}</p>
                     </div>
                     <div>
                         <p class="text-xs uppercase text-base-content/60">${labels.economicValue}</p>
                         <p class="font-semibold">${formatCurrency(structure.economic_value)}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs uppercase text-base-content/60">${labels.travelMinutes}</p>
-                        <p class="font-semibold">${structure.travel_minutes ?? 0}</p>
                     </div>
                 </div>
             `;

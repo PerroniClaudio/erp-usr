@@ -6,6 +6,9 @@ use App\Models\Company;
 use App\Models\DailyTravelStructure;
 use App\Models\User;
 use App\Models\DailyTravelStep;
+use App\Models\Vehicle;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 
@@ -48,7 +51,10 @@ class DailyTravelStructureController extends Controller
      */
     public function edit(User $user, Company $company)
     {
-        
+        $vehicles = $user->vehicles()
+            ->with(['pricePerKmUpdates' => fn ($query) => $query->latest('update_date')->latest('created_at')])
+            ->get();
+
         // Controlla se esiste già un DailyTravelStructure per l'utente e l'azienda specificati
         $dailyTravelStructure = DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $company->id)
@@ -59,12 +65,15 @@ class DailyTravelStructureController extends Controller
             $dailyTravelStructure = DailyTravelStructure::create([
                 'user_id' => $user->id,
                 'company_id' => $company->id,
-                'vehicle_id' => $user->vehicles()->first()?->id,
-                'cost_per_km' => 0,
+                'vehicle_id' => $vehicles->first()?->id,
+                'cost_per_km' => $this->getLatestVehicleCost($vehicles->first()),
                 'economic_value' => 0,
-                'travel_minutes' => 0,
             ]);
         }
+
+        $dailyTravelStructure->load([
+            'vehicle.pricePerKmUpdates' => fn ($query) => $query->latest('update_date')->latest('created_at'),
+        ]);
 
         // A questo punto fetcha tutti gli step 
 
@@ -101,7 +110,7 @@ class DailyTravelStructureController extends Controller
             'company' => $company,
             'dailyTravelStructure' => $dailyTravelStructure,
             'steps' => $steps,
-            'vehicles' => $user->vehicles,
+            'vehicles' => $vehicles,
             'distancesBetweenSteps' => $distancesBetweenSteps,
             'mapSteps' => $mapSteps,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
@@ -132,12 +141,18 @@ class DailyTravelStructureController extends Controller
             'zip_code' => 'required|string|max:20',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'time_difference' => 'required|integer|min:0',
         ]);
 
         $nextStepNumber = ($dailyTravelStructure->steps()->max('step_number') ?? 0) + 1;
 
         $validated['step_number'] = $nextStepNumber;
         $validated['daily_travel_structure_id'] = $dailyTravelStructure->id;
+
+        if ($coordinates = $this->geocodeWithGoogle($validated)) {
+            $validated['latitude'] = $coordinates['latitude'];
+            $validated['longitude'] = $coordinates['longitude'];
+        }
 
         DailyTravelStep::create($validated);
 
@@ -189,17 +204,19 @@ class DailyTravelStructureController extends Controller
             ],
             'cost_per_km' => ['nullable', 'numeric', 'min:0'],
             'economic_value' => ['nullable', 'numeric', 'min:0'],
-            'travel_minutes' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $cost = $validated['cost_per_km'] ?? $dailyTravelStructure->vehicle?->price_per_km ?? 0;
-        $cost = round((float) $cost, 2);
+        $vehicle = $user->vehicles()
+            ->with(['pricePerKmUpdates' => fn ($query) => $query->latest('update_date')->latest('created_at')])
+            ->findOrFail($validated['vehicle_id']);
+
+        $cost = $validated['cost_per_km'] ?? $this->getLatestVehicleCost($vehicle);
+        $cost = round((float) $cost, 4);
 
         $dailyTravelStructure->update([
             'vehicle_id' => $validated['vehicle_id'],
             'cost_per_km' => $cost,
             'economic_value' => $validated['economic_value'] ?? 0,
-            'travel_minutes' => $validated['travel_minutes'] ?? 0,
         ]);
 
         return back()->with('success', __('daily_travel.vehicle_updated'));
@@ -230,7 +247,13 @@ class DailyTravelStructureController extends Controller
             'zip_code' => 'required|string|max:20',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'time_difference' => 'required|integer|min:0',
         ]);
+
+        if ($coordinates = $this->geocodeWithGoogle($validated)) {
+            $validated['latitude'] = $coordinates['latitude'];
+            $validated['longitude'] = $coordinates['longitude'];
+        }
 
         $step->update($validated);
 
@@ -284,5 +307,80 @@ class DailyTravelStructureController extends Controller
             ->each(function ($step, $index) {
                 $step->update(['step_number' => $index + 1]);
             });
+    }
+
+    private function getLatestVehicleCost(?Vehicle $vehicle): float
+    {
+        if (!$vehicle) {
+            return 0.0;
+        }
+
+        $latestUpdate = $vehicle->pricePerKmUpdates()
+            ->latest('update_date')
+            ->latest('created_at')
+            ->first();
+
+        $value = $latestUpdate?->price_per_km ?? $vehicle->price_per_km ?? 0;
+
+        return round((float) $value, 4);
+    }
+
+    /**
+     * Verifica latitudine/longitudine con l'API di Google Maps.
+     */
+    private function geocodeWithGoogle(array $data): ?array
+    {
+        $apiKey = config('services.google_maps.api_key');
+        if (!$apiKey) {
+            return null;
+        }
+
+        $addressParts = array_filter([
+            $data['address'] ?? null,
+            $data['zip_code'] ?? null,
+            $data['city'] ?? null,
+            $data['province'] ?? null,
+        ]);
+
+        if (empty($addressParts)) {
+            return null;
+        }
+
+        $fullAddress = implode(', ', $addressParts);
+
+        try {
+            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $fullAddress,
+                'key' => $apiKey,
+            ]);
+
+            if ($response->successful()) {
+                $payload = $response->json();
+                $location = $payload['results'][0]['geometry']['location'] ?? null;
+
+                if ($location && isset($location['lat'], $location['lng'])) {
+                    return [
+                        'latitude' => (float) $location['lat'],
+                        'longitude' => (float) $location['lng'],
+                    ];
+                }
+
+                Log::warning('Google geocoding senza risultati validi', [
+                    'status' => $payload['status'] ?? null,
+                    'address' => $fullAddress,
+                ]);
+            } else {
+                Log::error('Errore HTTP geocoding Google', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Eccezione geocoding Google', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        return null;
     }
 }

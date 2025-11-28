@@ -70,9 +70,8 @@
                 <p><b>Veicolo:</b></p>
                 <p>{{ $structure?->vehicle?->brand }} {{ $structure?->vehicle?->model }}</p>
                 <ul>
-                    <li>Prezzo/km: € {{ number_format((float) $structure?->cost_per_km, 2, ',', '.') }}</li>
+                    <li>Prezzo/km: € {{ number_format((float) $structure?->cost_per_km, 4, ',', '.') }}</li>
                     <li>Valore economico: € {{ number_format((float) $structure?->economic_value, 2, ',', '.') }}</li>
-                    <li>Minuti viaggio: {{ $structure?->travel_minutes }}</li>
                 </ul>
             </td>
             <td style="width: 50%;" class="card">
