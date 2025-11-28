@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Carbon\Carbon;
 
 class TimeOffRequest extends Model
@@ -82,18 +81,14 @@ class TimeOffRequest extends Model
 
     }
 
-    protected function dateFrom(): Attribute
+    public function getDateFromAttribute($value)
     {
-        return Attribute::get(function ($value) {
-            return $this->parseDateValue($value);
-        });
+        return $this->parseDateValue($value);
     }
 
-    protected function dateTo(): Attribute
+    public function getDateToAttribute($value)
     {
-        return Attribute::get(function ($value) {
-            return $this->parseDateValue($value);
-        });
+        return $this->parseDateValue($value);
     }
 
     private function parseDateValue($value): ?Carbon

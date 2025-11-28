@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Carbon\Carbon;
 
 class Attendance extends Model {
@@ -39,11 +38,9 @@ class Attendance extends Model {
         return $this->belongsTo(AttendanceType::class);
     }
 
-    protected function date(): Attribute
+    public function getDateAttribute($value)
     {
-        return Attribute::get(function ($value) {
-            return $this->parseDateValue($value);
-        });
+        return $this->parseDateValue($value);
     }
 
     private function parseDateValue($value): ?Carbon
