@@ -1,11 +1,12 @@
 <x-layouts.app>
+    <div class="flex justify-between items-center">
+        <h1 class="text-4xl">Profilo utente</h1>
+    </div>
 
+    <hr>
     <div id="profile-page" data-search-url="{{ route('standard.profile.search-address') }}">
-        <div class="flex flex-col gap-2">
-            <h1 class="text-3xl font-semibold">Profilo utente</h1>
-        </div>
 
-        <hr>
+
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 my-4">
             <div class="card bg-base-300 xl:col-span-2">

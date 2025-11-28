@@ -1,12 +1,11 @@
 <x-layouts.app>
-    <div class="flex flex-col gap-2">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-semibold">{{ __('personnel.user_schedule_request_admin_title') }}</h1>
-            </div>
-        </div>
-    </div>
 
+
+    <div class="flex justify-between items-center">
+        <h1 class="text-4xl">{{ __('personnel.user_schedule_request_admin_title') }}</h1>
+        <a href="{{ route('admin.sectors.index') }}" class="btn btn-secondary"><x-lucide-arrow-left
+                class="w-4 h-4" />{{ __('files.sectors_back_to_sectors') }}</a>
+    </div>
     <hr>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">

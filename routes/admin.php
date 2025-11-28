@@ -182,6 +182,9 @@ Route::group([
     // Settori 
 
     Route::resource('/sectors', \App\Http\Controllers\FileObjectSectorController::class)->names('admin.sectors');
-
+    Route::get('/index', [\App\Http\Controllers\FileObjectController::class, 'index'])->name('admin.files.index');
+    Route::get('/folder/{hash}', [\App\Http\Controllers\FileObjectController::class, 'viewFolder'])->name('admin.files.folder');
+    Route::post('/upload', [\App\Http\Controllers\FileObjectController::class, 'uploadFile'])->name('admin.files.upload');
+    Route::post('/create-folder', [\App\Http\Controllers\FileObjectController::class, 'createFolder'])->name('admin.files.create-folder');
 
 });

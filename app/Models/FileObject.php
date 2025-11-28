@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FileObject extends Model
 {
     //
+    use SoftDeletes;
     protected $fillable = [
        'user_id',
         'file_object_sector_id',
@@ -33,5 +35,24 @@ class FileObject extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function isFolder()
+    {
+        return $this->type === 'folder';
+    }
+
+    public function humanFileSize()
+    {
+        $size = $this->file_size;
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $unitIndex = 0;
+
+        while ($size >= 1024 && $unitIndex < count($units) - 1) {
+            $size /= 1024;
+            $unitIndex++;
+        }
+
+        return round($size, 2) . ' ' . $units[$unitIndex];
     }
 }

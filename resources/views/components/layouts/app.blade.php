@@ -117,6 +117,32 @@
                         </details>
                     </li>
                     <li>
+                        <details>
+                            <summary>
+                                <x-lucide-file class="h-6 w-6 text-primary" />
+                                <span class="ml-2">{{ __('navbar.documents') }}</span>
+                            </summary>
+                            <ul>
+                                <li>
+                                    <a href="{{ route('admin.sectors.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-group class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.files_sector') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('groups.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-folder class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.files_documents') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.attendances.index') }}">
                             <x-lucide-calendar class="h-6 w-6 text-primary" />
                             <span class="ml-2">{{ __('navbar.attendances') }}</span>

@@ -21,4 +21,7 @@ return [
     'daily_travels' => 'Viaggi giornalieri',
     'profile' => 'Profilo',
     'profile_description' => 'Aggiorna i tuoi dati personali',
+    'documents' => 'Documentale',
+    'files_sector' => 'Settori',
+    'files_documents' => 'Documenti',
 ];
