@@ -746,7 +746,8 @@ class UsersController extends Controller
                 $attendances,
                 $timeOffRequests,
                 $overtimeRequests,
-                $festiveDays
+                $festiveDays,
+                includeOvertime: false
             );
 
             $weeklyExpectedHours = $this->calculateExpectedWorkingHours($actualWeekStart, $actualWeekEnd, $festiveDays);
@@ -767,7 +768,7 @@ class UsersController extends Controller
         }
 
         // Calcolo ore totali effettive
-        $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests);
+        $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests, includeOvertime: false);
         $totalDifference = $totalActualHours - $totalExpectedHours;
 
         // Verifica anomalie
@@ -847,7 +848,7 @@ class UsersController extends Controller
     /**
      * Calcola le ore lavorate in una settimana specifica
      */
-    private function calculateWeeklyHours($user, $weekStart, $weekEnd, $attendances, $timeOffRequests, $overtimeRequests, $festiveDays): float
+    private function calculateWeeklyHours($user, $weekStart, $weekEnd, $attendances, $timeOffRequests, $overtimeRequests, $festiveDays, bool $includeOvertime = true): float
     {
         $weeklyHours = 0;
 
@@ -894,8 +895,10 @@ class UsersController extends Controller
             return $date->between($weekStart, $weekEnd);
         });
 
-        foreach ($weekOvertimes as $overtime) {
-            $weeklyHours += $this->resolveOvertimeHours($overtime);
+        if ($includeOvertime) {
+            foreach ($weekOvertimes as $overtime) {
+                $weeklyHours += $this->resolveOvertimeHours($overtime);
+            }
         }
 
         return round($weeklyHours, 2);
@@ -904,7 +907,7 @@ class UsersController extends Controller
     /**
      * Calcola il totale delle ore effettive nel periodo
      */
-    private function calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests): float
+    private function calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests, bool $includeOvertime = true): float
     {
         $totalHours = 0;
 
@@ -925,8 +928,10 @@ class UsersController extends Controller
         }
 
         // Ore da straordinari
-        foreach ($overtimeRequests as $overtime) {
-            $totalHours += $this->resolveOvertimeHours($overtime);
+        if ($includeOvertime) {
+            foreach ($overtimeRequests as $overtime) {
+                $totalHours += $this->resolveOvertimeHours($overtime);
+            }
         }
 
         return round($totalHours, 2);
