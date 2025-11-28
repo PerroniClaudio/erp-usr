@@ -132,6 +132,12 @@ class AttendanceController extends Controller
                     ])->withInput();
                 }
             }
+
+            if (! $this->isWithinSubmissionWindow($fields['date'], $fields['time_in'])) {
+                return back()->withErrors([
+                    'message' => __('attendance_errors.attendance_creation_window_exceeded'),
+                ])->withInput();
+            }
         }
 
         $user_id = $user->hasRole('admin') ? $request->input('user_id') : $user->id;
@@ -265,6 +271,21 @@ class AttendanceController extends Controller
         $startsNearSlot = $start >= $allowedStartFrom && $start <= $allowedStartUntil;
 
         return $startsNearSlot && $end <= $slotEnd;
+    }
+
+    private function isWithinSubmissionWindow(string $date, string $timeIn): bool
+    {
+        try {
+            $start = Carbon::parse($date.' '.$timeIn);
+        } catch (\Exception $e) {
+            return true;
+        }
+
+        $now = Carbon::now();
+        $windowStart = (clone $start)->subHour();
+        $windowEnd = (clone $start)->addMinutes(30);
+
+        return $now->gte($windowStart) && $now->lte($windowEnd);
     }
 
     private function getTotalTimeOffHours($userId, $companyId, $date)

@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripExpense;
 use App\Models\BusinessTripTransfer;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -208,6 +211,48 @@ class BusinessTripController extends Controller
         ]);
 
         return back()->with('success', 'Trasferta eliminata con successo');
+    }
+
+    public function adminIndex(Request $request)
+    {
+        $defaultDate = Carbon::now()->subMonth();
+
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'month' => ['nullable'],
+            'year' => ['nullable', 'integer', 'min:1900'],
+        ]);
+
+        $selectedMonth = str_pad($validated['month'] ?? $defaultDate->format('m'), 2, '0', STR_PAD_LEFT);
+        $selectedYear = (int) ($validated['year'] ?? $defaultDate->year);
+
+        $selectedUser = null;
+        $businessTrips = collect();
+        $totals = null;
+
+        if (!empty($validated['user_id'])) {
+            $selectedUser = User::find($validated['user_id']);
+
+            if ($selectedUser) {
+                $businessTrips = $this->getMonthlyBusinessTrips($selectedUser, $selectedMonth, $selectedYear);
+                $totals = [
+                    'trips' => $businessTrips->count(),
+                    'expenses' => $businessTrips->sum(fn ($trip) => (float) $trip->expenses->sum('amount')),
+                    'transfers' => $businessTrips->sum(fn ($trip) => $trip->transfers->count()),
+                ];
+            }
+        }
+
+        $users = User::orderBy('name')->get();
+
+        return view('admin.business-trips.index', [
+            'users' => $users,
+            'selectedUser' => $selectedUser,
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
+            'businessTrips' => $businessTrips,
+            'totals' => $totals,
+        ]);
     }
 
     /**
@@ -452,59 +497,28 @@ class BusinessTripController extends Controller
             'year' => 'required|integer|min:1900',
         ]);
 
-        $start_of_month = date('Y-m-d', strtotime($fields['year'].'-'.$fields['month'].'-01'));
-        $end_of_month = date('Y-m-t', strtotime($fields['year'].'-'.$fields['month'].'-01'));
-
         $user = $request->user();
+        $month = str_pad($fields['month'], 2, '0', STR_PAD_LEFT);
+        $year = (int) $fields['year'];
 
-        $businessTrips = BusinessTrip::where('user_id', $user->id)
-            ->whereBetween('date_from', [$start_of_month, $end_of_month])
-            ->with(['user'])
-            ->orderBy('date_from', 'asc')
-            ->get();
+        $businessTrips = $this->getMonthlyBusinessTrips($user, $month, $year);
 
         if ($businessTrips->isEmpty()) {
             return redirect()->back()->with('error', 'Nessuna trasferta trovata per il mese e anno specificati.');
         }
 
-        $allTripsData = [];
-        $user_vehicle = null;
-
-        foreach ($businessTrips as $businessTrip) {
-            $transfers = BusinessTripTransfer::where('business_trip_id', $businessTrip->id)->with(['company'])->get();
-
-            if ($user_vehicle == null) {
-                $vehicle_id = $transfers->count() > 0 ? $transfers[0]->vehicle_id : null;
-                $user_vehicles = $user->vehicles;
-
-                foreach ($user_vehicles as $vehicle) {
-                    if ($vehicle->id == $vehicle_id) {
-                        $user_vehicle = $vehicle;
-                        break;
-                    }
-                }
-            }
-
-            $transferPairs = $this->generateTransfers($transfers);
-
-            $allTripsData[] = [
-                'businessTrip' => $businessTrip,
-                'expenses' => BusinessTripExpense::where('business_trip_id', $businessTrip->id)->with(['company'])->get(),
-                'transfers' => $transferPairs,
-                'user_vehicle' => $user_vehicle,
-            ];
-        }
+        [$allTripsData, $userVehicle] = $this->buildMonthlyBatchData($businessTrips, $user);
 
         $pdf = PDF::loadView('cedolini.business_trips_batch', [
             'allTripsData' => $allTripsData,
-            'month' => $fields['month'],
-            'year' => $fields['year'],
+            'month' => $month,
+            'year' => $year,
             'document_date' => date('Y-m-d'),
-            'user_vehicle' => $user_vehicle,
+            'user_vehicle' => $userVehicle,
             'user' => $user,
         ]);
 
-        return $pdf->download('trasferte_'.$fields['year'].'_'.str_pad($fields['month'], 2, '0', STR_PAD_LEFT).'.pdf');
+        return $pdf->download('trasferte_'.$year.'_'.str_pad($month, 2, '0', STR_PAD_LEFT).'.pdf');
     }
 
     private function generateTransfers($transfers)
@@ -545,6 +559,89 @@ class BusinessTripController extends Controller
         }
 
         return $result;
+    }
+
+    public function adminGenerateMonthlyPdf(Request $request)
+    {
+        $fields = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'month' => 'required',
+            'year' => 'required|integer|min:1900',
+        ]);
+
+        $user = User::findOrFail($fields['user_id']);
+        $month = str_pad($fields['month'], 2, '0', STR_PAD_LEFT);
+        $year = (int) $fields['year'];
+
+        $businessTrips = $this->getMonthlyBusinessTrips($user, $month, $year);
+
+        if ($businessTrips->isEmpty()) {
+            return redirect()->back()->with('error', 'Nessuna trasferta trovata per il mese e anno specificati.');
+        }
+
+        [$allTripsData, $userVehicle] = $this->buildMonthlyBatchData($businessTrips, $user);
+
+        $pdf = PDF::loadView('cedolini.business_trips_batch', [
+            'allTripsData' => $allTripsData,
+            'month' => $month,
+            'year' => $year,
+            'document_date' => date('Y-m-d'),
+            'user_vehicle' => $userVehicle,
+            'user' => $user,
+        ]);
+
+        return $pdf->download('trasferte_'.$year.'_'.str_pad($month, 2, '0', STR_PAD_LEFT).'.pdf');
+    }
+
+    private function getMonthlyBusinessTrips(User $user, string $month, int $year): Collection
+    {
+        $monthDate = Carbon::createFromDate($year, (int) $month, 1);
+        $startOfMonth = $monthDate->copy()->startOfMonth()->toDateString();
+        $endOfMonth = $monthDate->copy()->endOfMonth()->toDateString();
+
+        return BusinessTrip::where('user_id', $user->id)
+            ->whereBetween('date_from', [$startOfMonth, $endOfMonth])
+            ->with([
+                'user',
+                'expenses',
+                'transfers.company',
+                'transfers.vehicle',
+            ])
+            ->orderBy('date_from', 'asc')
+            ->get();
+    }
+
+    private function buildMonthlyBatchData(Collection $businessTrips, User $user): array
+    {
+        $allTripsData = [];
+        $userVehicle = null;
+
+        foreach ($businessTrips as $businessTrip) {
+            $transfers = $businessTrip->transfers;
+
+            if ($userVehicle === null) {
+                $vehicleId = $transfers->count() > 0 ? $transfers[0]->vehicle_id : null;
+                $userVehicles = $user->vehicles;
+
+                foreach ($userVehicles as $vehicle) {
+                    if ($vehicle->id == $vehicleId) {
+                        $userVehicle = $vehicle;
+                        break;
+                    }
+                }
+            }
+
+            $transferPairs = $this->generateTransfers($transfers);
+
+            $allTripsData[] = [
+                'businessTrip' => $businessTrip,
+                'expenses' => $businessTrip->expenses,
+                'transfers' => $transferPairs,
+                'user_vehicle' => $userVehicle,
+            ];
+        }
+
+        return [$allTripsData, $userVehicle];
     }
 
     /**

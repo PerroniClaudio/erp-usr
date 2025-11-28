@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyTravel;
 use App\Models\DailyTravelStructure;
-use App\Models\DailyTravelExpense;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class DailyTravelController extends Controller
 {
@@ -182,6 +184,108 @@ class DailyTravelController extends Controller
             ->with('success', __('daily_travel.deleted_success'));
     }
 
+    public function adminIndex(Request $request)
+    {
+        $defaultDate = Carbon::now()->subMonth();
+
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'month' => ['nullable'],
+            'year' => ['nullable', 'integer', 'min:1900'],
+        ]);
+
+        $requestedMonth = $validated['month'] ?? null;
+        $selectedMonth = str_pad($requestedMonth ?: $defaultDate->format('m'), 2, '0', STR_PAD_LEFT);
+        $selectedYear = (int) (($validated['year'] ?? null) ?: $defaultDate->year);
+
+        $selectedUser = null;
+        $travelsData = collect();
+        $totals = null;
+
+        if (!empty($validated['user_id'])) {
+            $selectedUser = User::find($validated['user_id']);
+
+            if ($selectedUser) {
+                $monthlyTravels = $this->getMonthlyTravelsForUser($selectedUser, $selectedMonth, $selectedYear);
+                [$travelsData, $totals] = $this->summarizeTravels($monthlyTravels);
+            }
+        }
+
+        $users = User::orderBy('name')->get();
+
+        return view('admin.daily-travels.index', [
+            'users' => $users,
+            'selectedUser' => $selectedUser,
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
+            'travelsData' => $travelsData,
+            'totals' => $totals,
+        ]);
+    }
+
+    public function adminPdfBatch(Request $request)
+    {
+        $fields = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'month' => ['required'],
+            'year' => ['required', 'integer', 'min:1900'],
+        ]);
+
+        $user = User::findOrFail($fields['user_id']);
+        $month = str_pad($fields['month'], 2, '0', STR_PAD_LEFT);
+        $year = (int) $fields['year'];
+
+        $dailyTravels = $this->getMonthlyTravelsForUser($user, $month, $year);
+
+        if ($dailyTravels->isEmpty()) {
+            return back()->with('error', __('daily_travel.batch_empty'));
+        }
+
+        [$travelsData, $totals] = $this->summarizeTravels($dailyTravels);
+
+        $pdf = PDF::loadView('cedolini.daily_travels_batch', [
+            'travelsData' => $travelsData,
+            'month' => $month,
+            'year' => $year,
+            'document_date' => now()->toDateString(),
+            'totals' => $totals,
+            'user' => $user,
+        ]);
+
+        return $pdf->download('nota_spese_daily_'.$year.'_'.str_pad($month, 2, '0', STR_PAD_LEFT).'.pdf');
+    }
+
+    public function pdfBatch(Request $request)
+    {
+        $fields = $request->validate([
+            'month' => 'required',
+            'year' => 'required|integer|min:1900',
+        ]);
+
+        $user = $request->user();
+        $month = str_pad($fields['month'], 2, '0', STR_PAD_LEFT);
+        $year = (int) $fields['year'];
+
+        $dailyTravels = $this->getMonthlyTravelsForUser($user, $month, $year);
+
+        if ($dailyTravels->isEmpty()) {
+            return back()->with('error', __('daily_travel.batch_empty'));
+        }
+
+        [$travelsData, $totals] = $this->summarizeTravels($dailyTravels);
+
+        $pdf = PDF::loadView('cedolini.daily_travels_batch', [
+            'travelsData' => $travelsData,
+            'month' => $month,
+            'year' => $year,
+            'document_date' => now()->toDateString(),
+            'totals' => $totals,
+            'user' => $user,
+        ]);
+
+        return $pdf->download('nota_spese_daily_'.$year.'_'.str_pad($month, 2, '0', STR_PAD_LEFT).'.pdf');
+    }
+
     private function hasValidCoordinates($step): bool
     {
         return is_numeric($step->latitude ?? null) && is_numeric($step->longitude ?? null);
@@ -204,20 +308,13 @@ class DailyTravelController extends Controller
         return $earthRadiusKm * $c;
     }
 
-
-    public function pdfBatch(Request $request)
+    private function getMonthlyTravelsForUser(User $user, string $month, int $year): Collection
     {
-        $fields = $request->validate([
-            'month' => 'required',
-            'year' => 'required|integer|min:1900',
-        ]);
+        $monthDate = Carbon::createFromDate($year, (int) $month, 1);
+        $startOfMonth = $monthDate->copy()->startOfMonth()->toDateString();
+        $endOfMonth = $monthDate->copy()->endOfMonth()->toDateString();
 
-        $startOfMonth = date('Y-m-d', strtotime($fields['year'].'-'.$fields['month'].'-01'));
-        $endOfMonth = date('Y-m-t', strtotime($fields['year'].'-'.$fields['month'].'-01'));
-
-        $user = $request->user();
-
-        $dailyTravels = DailyTravel::with([
+        return DailyTravel::with([
             'company',
             'structure.vehicle',
             'structure.steps' => fn ($q) => $q->orderBy('step_number'),
@@ -226,15 +323,14 @@ class DailyTravelController extends Controller
             ->whereBetween('travel_date', [$startOfMonth, $endOfMonth])
             ->orderBy('travel_date')
             ->get();
+    }
 
-        if ($dailyTravels->isEmpty()) {
-            return back()->with('error', __('daily_travel.batch_empty'));
-        }
-
+    private function summarizeTravels(Collection $dailyTravels): array
+    {
         $travelsData = $dailyTravels->map(function (DailyTravel $travel) {
             $steps = $travel->structure?->steps ?? collect();
             $distance = 0;
-            $timeDifference = 0;
+
             for ($i = 0; $i < $steps->count() - 1; $i++) {
                 $from = $steps[$i];
                 $to = $steps[$i + 1];
@@ -280,15 +376,6 @@ class DailyTravelController extends Controller
             'grand_total' => $travelsData->sum('total'),
         ];
 
-        $pdf = PDF::loadView('cedolini.daily_travels_batch', [
-            'travelsData' => $travelsData,
-            'month' => $fields['month'],
-            'year' => $fields['year'],
-            'document_date' => now()->toDateString(),
-            'totals' => $totals,
-            'user' => $user,
-        ]);
-
-        return $pdf->download('nota_spese_daily_'.$fields['year'].'_'.str_pad($fields['month'], 2, '0', STR_PAD_LEFT).'.pdf');
+        return [$travelsData, $totals];
     }
 }

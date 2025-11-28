@@ -87,8 +87,9 @@
             </div>
             <h1 class="text-3xl mb-4">{{ __('business_trips.export_nota_spese') }}</h1>
             <hr>
-            <form action="{{ route('business-trips.pdf-batch') }}" method="GET">
-                <fieldset class="fieldset mb-4">
+            <form action="{{ route('business-trips.pdf-batch') }}" method="GET"
+                class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                <fieldset class="fieldset">
                     <legend class="fieldset-legend">{{ __('personnel.users_cedolino_year') }}</legend>
                     <select id="year" name="year" class="select select-bordered">
                         @foreach (range(\Carbon\Carbon::now()->year - 5, \Carbon\Carbon::now()->year + 5) as $year)
@@ -109,10 +110,11 @@
                     </select>
                 </fieldset>
 
-
-                <button type="submit" class="btn btn-primary">
-                    {{ __('business_trips.export_nota_spese') }}
-                </button>
+                <div class="flex gap-2 flex-col sm:flex-row col-span-full">
+                    <button type="submit" class="btn btn-primary w-full sm:w-auto">
+                        {{ __('business_trips.export_nota_spese') }}
+                    </button>
+                </div>
 
             </form>
         </div>

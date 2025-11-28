@@ -19,6 +19,8 @@ return [
     'schedule_request' => 'Richiesta orario',
     'schedule_requests_admin' => 'Richieste orario utenti',
     'daily_travels' => 'Viaggi giornalieri',
+    'business_trips_admin' => 'Trasferte utenti',
+    'daily_travels_admin' => 'Viaggi giornalieri utenti',
     'profile' => 'Profilo',
     'profile_description' => 'Aggiorna i tuoi dati personali',
     'documents' => 'Documentale',

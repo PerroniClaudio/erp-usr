@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BusinessTripController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\DailyTravelController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
@@ -146,6 +148,22 @@ Route::group([
     Route::get('/{failedAttendance}/handle', [FailedAttendanceController::class, 'handleFailedAttendance'])->name('admin.failed-attendances.edit');
     Route::post('/{failedAttendance}/approve', [FailedAttendanceController::class, 'approveFailedAttendance'])->name('admin.failed-attendances.approve');
     Route::post('/{failedAttendance}/deny', [FailedAttendanceController::class, 'denyFailedAttendance'])->name('admin.failed-attendances.deny');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:admin'],
+    'prefix' => 'admin/business-trips',
+], function () {
+    Route::get('/', [BusinessTripController::class, 'adminIndex'])->name('admin.business-trips.index');
+    Route::get('/export', [BusinessTripController::class, 'adminGenerateMonthlyPdf'])->name('admin.business-trips.export');
+});
+
+Route::group([
+    'middleware' => ['auth', 'role:admin'],
+    'prefix' => 'admin/daily-travels',
+], function () {
+    Route::get('/', [DailyTravelController::class, 'adminIndex'])->name('admin.daily-travels.index');
+    Route::get('/export', [DailyTravelController::class, 'adminPdfBatch'])->name('admin.daily-travels.export');
 });
 
 Route::group([

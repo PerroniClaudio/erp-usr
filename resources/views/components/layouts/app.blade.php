@@ -106,6 +106,22 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <a href="{{ route('admin.daily-travels.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-route class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.daily_travels_admin') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.business-trips.index') }}">
+                                        <div class="flex items-center">
+                                            <x-lucide-car class="h-4 w-4 text-primary" />
+                                            <span class="ml-2">{{ __('navbar.business_trips_admin') }}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="{{ route('users.roles') }}">
                                         <div class="flex items-center">
                                             <x-lucide-badge-check class="h-4 w-4 text-primary" />

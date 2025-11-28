@@ -11,4 +11,5 @@ return [
     'locked_admin_insert' => 'Non puoi modificare una presenza inserita da un amministratore.',
     'edit_not_today' => 'Non è possibile modificare una presenza che non è di oggi',
     'delete_locked_admin_insert' => 'Non puoi eliminare una presenza inserita da un amministratore.',
+    'attendance_creation_window_exceeded' => 'Puoi inserire la presenza da 1 ora prima fino a 30 minuti dopo l\'orario di inizio previsto.',
 ];
