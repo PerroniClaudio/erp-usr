@@ -31,6 +31,7 @@ function renderCalendar() {
         width: "auto",
         contentHeight: "auto",
         handleWindowResize: true,
+        displayEventTime: false,
         events: function (fetchInfo, successCallback, failureCallback) {
             let page = new Date(fetchInfo.start).getMonth() + 1; // Use the month as the page number
 
