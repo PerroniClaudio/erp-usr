@@ -810,8 +810,8 @@ class UsersController extends Controller
 
         $current = $start->copy();
         while ($current->lte($end)) {
-            // Salta weekend (sabato e domenica)
-            if (! $current->isWeekend()) {
+            // Salta solo la domenica
+            if (! $current->isSunday()) {
                 // Controlla se è un giorno festivo
                 $dayMonth = $current->format('m-d');
                 if (! in_array($dayMonth, $festiveDays)) {
@@ -825,7 +825,7 @@ class UsersController extends Controller
     }
 
     /**
-     * Calcola le ore lavorative previste per un periodo escludendo weekend e festivi
+     * Calcola le ore lavorative previste per un periodo escludendo la sola domenica e i festivi
      */
     private function calculateExpectedWorkingHours($dateFrom, $dateTo, $festiveDays): float
     {
@@ -835,8 +835,8 @@ class UsersController extends Controller
 
         $current = $start->copy();
         while ($current->lte($end)) {
-            // Salta weekend (sabato e domenica)
-            if (! $current->isWeekend()) {
+            // Salta solo la domenica
+            if (! $current->isSunday()) {
                 // Controlla se è un giorno festivo
                 $dayMonth = $current->format('m-d');
                 if (! in_array($dayMonth, $festiveDays)) {
