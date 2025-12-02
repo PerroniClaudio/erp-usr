@@ -164,6 +164,8 @@ Route::group([
     'prefix' => 'admin/daily-travels',
 ], function () {
     Route::get('/', [DailyTravelController::class, 'adminIndex'])->name('admin.daily-travels.index');
+    Route::get('/create', [DailyTravelController::class, 'adminCreate'])->name('admin.daily-travels.create');
+    Route::post('/', [DailyTravelController::class, 'adminStore'])->name('admin.daily-travels.store');
     Route::get('/export', [DailyTravelController::class, 'adminPdfBatch'])->name('admin.daily-travels.export');
 });
 

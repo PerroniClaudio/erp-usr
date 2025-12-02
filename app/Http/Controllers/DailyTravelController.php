@@ -184,6 +184,113 @@ class DailyTravelController extends Controller
             ->with('success', __('daily_travel.deleted_success'));
     }
 
+    public function adminCreate(Request $request)
+    {
+        $users = User::orderBy('name')->get();
+        $selectedUserId = $request->old('user_id', $request->integer('user_id'));
+        $selectedUser = $users->firstWhere('id', $selectedUserId);
+
+        $companies = collect();
+        $companyIds = collect();
+        $structures = collect();
+        $structuresMap = collect();
+        $selectedCompanyId = null;
+
+        if ($selectedUser) {
+            $companies = $selectedUser->companies;
+            $companyIds = $companies->pluck('id');
+            $selectedCompanyId = $request->old('company_id', $request->integer('company_id') ?? $companies->first()?->id);
+
+            if ($selectedCompanyId && !$companyIds->contains($selectedCompanyId)) {
+                $selectedCompanyId = $companies->first()?->id;
+            }
+
+            $structures = DailyTravelStructure::with([
+                'vehicle',
+                'steps' => fn ($query) => $query->orderBy('step_number'),
+            ])
+                ->where('user_id', $selectedUser->id)
+                ->whereIn('company_id', $companyIds)
+                ->get();
+
+            $structuresMap = $structures->mapWithKeys(function (DailyTravelStructure $structure) {
+                return [
+                    $structure->company_id => [
+                        'cost_per_km' => (float) $structure->cost_per_km,
+                        'economic_value' => (float) $structure->economic_value,
+                        'vehicle' => $structure->vehicle ? [
+                            'id' => $structure->vehicle->id,
+                            'label' => trim($structure->vehicle->brand.' '.$structure->vehicle->model),
+                            'price_per_km' => (float) $structure->vehicle->price_per_km,
+                        ] : null,
+                        'steps' => $structure->steps->map(fn ($step) => [
+                            'step_number' => $step->step_number,
+                            'address' => $step->address,
+                            'city' => $step->city,
+                            'province' => $step->province,
+                            'zip_code' => $step->zip_code,
+                            'latitude' => (float) $step->latitude,
+                            'longitude' => (float) $step->longitude,
+                            'time_difference' => (int) $step->time_difference,
+                        ])->values(),
+                    ],
+                ];
+            });
+        }
+
+        return view('admin.daily-travels.create', [
+            'users' => $users,
+            'selectedUser' => $selectedUser,
+            'companies' => $companies,
+            'selectedCompanyId' => $selectedCompanyId,
+            'structuresMap' => $structuresMap,
+            'selectedStructure' => $structures->firstWhere('company_id', $selectedCompanyId),
+            'googleMapsApiKey' => config('services.google_maps.api_key'),
+        ]);
+    }
+
+    public function adminStore(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'travel_date' => ['required', 'date'],
+            'company_id' => [
+                'required',
+                'integer',
+                Rule::exists('user_companies', 'company_id')->where(fn ($query) => $query->where('user_id', $request->integer('user_id'))),
+            ],
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+
+        $structure = DailyTravelStructure::where('user_id', $user->id)
+            ->where('company_id', $validated['company_id'])
+            ->first();
+
+        if (!$structure) {
+            return back()
+                ->withErrors(['company_id' => __('daily_travel.validation_no_structure')])
+                ->withInput();
+        }
+
+        DailyTravel::create([
+            'user_id' => $user->id,
+            'company_id' => $validated['company_id'],
+            'daily_travel_structure_id' => $structure->id,
+            'travel_date' => $validated['travel_date'],
+        ]);
+
+        $travelDate = Carbon::parse($validated['travel_date']);
+
+        return redirect()
+            ->route('admin.daily-travels.index', [
+                'user_id' => $user->id,
+                'month' => $travelDate->format('m'),
+                'year' => $travelDate->year,
+            ])
+            ->with('success', __('daily_travel.created_success'));
+    }
+
     public function adminIndex(Request $request)
     {
         $defaultDate = Carbon::now()->subMonth();
