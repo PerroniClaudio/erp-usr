@@ -10,6 +10,7 @@ return [
     'summary' => [
         'expected_hours' => 'Ore Previste',
         'actual_hours' => 'Ore Effettive',
+        'overtime_hours' => 'Ore di Straodinario',
         'difference' => 'Differenza',
         'difference_positive' => 'ore in eccesso',
         'difference_negative' => 'ore mancanti',
@@ -24,6 +25,7 @@ return [
         'expected_hours' => 'Ore previste',
         'actual_hours' => 'Ore effettive',
         'difference' => 'Differenza',
+        'overtime_hours' => 'Ore di straordinario',
         'attendance_title' => 'Presenze della settimana',
         'attendance_empty' => 'Nessuna presenza registrata in questa settimana.',
         'time_off_title' => 'Permessi e ferie della settimana',
@@ -59,5 +61,6 @@ return [
         'edit_time_off_title' => 'Modifica permesso o ferie',
         'edit_time_off_aria' => 'Modifica permesso o ferie dal :date',
         'download_report' => 'Scarica Report PDF',
+        'download_anomaly_payslip' => 'Scarica cedolino con anomalie',
     ],
 ];

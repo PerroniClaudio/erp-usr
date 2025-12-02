@@ -217,7 +217,7 @@
     <div class="subtitle">
         <strong>Dipendente:</strong> {{ $user->name }}<br>
         <strong>Periodo:</strong> {{ $primoGiorno->format('d/m/Y') }} - {{ $ultimoGiorno->format('d/m/Y') }}
-        ({{ $mese }} {{ $anno }})<br>
+        ({{ $mese }} {{ $anno }} – {{ number_format($anomaliesData['totalExpectedHours'], 1) }}h previste su {{ $anomaliesData['workingDaysInPeriod'] }} giorni lavorativi)<br>
         <strong>Data generazione:</strong> {{ now()->format('d/m/Y H:i') }}
     </div>
 

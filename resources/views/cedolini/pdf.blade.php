@@ -118,6 +118,7 @@
                     'CIL' => 'CORSO INTRA-LAVORATIVO',
                     'CP' => 'CONGEDO PARENTALE',
                     'L104' => 'PERMESSO LEGGE 104',
+                    'RE' => 'RECUPERO',
                 ];
 
                 $datiGiorni = [];
@@ -143,7 +144,6 @@
                     ->where('status', 2)
                     ->get();
 
-
                 foreach ($attendances as $attendance) {
                     $giorno = \Carbon\Carbon::parse($attendance->date)->day;
                     if (is_null($datiGiorni[$attendance->attendanceType->acronym][$giorno])) {
@@ -156,7 +156,7 @@
                 foreach ($overtimeRequests as $overtime) {
                     $giorno = \Carbon\Carbon::parse($overtime->date)->day;
                     $acronym = $overtime->overtimeType->acronym ?? null;
-             
+
                     if (
                         $acronym &&
                         array_key_exists($acronym, $datiGiorni) &&
@@ -168,8 +168,6 @@
                         $datiGiorni[$acronym][$giorno] += $overtime->hours;
                     }
                 }
-
-                
 
                 foreach ($timeOffRequests as $request) {
                     $startDate = \Carbon\Carbon::parse($request->date_from);

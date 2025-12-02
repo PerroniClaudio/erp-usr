@@ -106,13 +106,14 @@
     </div>
 
     <div class="title">Esportazione presenze {{ $user->name }}</div>
-    <div class="subtitle">Mese: {{ $mese }}</div>
+    <div class="subtitle">Mese: {{ $mese }} - {{ number_format($expected_hours, 1) }}h previste su {{ $working_days }} giorni lavorativi</div>
     <div class="subtitle">Anno: {{ $anno }}</div>
 
     <!-- Tabella riassuntiva -->
     <table class="summary-table">
         <thead>
             <tr>
+                <th></th>
                 <th>LAVORATO</th>
                 <th>STRAORDINARIO</th>
                 <th>STRAORD.<br>NOTTURNO</th>
@@ -128,6 +129,7 @@
         </thead>
         <tbody>
             <tr>
+                <th>ORE</th>
                 <td>{{ $riepilogo['lavorato']['ore'] }}</td>
                 <td>{{ $riepilogo['straordinario']['ore'] }}</td>
                 <td>{{ $riepilogo['straordinario_notturno']['ore'] }}</td>
@@ -141,6 +143,7 @@
                 <td>{{ $riepilogo['permesso_legge_104']['ore'] }}</td>
             </tr>
             <tr>
+                <th>GIORNI</th>
                 <td>{{ number_format($riepilogo['lavorato']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['straordinario']['giorni'], 3) }}</td>
                 <td>{{ number_format($riepilogo['straordinario_notturno']['giorni'], 3) }}</td>

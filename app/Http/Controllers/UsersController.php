@@ -215,6 +215,9 @@ class UsersController extends Controller
         $meseNumero = $mesiMap[$mese];
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
+        $festiveDays = $this->getFestiveDays();
+        $workingDays = $this->calculateWorkingDays($primoGiorno, $ultimoGiorno, $festiveDays);
+        $expectedHours = $this->calculateExpectedWorkingHours($primoGiorno, $ultimoGiorno, $festiveDays);
 
         $anomaliesData = $this->getAnomaliesData($user, $primoGiorno, $ultimoGiorno);
 
@@ -290,6 +293,9 @@ class UsersController extends Controller
         $meseNumero = $mesiMap[$mese];
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
+        $festiveDays = $this->getFestiveDays();
+        $workingDays = $this->calculateWorkingDays($primoGiorno, $ultimoGiorno, $festiveDays);
+        $expectedHours = $this->calculateExpectedWorkingHours($primoGiorno, $ultimoGiorno, $festiveDays);
 
         // Otteniamo le presenze dell'utente per il mese specificato
         $attendances = Attendance::where('user_id', $user->id)
@@ -339,6 +345,8 @@ class UsersController extends Controller
             'buoni_pasto' => $buoni_pasto,
             'pagina' => 1,
             'totale_pagine' => ceil($presenze->count() / 30), // Assumiamo circa 30 righe per pagina
+            'working_days' => $workingDays,
+            'expected_hours' => $expectedHours,
         ]);
 
         // Impostiamo le opzioni del PDF
@@ -478,6 +486,57 @@ class UsersController extends Controller
         return $pdf->download('anomalie_'.$user->name.'_'.$mese.'_'.$anno.'.pdf');
     }
 
+    public function exportAnomaliesCedolinoPdf(User $user, Request $request)
+    {
+        $request->validate([
+            'mese' => 'required|string',
+            'anno' => 'required|integer',
+        ]);
+
+        $mesiMap = [
+            'Gennaio' => 1,
+            'Febbraio' => 2,
+            'Marzo' => 3,
+            'Aprile' => 4,
+            'Maggio' => 5,
+            'Giugno' => 6,
+            'Luglio' => 7,
+            'Agosto' => 8,
+            'Settembre' => 9,
+            'Ottobre' => 10,
+            'Novembre' => 11,
+            'Dicembre' => 12,
+        ];
+
+        $mese = $request->mese;
+        $anno = $request->anno;
+        $meseNumero = $mesiMap[$mese];
+
+        $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
+        $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
+
+        // Usa lo stesso layout del cedolino ufficiale, permettendo il download anche in presenza di anomalie
+        $pdf = PDF::loadView('cedolini.pdf', [
+            'user' => $user,
+            'mese' => $mese,
+            'anno' => $anno,
+            'meseNumero' => $meseNumero,
+            'primoGiorno' => $primoGiorno,
+            'ultimoGiorno' => $ultimoGiorno,
+            'festive' => $this->getFestiveDays(),
+        ]);
+
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOptions([
+            'dpi' => 150,
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+        ]);
+
+        return $pdf->download('cedolino_anomalie_'.$user->name.'_'.$mese.'_'.$anno.'.pdf');
+    }
+
     private function preparePresenzeData($attendances, $timeOffRequests, $overtimeRequests, $user, $primoGiorno, $ultimoGiorno)
     {
         $presenze = new Collection;
@@ -485,6 +544,10 @@ class UsersController extends Controller
         // Aggiungiamo le presenze
         foreach ($attendances as $attendance) {
             $data = Carbon::parse($attendance->date);
+            $startAt = clone $data;
+            if ($attendance->time_in) {
+                $startAt->setTimeFromTimeString($attendance->time_in);
+            }
             $giorno_settimana = $this->getGiornoSettimanaItaliano($data->format('D'));
 
             $tipologia = $attendance->attendanceType->name;
@@ -502,12 +565,14 @@ class UsersController extends Controller
                 'ore' => number_format($ore, 2),
                 'annullata' => false,
                 'giornata' => null,
+                'start_at' => $startAt,
             ]);
         }
 
         // Aggiungiamo le ferie e i permessi
         foreach ($timeOffRequests as $request) {
             $data = $this->parseDateTime($request->date_from);
+            $startAt = clone $data;
             $presenze->push((object) [
                 'id' => $request->id,
                 'persona' => $user->name,
@@ -520,12 +585,17 @@ class UsersController extends Controller
                 'ore' => number_format($data->diffInMinutes($this->parseDateTime($request->date_to)) / 60, 2),
                 'annullata' => false,
                 'giornata' => null,
+                'start_at' => $startAt,
             ]);
         }
 
         // Aggiungiamo gli straordinari approvati
         foreach ($overtimeRequests as $overtime) {
             $data = Carbon::parse($overtime->date);
+            $startAt = clone $data;
+            if ($overtime->time_in) {
+                $startAt->setTimeFromTimeString($overtime->time_in);
+            }
             $giorno_settimana = $this->getGiornoSettimanaItaliano($data->format('D'));
 
             $presenze->push((object) [
@@ -540,14 +610,16 @@ class UsersController extends Controller
                 'ore' => number_format($overtime->hours ?? 0, 2),
                 'annullata' => false,
                 'giornata' => null,
+                'start_at' => $startAt,
             ]);
         }
 
-        // Ordiniamo le presenze per data e ora
+        // Ordiniamo le presenze per data/ora di inizio per tenere insieme presenze e straordinari
         return $presenze->sortBy([
+            ['start_at', 'asc'],
             ['data', 'asc'],
             ['ora_inizio', 'asc'],
-        ]);
+        ])->values();
     }
 
     private function calcolaRiepilogo($presenze, $permessi, $overtimeRequests)
