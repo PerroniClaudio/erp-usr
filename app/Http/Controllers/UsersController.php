@@ -751,7 +751,7 @@ class UsersController extends Controller
                 $timeOffRequests,
                 $overtimeRequests,
                 $festiveDays,
-                includeOvertime: false
+                includeOvertime: true
             );
 
             $weeklyExpectedHours = $this->calculateExpectedWorkingHours($actualWeekStart, $actualWeekEnd, $festiveDays);
@@ -772,7 +772,7 @@ class UsersController extends Controller
         }
 
         // Calcolo ore totali effettive
-        $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests, includeOvertime: false);
+        $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests, includeOvertime: true);
         $totalDifference = $totalActualHours - $totalExpectedHours;
 
         // Verifica anomalie
