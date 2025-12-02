@@ -753,9 +753,20 @@ class UsersController extends Controller
                 $festiveDays,
                 includeOvertime: true
             );
+            $weeklyHoursBase = $this->calculateWeeklyHours(
+                $user,
+                $actualWeekStart,
+                $actualWeekEnd,
+                $attendances,
+                $timeOffRequests,
+                $overtimeRequests,
+                $festiveDays,
+                includeOvertime: false
+            );
 
             $weeklyExpectedHours = $this->calculateExpectedWorkingHours($actualWeekStart, $actualWeekEnd, $festiveDays);
             $weeklyDifference = $weeklyHours - $weeklyExpectedHours;
+            $weeklyDifferenceBase = $weeklyHoursBase - $weeklyExpectedHours;
 
             $weeklyData[] = [
                 'week_start' => $actualWeekStart->format('d/m/Y'),
@@ -763,9 +774,9 @@ class UsersController extends Controller
                 'expected_hours' => $weeklyExpectedHours,
                 'actual_hours' => $weeklyHours,
                 'difference' => $weeklyDifference,
-                'limit_exceeded' => $weeklyHours > 40,
-                'has_shortage' => $weeklyDifference < -4, // Tolleranza di mezza giornata
-                'has_excess' => $weeklyDifference > 4,
+                'limit_exceeded' => $weeklyHoursBase > 40,
+                'has_shortage' => $weeklyDifferenceBase < -4, // Tolleranza di mezza giornata
+                'has_excess' => $weeklyDifferenceBase > 4,
             ];
 
             $currentWeek->addWeek();
@@ -773,13 +784,15 @@ class UsersController extends Controller
 
         // Calcolo ore totali effettive
         $totalActualHours = $this->calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests, includeOvertime: true);
+        $totalActualHoursBase = $this->calculateTotalActualHours($attendances, $timeOffRequests, $overtimeRequests, includeOvertime: false);
         $totalDifference = $totalActualHours - $totalExpectedHours;
+        $totalDifferenceBase = $totalActualHoursBase - $totalExpectedHours;
 
         // Verifica anomalie
         $hasWeeklyAnomalies = collect($weeklyData)->contains(function ($week) {
             return $week['limit_exceeded'] || $week['has_shortage'] || $week['has_excess'];
         });
-        $hasMonthlyAnomalies = abs($totalDifference) > 8; // Tolleranza di una giornata
+        $hasMonthlyAnomalies = abs($totalDifferenceBase) > 8; // Tolleranza di una giornata
 
         // Calcola i giorni lavorativi del periodo
         $workingDaysInPeriod = $this->calculateWorkingDays($dateFrom, $dateTo, $festiveDays);
@@ -865,9 +878,7 @@ class UsersController extends Controller
             return $attendanceDate->between($weekStart, $weekEnd);
         });
 
-        foreach ($weekAttendances as $attendance) {
-            $weeklyHours += $this->getSignedAttendanceHours($attendance);
-        }
+        $weeklyHours += $this->sumSignedAttendanceHours($weekAttendances);
 
         // Ore da permessi (ferie, rol, etc.)
         $weekTimeOffs = $timeOffRequests->filter(function ($timeOff) use ($weekStart, $weekEnd) {
@@ -914,9 +925,7 @@ class UsersController extends Controller
         $totalHours = 0;
 
         // Ore da presenze
-        foreach ($attendances as $attendance) {
-            $totalHours += $this->getSignedAttendanceHours($attendance);
-        }
+        $totalHours += $this->sumSignedAttendanceHours($attendances);
 
         // Ore da permessi
         foreach ($timeOffRequests as $timeOff) {
@@ -952,6 +961,43 @@ class UsersController extends Controller
         }
 
         return $hours;
+    }
+
+    /**
+     * Somma le ore delle presenze applicando un tetto giornaliero ai recuperi
+     */
+    private function sumSignedAttendanceHours($attendances): float
+    {
+        $total = 0.0;
+        $recuperoHoursByDate = [];
+
+        foreach ($attendances as $attendance) {
+            $hours = $this->getSignedAttendanceHours($attendance);
+
+            if ($this->isRecuperoAttendance($attendance)) {
+                $dateKey = Carbon::parse($attendance->date)->toDateString();
+                $recuperoHoursByDate[$dateKey] = ($recuperoHoursByDate[$dateKey] ?? 0.0) + abs($hours);
+                continue;
+            }
+
+            $total += $hours;
+        }
+
+        // Applica un tetto di 4h/giorno ai recuperi per evitare doppi conteggi su slot multipli
+        foreach ($recuperoHoursByDate as $hours) {
+            $total -= min($hours, 4);
+        }
+
+        return round($total, 2);
+    }
+
+    private function isRecuperoAttendance($attendance): bool
+    {
+        $attendanceType = $attendance->attendanceType ?? null;
+        $acronym = strtoupper($attendanceType->acronym ?? '');
+        $name = strtolower($attendanceType->name ?? '');
+
+        return $acronym === 'RE' || str_contains($name, 'recupero');
     }
 
     private function resolveOvertimeHours($overtimeRequest): float
