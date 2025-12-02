@@ -329,7 +329,7 @@
                     </td>
                     <td>
                         @if ($attendance->time_in && $attendance->time_out)
-                            {{ number_format(\Carbon\Carbon::parse($attendance->time_in)->diffInMinutes(\Carbon\Carbon::parse($attendance->time_out)) / 60, 1) }}h
+                            {{ number_format($attendance->signed_hours ?? (\Carbon\Carbon::parse($attendance->time_in)->diffInMinutes(\Carbon\Carbon::parse($attendance->time_out)) / 60), 1) }}h
                         @else
                             -
                         @endif

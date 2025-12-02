@@ -488,6 +488,7 @@ class UsersController extends Controller
             $giorno_settimana = $this->getGiornoSettimanaItaliano($data->format('D'));
 
             $tipologia = $attendance->attendanceType->name;
+            $ore = $this->getSignedAttendanceHours($attendance);
 
             $presenze->push((object) [
                 'id' => $attendance->id,
@@ -498,7 +499,7 @@ class UsersController extends Controller
                 'data_formattata' => $data->format('d-m-Y').' '.$giorno_settimana,
                 'ora_inizio' => Carbon::parse($attendance->time_in)->format('H:i'),
                 'ora_fine' => Carbon::parse($attendance->time_out)->format('H:i'),
-                'ore' => number_format(Carbon::parse($attendance->time_in)->diffInMinutes(Carbon::parse($attendance->time_out)) / 60, 2),
+                'ore' => number_format($ore, 2),
                 'annullata' => false,
                 'giornata' => null,
             ]);
@@ -604,10 +605,10 @@ class UsersController extends Controller
                 continue;
             }
 
-            $ore = number_format(Carbon::parse($presenza->time_in)->diffInMinutes(Carbon::parse($presenza->time_out)) / 60, 2);
+            $ore = round($this->getSignedAttendanceHours($presenza), 2);
 
-            $riepilogo[$key]['ore'] += floatval(str_replace(',', '.', $ore));
-            $riepilogo[$key]['giorni'] += floatval(str_replace(',', '.', $ore)) / 8; // Consideriamo 8 ore come un giorno lavorativo
+            $riepilogo[$key]['ore'] += $ore;
+            $riepilogo[$key]['giorni'] += $ore / 8; // Consideriamo 8 ore come un giorno lavorativo
 
         }
 
@@ -699,6 +700,9 @@ class UsersController extends Controller
             ->whereBetween('date', [$dateFrom, $dateTo])
             ->with('attendanceType')
             ->get();
+        $attendances->each(function ($attendance) {
+            $attendance->signed_hours = $this->getSignedAttendanceHours($attendance);
+        });
 
         // Ottieni tutti gli straordinari approvati dell'utente nel periodo
         $overtimeRequests = OvertimeRequest::with(['overtimeType', 'company'])
@@ -860,11 +864,7 @@ class UsersController extends Controller
         });
 
         foreach ($weekAttendances as $attendance) {
-            if ($attendance->time_in && $attendance->time_out) {
-                $timeIn = Carbon::parse($attendance->time_in);
-                $timeOut = Carbon::parse($attendance->time_out);
-                $weeklyHours += $timeIn->diffInMinutes($timeOut) / 60;
-            }
+            $weeklyHours += $this->getSignedAttendanceHours($attendance);
         }
 
         // Ore da permessi (ferie, rol, etc.)
@@ -913,11 +913,7 @@ class UsersController extends Controller
 
         // Ore da presenze
         foreach ($attendances as $attendance) {
-            if ($attendance->time_in && $attendance->time_out) {
-                $timeIn = Carbon::parse($attendance->time_in);
-                $timeOut = Carbon::parse($attendance->time_out);
-                $totalHours += $timeIn->diffInMinutes($timeOut) / 60;
-            }
+            $totalHours += $this->getSignedAttendanceHours($attendance);
         }
 
         // Ore da permessi
@@ -935,6 +931,25 @@ class UsersController extends Controller
         }
 
         return round($totalHours, 2);
+    }
+
+    private function getSignedAttendanceHours(Attendance $attendance): float
+    {
+        if (! $attendance->time_in || ! $attendance->time_out) {
+            return 0.0;
+        }
+
+        $hours = Carbon::parse($attendance->time_in)->diffInMinutes(Carbon::parse($attendance->time_out)) / 60;
+
+        $attendanceType = $attendance->attendanceType;
+        $acronym = strtoupper($attendanceType->acronym ?? '');
+        $name = strtolower($attendanceType->name ?? '');
+
+        if ($acronym === 'RE' || str_contains($name, 'recupero')) {
+            return -1 * $hours;
+        }
+
+        return $hours;
     }
 
     private function resolveOvertimeHours($overtimeRequest): float
