@@ -20,6 +20,10 @@ class OvertimeRequest extends Model {
         'overtime_type_id',
     ];
 
+    protected $casts = [
+        'hours' => 'float',
+    ];
+
     public function user() {
         return $this->belongsTo(User::class);
     }

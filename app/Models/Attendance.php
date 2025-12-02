@@ -21,6 +21,10 @@ class Attendance extends Model {
         "attendance_type_id",
     ];
 
+    protected $casts = [
+        'hours' => 'float',
+    ];
+
     public function user() {
         return $this->belongsTo(User::class);
     }
