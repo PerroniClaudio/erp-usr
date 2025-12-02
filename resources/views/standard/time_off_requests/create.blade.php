@@ -38,7 +38,7 @@
                             class="alert alert-warning mt-2 {{ $showDateFromWarning ? '' : 'hidden' }}" role="alert">
                             <x-lucide-alert-triangle class="w-6 h-6" />
                             <p>Ricordiamo che per regolamento aziendale ferie e permessi vanno chieste con un minimo di
-                                3 gg di preavviso. <br> La richiesta potrebbe venire rifiutata. <br> Attenzione:
+                                5 gg di preavviso. <br> La richiesta potrebbe venire rifiutata. <br> Attenzione:
                                 preparare
                                 opportuno giustificativo</p>
                         </div>

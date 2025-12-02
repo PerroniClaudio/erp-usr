@@ -36,6 +36,27 @@ class FileObjectController extends Controller
             $results->getCollection()->loadMissing(['sector', 'protocol']);
         }
 
+        if ($request->wantsJson()) {
+            $data = $results
+                ? $results->getCollection()
+                    ->filter(fn (FileObject $file) => ! $file->isFolder())
+                    ->map(fn (FileObject $file) => [
+                        'id' => $file->id,
+                        'name' => $file->name,
+                        'mime_type' => $file->mime_type,
+                        'file_size' => $file->file_size,
+                        'human_file_size' => $file->humanFileSize(),
+                        'protocol_number' => $file->protocol_number,
+                        'protocol_year' => $file->protocol_year,
+                        'valid_at' => $file->valid_at?->toDateString(),
+                        'is_public' => (bool) $file->is_public,
+                        'download_url' => route('files.download', $file),
+                    ])
+                : collect();
+
+            return response()->json(['data' => $data->values()]);
+        }
+
         return view('admin.files.search', [
             'results' => $results,
             'query' => $query,
@@ -336,6 +357,10 @@ class FileObjectController extends Controller
             return;
         }
 
+        if ($this->isLinkedToActiveAnnouncement($fileObject)) {
+            return;
+        }
+
         abort(403);
     }
 
@@ -389,6 +414,11 @@ class FileObjectController extends Controller
         }
 
         return $cleanPath;
+    }
+
+    private function isLinkedToActiveAnnouncement(FileObject $fileObject): bool
+    {
+        return $fileObject->announcements()->where('is_active', true)->exists();
     }
 
 }

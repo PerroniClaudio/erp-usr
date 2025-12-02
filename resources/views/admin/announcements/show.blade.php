@@ -24,6 +24,33 @@
                     <div class="prose max-w-none">
                         {!! nl2br(e($announcement->content)) !!}
                     </div>
+
+                    @if ($announcement->attachments->isNotEmpty())
+                        <div class="divider"></div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-lg">Allegati</h3>
+                            <span class="text-xs text-base-content/60">{{ $announcement->attachments->count() }} file</span>
+                        </div>
+                        <ul class="space-y-2">
+                            @foreach ($announcement->attachments as $attachment)
+                                <li class="flex items-center justify-between gap-3 p-2 bg-base-200 rounded">
+                                    <div class="flex flex-col">
+                                        <span class="font-medium">{{ $attachment->name }}</span>
+                                        <span class="text-xs text-base-content/60">
+                                            {{ $attachment->mime_type }}
+                                            @if ($attachment->file_size)
+                                                • {{ $attachment->humanFileSize() }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <a href="{{ route('files.download', $attachment) }}" class="btn btn-outline btn-sm">
+                                        <x-lucide-download class="w-4 h-4" />
+                                        Scarica
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
             </div>
         </div>

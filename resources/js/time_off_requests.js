@@ -265,6 +265,14 @@ submitButton?.addEventListener("click", async (event) => {
         })
         .catch((error) => {
             console.error("Error submitting form:", error);
+
+            if (error.response && error.response.data && error.response.data.message) {
+                displayError(error.response.data.message);
+            } else {
+                displayError(
+                    "Si è verificato un errore durante l'invio della richiesta."
+                );
+            }
         })
         .finally(() => {
             submitButton.disabled = false;

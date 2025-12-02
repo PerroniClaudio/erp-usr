@@ -34,6 +34,11 @@ class Announcement extends Model
         return $this->belongsToMany(User::class, 'announcement_user')->withTimestamps();
     }
 
+    public function attachments()
+    {
+        return $this->belongsToMany(FileObject::class, 'announcement_file_object')->withTimestamps();
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

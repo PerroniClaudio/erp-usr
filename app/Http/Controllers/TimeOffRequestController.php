@@ -68,6 +68,13 @@ class TimeOffRequestController extends Controller
         $user = $request->user();
         $requests = json_decode($request->requests);
         $batch_id = uniqid();
+        $errorResponse = function (string $message, int $status = 422) use ($request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], $status);
+            }
+
+            return redirect()->back()->withErrors(['message' => $message])->withInput();
+        };
 
         DB::beginTransaction();
 
@@ -85,7 +92,7 @@ class TimeOffRequestController extends Controller
             if ($this->violatesMinimumNotice($user, $fields['date_from'])) {
                 DB::rollBack();
 
-                return redirect()->back()->withErrors(['message' => self::NOTICE_ERROR_MESSAGE])->withInput();
+                return $errorResponse(self::NOTICE_ERROR_MESSAGE);
             }
 
             $existingRequest = TimeOffRequest::where('user_id', $user->id)
@@ -98,7 +105,7 @@ class TimeOffRequestController extends Controller
             if ($existingRequest) {
                 DB::rollBack();
 
-                return redirect()->back()->withErrors(['message' => 'Hai già una richiesta di permesso in questo periodo']);
+                return $errorResponse('Hai già una richiesta di permesso in questo periodo');
             }
 
             TimeOffRequest::create($fields);
@@ -110,6 +117,10 @@ class TimeOffRequestController extends Controller
         \Illuminate\Support\Facades\Mail::to(config('mail.hr_mail'))
             ->cc(config('mail.admin_mail'))
             ->send(new \App\Mail\TimeOffRequest($batch_id, $user, true));
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Richieste di permesso create con successo'], 200);
+        }
 
         return redirect()->route('time-off-requests.index')->with('success', 'Richieste di permesso create con successo');
     }

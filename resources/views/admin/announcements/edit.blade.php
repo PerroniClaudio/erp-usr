@@ -21,7 +21,8 @@
 
     <div class="card bg-base-300">
         <div class="card-body">
-            <form action="{{ route('admin.announcements.update', $announcement) }}" method="POST">
+            <form action="{{ route('admin.announcements.update', $announcement) }}" method="POST"
+                enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -36,6 +37,8 @@
                         <legend class="fieldset-legend">Contenuto</legend>
                         <textarea name="content" class="textarea w-full h-32" required>{{ old('content', $announcement->content) }}</textarea>
                     </fieldset>
+
+                    @include('admin.announcements.partials.attachments')
 
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">Stato</legend>

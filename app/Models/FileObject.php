@@ -53,6 +53,11 @@ class FileObject extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function announcements()
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_file_object')->withTimestamps();
+    }
+
     public function isFolder()
     {
         return $this->type === 'folder';
