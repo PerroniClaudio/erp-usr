@@ -72,7 +72,7 @@
 
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">Data presenza</legend>
-                <input type="date" name="date" class="input" value="{{ $attendance->date }}"
+                <input type="date" name="date" class="input" value="{{ optional($attendance->date)->toDateString() }}"
                     placeholder="{{ \Carbon\Carbon::today()->toDateString() }}" />
 
             </fieldset>

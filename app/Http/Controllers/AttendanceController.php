@@ -43,10 +43,14 @@ class AttendanceController extends Controller
         }
 
         $events = $attendances->map(function ($attendance) {
+            $date = $attendance->date?->toDateString();
+
             return [
                 'id' => $attendance->id,
                 'title' => $attendance->attendanceType->acronym.' ('.$attendance->time_in.' - '.$attendance->time_out.')',
-                'date' => $attendance->date,
+                'start' => $date,
+                'date' => $date,
+                'allDay' => true,
                 'description' => $attendance->attendanceType->description,
                 'color' => $attendance->attendanceType->color,
             ];
@@ -405,6 +409,7 @@ class AttendanceController extends Controller
     public function edit(Attendance $attendance)
     {
         $user = Auth::user();
+        $companies = $user->hasRole('admin') ? Company::all() : $user->companies;
 
         if ($this->isLockedForUser($attendance, $user)) {
             return redirect()->route('attendances.index')->withErrors(['message' => __('attendance_errors.locked_admin_insert')]);
@@ -421,7 +426,7 @@ class AttendanceController extends Controller
         return view('standard.attendances.edit', [
             'attendance' => $attendance,
             'attendanceTypes' => $attendanceTypes,
-            'companies' => $user->companies,
+            'companies' => $companies,
         ])->with([
             'success' => session('success'),
             'error' => session('error'),
@@ -645,6 +650,7 @@ class AttendanceController extends Controller
         */
 
         $events = $attendances->map(function ($attendance) {
+            $date = $attendance->date?->toDateString();
             if ($attendance->user->color === '') {
                 $attendance->user->assignColorToUser();
             }
@@ -652,7 +658,9 @@ class AttendanceController extends Controller
             return [
                 'id' => $attendance->id,
                 'title' => $attendance->formattedUserName().' - '.$attendance->attendanceType->acronym.' ('.$attendance->time_in.' - '.$attendance->time_out.')',
-                'date' => $attendance->date,
+                'start' => $date,
+                'date' => $date,
+                'allDay' => true,
                 'description' => $attendance->attendanceType->description,
                 'color' => $attendance->user->color,
             ];
@@ -708,11 +716,12 @@ class AttendanceController extends Controller
         $attendanceTypes = AttendanceType::all();
         // Carica la relazione user per mostrare chi ha segnato la presenza agli admin
         $attendance->load('user');
+        $companies = Auth::user()->hasRole('admin') ? Company::all() : Auth::user()->companies;
 
         return view('standard.attendances.edit', [
             'attendance' => $attendance,
             'attendanceTypes' => $attendanceTypes,
-            'companies' => Auth::user()->companies,
+            'companies' => $companies,
         ])->with([
             'success' => session('success'),
             'error' => session('error'),
