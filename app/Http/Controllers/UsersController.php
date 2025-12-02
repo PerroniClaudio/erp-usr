@@ -832,6 +832,8 @@ class UsersController extends Controller
         $start = Carbon::parse($dateFrom);
         $end = Carbon::parse($dateTo);
         $workingDays = 0;
+        $weeklyBaseHours = 40; // Monte ore settimanale standard
+        $dailyExpectedHours = $weeklyBaseHours / 6; // 40h distribuite su 6 giorni (lun-sab)
 
         $current = $start->copy();
         while ($current->lte($end)) {
@@ -846,7 +848,7 @@ class UsersController extends Controller
             $current->addDay();
         }
 
-        return $workingDays * 8; // 8 ore per giorno lavorativo
+        return $workingDays * $dailyExpectedHours;
     }
 
     /**
