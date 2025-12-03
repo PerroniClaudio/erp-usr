@@ -67,10 +67,11 @@ class AttendanceControllerTest extends TestCase {
             'attendance_type_id' => $type->id,
         ]);
         $response->assertRedirect();
-        $this->assertDatabaseHas('attendances', [
-            'id' => $attendance->id,
-            'time_in' => '10:00',
-        ]);
+            $this->assertDatabaseHas('attendances', [
+                'id' => $attendance->id,
+                'time_in' => '10:00',
+                'hours' => 4.0,
+            ]);
     }
 
     public function test_destroy_attendance() {

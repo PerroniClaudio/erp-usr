@@ -481,7 +481,8 @@ class AttendanceController extends Controller
             'time_in' => $fields['time_in'],
             'time_out' => $fields['time_out'],
             'attendance_type_id' => $fields['attendance_type_id'],
-        ]);
+                'hours' => $difference,
+            ]);
 
         if ($user->hasRole('admin')) {
             return redirect()->route('admin.attendances.index')->with('success', 'Presenza modificata con successo');
