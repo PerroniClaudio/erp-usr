@@ -26,6 +26,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const editTimeDifferenceInput = document.getElementById(
         "edit_step_time_difference"
     );
+    const stepEconomicValueInput = document.getElementById("step_economic_value");
+    const editStepEconomicValueInput = document.getElementById(
+        "edit_step_economic_value"
+    );
     const csrfToken =
         document.querySelector('meta[name="csrf-token"]')?.content ?? "";
 
@@ -76,6 +80,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getFieldValue = (selector, fieldName) =>
         getField(selector, fieldName)?.value ?? "";
+
+    const normalizeAmount = (value) => {
+        const numeric = Number.parseFloat(value ?? "0");
+        if (!Number.isFinite(numeric) || numeric < 0) {
+            return 0;
+        }
+        return Number(numeric.toFixed(2));
+    };
 
     const populateAddressFields = (selector, addressDetails, latitude, longitude) => {
         setFieldValue(selector, "address", addressDetails.road);
@@ -142,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 Number.isFinite(timeDifferenceValue) && timeDifferenceValue >= 0
                     ? timeDifferenceValue
                     : 0,
+            economic_value: normalizeAmount(stepEconomicValueInput?.value ?? "0"),
         };
 
         clearError(errorLabel);
@@ -181,6 +194,9 @@ document.addEventListener("DOMContentLoaded", () => {
             resetFields(stepFields());
             if (timeDifferenceInput) {
                 timeDifferenceInput.value = "0";
+            }
+            if (stepEconomicValueInput) {
+                stepEconomicValueInput.value = "0";
             }
             addStepModal.showModal();
         });
@@ -304,6 +320,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
         }
 
+        if (editStepEconomicValueInput) {
+            const normalizedValue = normalizeAmount(
+                row.dataset.economicValue ?? "0"
+            );
+            editStepEconomicValueInput.value = normalizedValue.toFixed(2);
+        }
+
         editStepModal.showModal();
     };
 
@@ -336,6 +359,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 Number.isFinite(parsedTimeDifference) && parsedTimeDifference >= 0
                     ? parsedTimeDifference
                     : 0,
+            economic_value: normalizeAmount(
+                editStepEconomicValueInput?.value ?? "0"
+            ),
         };
 
         if (

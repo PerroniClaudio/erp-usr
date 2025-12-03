@@ -97,19 +97,14 @@
                             </div>
 
                             <div class="card bg-base-200">
-                                <div class="card-body grid grid-cols-1 gap-4">
-                                    <label class="form-control w-full" for="economic_value">
-                                        <div class="label">
-                                            <span class="label-text">{{ __('daily_travel.economic_value') }}</span>
-                                        </div>
-                                        <input type="number" step="0.01" min="0" name="economic_value"
-                                            id="economic_value" class="input input-bordered w-full"
-                                            value="{{ old('economic_value', number_format($dailyTravelStructure->economic_value ?? 0, 2, '.', '')) }}"
-                                            placeholder="{{ __('daily_travel.economic_value_placeholder') }}">
-                                        @error('economic_value')
-                                            <span class="text-error text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </label>
+                                <div class="card-body gap-2">
+                                    <div>
+                                        <p class="text-xs uppercase text-base-content/60">{{ __('daily_travel.economic_value') }}</p>
+                                        <p class="text-3xl font-semibold">€ {{ number_format((float) $dailyTravelStructure->economic_value, 2, ',', '.') }}</p>
+                                    </div>
+                                    <p class="text-sm text-base-content/70">
+                                        {{ __('daily_travel.steps_economic_value_hint') }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -144,6 +139,7 @@
                                 <th>{{ __('daily_travel.steps_province') }}</th>
                                 <th>{{ __('daily_travel.steps_zip') }}</th>
                                 <th>{{ __('daily_travel.steps_time_difference') }}</th>
+                                <th>{{ __('daily_travel.steps_economic_value') }}</th>
                                 <th>{{ __('daily_travel.steps_actions') }}</th>
                             </tr>
                         </thead>
@@ -155,6 +151,7 @@
                                     data-province="{{ $step->province }}" data-zip="{{ $step->zip_code }}"
                                     data-lat="{{ $step->latitude }}" data-lng="{{ $step->longitude }}"
                                     data-time-difference="{{ $step->time_difference }}"
+                                    data-economic-value="{{ (float) $step->economic_value }}"
                                     data-update-url="{{ route('admin.user.daily-trip-structure.steps.update', [$user, $company, $step]) }}"
                                     data-delete-url="{{ route('admin.user.daily-trip-structure.steps.destroy', [$user, $company, $step]) }}">
                                     <td class="text-center">
@@ -166,6 +163,7 @@
                                     <td>{{ $step->province }}</td>
                                     <td>{{ $step->zip_code }}</td>
                                     <td>{{ $step->time_difference }}</td>
+                                    <td>€ {{ number_format((float) $step->economic_value, 2, ',', '.') }}</td>
                                     <td>
                                         <div class="flex gap-2">
                                             <button type="button"
@@ -183,7 +181,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-sm text-gray-500">
+                                    <td colspan="9" class="text-center text-sm text-gray-500">
                                         {{ __('daily_travel.steps_empty') }}
                                     </td>
                                 </tr>
@@ -324,6 +322,12 @@
                     <input type="number" min="0" name="time_difference" id="step_time_difference"
                         class="input w-full" value="0" />
                 </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.steps_economic_value') }}</legend>
+                    <input type="number" min="0" step="0.01" name="economic_value" id="step_economic_value"
+                        class="input w-full" value="0" placeholder="{{ __('daily_travel.steps_economic_value_placeholder') }}" />
+                </fieldset>
             </div>
 
 
@@ -414,6 +418,12 @@
                     <legend class="fieldset-legend">{{ __('daily_travel.steps_time_difference') }}</legend>
                     <input type="number" min="0" name="time_difference" id="edit_step_time_difference"
                         class="input w-full" data-field="time_difference" value="0" />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.steps_economic_value') }}</legend>
+                    <input type="number" min="0" step="0.01" name="economic_value" id="edit_step_economic_value"
+                        class="input w-full" value="0" placeholder="{{ __('daily_travel.steps_economic_value_placeholder') }}" />
                 </fieldset>
             </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class DailyTravelStructure extends Model
@@ -13,12 +14,22 @@ class DailyTravelStructure extends Model
         'company_id',
         'vehicle_id',
         'cost_per_km',
-        'economic_value',
     ];
 
     protected $casts = [
         'cost_per_km' => 'decimal:4',
     ];
+
+    protected function economicValue(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->relationLoaded('steps')) {
+                return (float) round($this->steps->sum(fn ($step) => (float) $step->economic_value), 2);
+            }
+
+            return (float) round($this->steps()->sum('economic_value'), 2);
+        });
+    }
 
     public function user()
     {

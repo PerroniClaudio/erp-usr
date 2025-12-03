@@ -67,7 +67,6 @@ class DailyTravelStructureController extends Controller
                 'company_id' => $company->id,
                 'vehicle_id' => $vehicles->first()?->id,
                 'cost_per_km' => $this->getLatestVehicleCost($vehicles->first()),
-                'economic_value' => 0,
             ]);
         }
 
@@ -78,6 +77,7 @@ class DailyTravelStructureController extends Controller
         // A questo punto fetcha tutti gli step 
 
         $steps = $dailyTravelStructure->steps()->orderBy('step_number')->get();
+        $dailyTravelStructure->setRelation('steps', $steps);
         $distancesBetweenSteps = [];
         $mapSteps = $steps->map(fn ($step) => [
             'step_number' => $step->step_number,
@@ -142,12 +142,14 @@ class DailyTravelStructureController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'time_difference' => 'required|integer|min:0',
+            'economic_value' => 'nullable|numeric|min:0',
         ]);
 
         $nextStepNumber = ($dailyTravelStructure->steps()->max('step_number') ?? 0) + 1;
 
         $validated['step_number'] = $nextStepNumber;
         $validated['daily_travel_structure_id'] = $dailyTravelStructure->id;
+        $validated['economic_value'] = round((float) ($validated['economic_value'] ?? 0), 2);
 
         if ($coordinates = $this->geocodeWithGoogle($validated)) {
             $validated['latitude'] = $coordinates['latitude'];
@@ -203,7 +205,6 @@ class DailyTravelStructureController extends Controller
                 Rule::exists('user_vehicle', 'vehicle_id')->where('user_id', $user->id),
             ],
             'cost_per_km' => ['nullable', 'numeric', 'min:0'],
-            'economic_value' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $vehicle = $user->vehicles()
@@ -216,7 +217,6 @@ class DailyTravelStructureController extends Controller
         $dailyTravelStructure->update([
             'vehicle_id' => $validated['vehicle_id'],
             'cost_per_km' => $cost,
-            'economic_value' => $validated['economic_value'] ?? 0,
         ]);
 
         return back()->with('success', __('daily_travel.vehicle_updated'));
@@ -248,7 +248,9 @@ class DailyTravelStructureController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'time_difference' => 'required|integer|min:0',
+            'economic_value' => 'nullable|numeric|min:0',
         ]);
+        $validated['economic_value'] = round((float) ($validated['economic_value'] ?? 0), 2);
 
         if ($coordinates = $this->geocodeWithGoogle($validated)) {
             $validated['latitude'] = $coordinates['latitude'];

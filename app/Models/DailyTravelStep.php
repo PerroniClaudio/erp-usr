@@ -18,6 +18,12 @@ class DailyTravelStep extends Model
         'zip_code',
         'latitude',
         'longitude',
+        'economic_value',
+    ];
+
+    protected $casts = [
+        'time_difference' => 'integer',
+        'economic_value' => 'decimal:2',
     ];
 
     public function dailyTravelStructure()

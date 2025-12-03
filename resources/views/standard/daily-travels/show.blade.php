@@ -69,6 +69,7 @@
                                 <th>{{ __('daily_travel.steps_city') }}</th>
                                 <th>{{ __('daily_travel.steps_province') }}</th>
                                 <th>{{ __('daily_travel.steps_zip') }}</th>
+                                <th>{{ __('daily_travel.steps_economic_value') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,10 +80,11 @@
                                     <td>{{ $step->city }}</td>
                                     <td>{{ $step->province }}</td>
                                     <td>{{ $step->zip_code }}</td>
+                                    <td>€ {{ number_format((float) $step->economic_value, 2, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-sm text-base-content/70">
+                                    <td colspan="6" class="text-center text-sm text-base-content/70">
                                         {{ __('daily_travel.preview_steps_empty') }}
                                     </td>
                                 </tr>

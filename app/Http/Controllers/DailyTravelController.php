@@ -54,6 +54,7 @@ class DailyTravelController extends Controller
                         'latitude' => (float) $step->latitude,
                         'longitude' => (float) $step->longitude,
                         'time_difference' => (int) $step->time_difference,
+                        'economic_value' => (float) $step->economic_value,
                     ])->values(),
                 ],
             ];
@@ -232,6 +233,7 @@ class DailyTravelController extends Controller
                             'latitude' => (float) $step->latitude,
                             'longitude' => (float) $step->longitude,
                             'time_difference' => (int) $step->time_difference,
+                            'economic_value' => (float) $step->economic_value,
                         ])->values(),
                     ],
                 ];
