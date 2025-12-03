@@ -62,6 +62,13 @@
                     </form>
                 @endif
             </div>
+            <form class="w-full mt-2" method="POST"
+                action="{{ route('admin.overtime-requests.destroy', $overtimeRequest) }}"
+                onsubmit="return confirm('{{ __('overtime_requests.delete_confirmation') }}');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-error w-full">{{ __('overtime_requests.delete') }}</button>
+            </form>
             <a href="{{ route('admin.overtime-requests.index') }}" class="btn btn-secondary mt-2">Torna all'elenco</a>
         </div>
     </div>

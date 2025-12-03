@@ -19,6 +19,8 @@ return [
     'deny' => 'Rifiuta',
     'denied' => 'Rifiutata',
     'user' => 'Utente',
+    'delete' => 'Elimina richiesta',
+    'delete_confirmation' => 'Sei sicuro di voler eliminare questa richiesta?',
     'admin_list' => 'Richieste di Straordinario',
     'your_requests' => 'Le tue richieste di straordinario',
     'new' => 'Nuova richiesta',

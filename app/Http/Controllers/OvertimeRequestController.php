@@ -248,4 +248,10 @@ class OvertimeRequestController extends Controller {
         OvertimeRequest::create($fields);
         return redirect()->route('admin.overtime-requests.index')->with('success', 'Richiesta di straordinario creata con successo');
     }
+
+    public function destroy(OvertimeRequest $overtimeRequest) {
+        $overtimeRequest->delete();
+
+        return redirect()->route('admin.overtime-requests.index')->with('success', 'Richiesta di straordinario eliminata con successo');
+    }
 }

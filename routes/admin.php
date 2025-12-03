@@ -180,6 +180,7 @@ Route::group([
     Route::post('/store', [\App\Http\Controllers\OvertimeRequestController::class, 'adminStore'])->name('admin.overtime-requests.store');
     Route::post('/{overtimeRequest}/approve', [\App\Http\Controllers\OvertimeRequestController::class, 'approve'])->name('admin.overtime-requests.approve');
     Route::post('/{overtimeRequest}/deny', [\App\Http\Controllers\OvertimeRequestController::class, 'deny'])->name('admin.overtime-requests.deny');
+    Route::delete('/{overtimeRequest}', [\App\Http\Controllers\OvertimeRequestController::class, 'destroy'])->name('admin.overtime-requests.destroy');
 });
 
 Route::group([
