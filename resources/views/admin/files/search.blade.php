@@ -3,7 +3,6 @@
     <div class="flex justify-between items-start flex-wrap gap-2">
         <div class="flex flex-col gap-1">
             <h1 class="text-4xl">{{ __('files.files_search_title') }}</h1>
-            <p class="text-base text-base-content/70">{{ __('files.files_search_subtitle') }}</p>
         </div>
         <a class="btn btn-outline" href="{{ route('admin.files.index') }}">
             <x-lucide-folder class="w-4 h-4" />
@@ -72,7 +71,10 @@
                                     $baseRoot = app()->environment('local') ? 'dev/files/' : 'files/';
                                     $relativePath = \Illuminate\Support\Str::after($file->storage_path, $baseRoot);
                                     $currentUser = auth()->user();
-                                    $canDownload = $currentUser->hasRole('admin') || $file->is_public || $file->user_id === $currentUser->id;
+                                    $canDownload =
+                                        $currentUser->hasRole('admin') ||
+                                        $file->is_public ||
+                                        $file->user_id === $currentUser->id;
                                     $canDelete = $currentUser->hasRole('admin') || $file->user_id === $currentUser->id;
                                 @endphp
                                 <tr class="hover:bg-base-200">
@@ -136,16 +138,19 @@
                                                 <button type="button" tabindex="0" class="btn btn-ghost btn-xs">
                                                     <x-lucide-ellipsis-vertical class="w-4 h-4" />
                                                 </button>
-                                                <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow">
+                                                <ul tabindex="0"
+                                                    class="dropdown-content menu menu-sm bg-base-200 rounded-box shadow">
                                                     @if ($canDownload)
                                                         <li>
-                                                            <a href="{{ route('files.download', $file) }}" class="flex items-center gap-2">
+                                                            <a href="{{ route('files.download', $file) }}"
+                                                                class="flex items-center gap-2">
                                                                 <x-lucide-download class="w-4 h-4" />
                                                                 <span>{{ __('files.files_download_button') }}</span>
                                                             </a>
                                                         </li>
                                                         <li>
-                                                            <a href="{{ route('files.versions', $file) }}" class="flex items-center gap-2">
+                                                            <a href="{{ route('files.versions', $file) }}"
+                                                                class="flex items-center gap-2">
                                                                 <x-lucide-history class="w-4 h-4" />
                                                                 <span>{{ __('files.files_versioning_button') }}</span>
                                                             </a>
@@ -153,11 +158,14 @@
                                                     @endif
                                                     @if ($canDelete)
                                                         <li>
-                                                            <form action="{{ route('files.destroy', $file) }}" method="POST"
-                                                                onsubmit="return confirm('{{ __('files.files_delete_confirm') }}')" class="w-full">
+                                                            <form action="{{ route('files.destroy', $file) }}"
+                                                                method="POST"
+                                                                onsubmit="return confirm('{{ __('files.files_delete_confirm') }}')"
+                                                                class="w-full">
                                                                 @csrf
                                                                 @method('DELETE')
-                                                                <button type="submit" class="flex items-center gap-2 text-error w-full text-left">
+                                                                <button type="submit"
+                                                                    class="flex items-center gap-2 text-error w-full text-left">
                                                                     <x-lucide-trash-2 class="w-4 h-4" />
                                                                     <span>{{ __('files.files_delete_button') }}</span>
                                                                 </button>
@@ -169,24 +177,24 @@
                                         @endif
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center text-base-content/60">
-                                        {{ __('files.files_search_no_results') }}
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-base-content/60">
+                                            {{ __('files.files_search_no_results') }}
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
-                <div class="mt-4">
-                    {{ $results->withQueryString()->links() }}
-                </div>
-            @else
-                <p class="text-base-content/60">{{ __('files.files_search_empty_state') }}</p>
-            @endif
+                    <div class="mt-4">
+                        {{ $results->withQueryString()->links() }}
+                    </div>
+                @else
+                    <p class="text-base-content/60">{{ __('files.files_search_empty_state') }}</p>
+                @endif
+            </div>
         </div>
-    </div>
 
-</x-layouts.app>
+    </x-layouts.app>

@@ -39,7 +39,22 @@
 
         <div class="card bg-base-300">
             <div class="card-body">
-                <h3 class="card-title">{{ __('daily_travel.travel_data_title') }}</h3>
+                <div class="flex flex-col gap-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <h3 class="card-title m-0">{{ __('daily_travel.travel_data_title') }}</h3>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($startLocations as $location)
+                                <a href="{{ route('admin.user.daily-trip-structure.edit', [$user, $company]) . '?start_location=' . $location }}"
+                                    class="btn btn-sm {{ $location === $startLocation ? 'btn-primary' : 'btn-ghost' }}">
+                                    {{ __('daily_travel.start_location_' . $location) }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    <p class="text-sm text-base-content/70">
+                        {{ __('daily_travel.start_location_helper', ['location' => __('daily_travel.start_location_' . $startLocation)]) }}
+                    </p>
+                </div>
                 <hr>
                 @if ($vehicles->isEmpty())
                     <p class="text-sm text-gray-500">{{ __('daily_travel.user_no_vehicles_associated') }}</p>
@@ -48,6 +63,7 @@
                         action="{{ route('admin.user.daily-trip-structure.edit-vehicle', [$user, $company]) }}"
                         class="flex flex-col gap-4">
                         @csrf
+                        <input type="hidden" name="start_location" value="{{ $startLocation }}">
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="card bg-base-200">
@@ -144,7 +160,7 @@
                             </tr>
                         </thead>
                         <tbody id="steps_table_body"
-                            data-reorder-url="{{ route('admin.user.daily-trip-structure.steps.reorder', [$user, $company]) }}">
+                            data-reorder-url="{{ route('admin.user.daily-trip-structure.steps.reorder', [$user, $company]) . '?start_location=' . $startLocation }}">
                             @forelse ($steps as $step)
                                 <tr data-step-id="{{ $step->id }}" draggable="true" class="cursor-move"
                                     data-address="{{ $step->address }}" data-city="{{ $step->city }}"
@@ -152,8 +168,8 @@
                                     data-lat="{{ $step->latitude }}" data-lng="{{ $step->longitude }}"
                                     data-time-difference="{{ $step->time_difference }}"
                                     data-economic-value="{{ (float) $step->economic_value }}"
-                                    data-update-url="{{ route('admin.user.daily-trip-structure.steps.update', [$user, $company, $step]) }}"
-                                    data-delete-url="{{ route('admin.user.daily-trip-structure.steps.destroy', [$user, $company, $step]) }}">
+                                    data-update-url="{{ route('admin.user.daily-trip-structure.steps.update', [$user, $company, $step]) . '?start_location=' . $startLocation }}"
+                                    data-delete-url="{{ route('admin.user.daily-trip-structure.steps.destroy', [$user, $company, $step]) . '?start_location=' . $startLocation }}">
                                     <td class="text-center">
                                         <x-lucide-move class="w-4 h-4 inline" />
                                     </td>
@@ -244,7 +260,7 @@
     </div>
 
     <dialog id="add_step_modal" class="modal" data-search-url="{{ route('users.search-address') }}"
-        data-store-url="{{ route('admin.user.daily-trip-structure.steps.store', [$user, $company]) }}">
+        data-store-url="{{ route('admin.user.daily-trip-structure.steps.store', [$user, $company]) . '?start_location=' . $startLocation }}">
         <div class="modal-box">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold">{{ __('daily_travel.steps_new_title') }}</h3>

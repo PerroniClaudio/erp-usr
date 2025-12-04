@@ -5,10 +5,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const metaContainer = preview.querySelector("[data-preview-meta]");
     const stepsTable = document.querySelector("[data-steps-table]");
     const companySelect = document.getElementById("company_id");
+    const startFromHomeCheckbox = document.getElementById("start_from_home");
     const structures = JSON.parse(preview.dataset.structures || "{}");
     const mapContainer = document.getElementById("daily-travel-map");
     const googleApiKey = preview.dataset.googleApiKey;
     const distanceSummary = document.querySelector("[data-distance-summary]");
+    const startLocationOfficeValue =
+        preview.dataset.startLocationOfficeValue || "office";
+    const startLocationHomeValue =
+        preview.dataset.startLocationHomeValue || "home";
 
     const labels = {
         missing: preview.dataset.missingMessage || "",
@@ -16,6 +21,9 @@ document.addEventListener("DOMContentLoaded", () => {
         vehicleNone: preview.dataset.vehicleNone || "",
         costPerKm: preview.dataset.costPerKmLabel || "",
         economicValue: preview.dataset.economicValueLabel || "",
+        startLocation: preview.dataset.startLocationLabel || "",
+        startLocationOffice: preview.dataset.startLocationOfficeLabel || "",
+        startLocationHome: preview.dataset.startLocationHomeLabel || "",
         stepsTitle: preview.dataset.stepsTitle || "",
         stepsEmpty: preview.dataset.stepsEmpty || "",
         stepLabel: preview.dataset.stepLabel || "",
@@ -37,7 +45,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }`;
     };
 
-    const renderStructure = (structure) => {
+    const resolveStartLocationLabel = (value) =>
+        value === startLocationHomeValue
+            ? labels.startLocationHome
+            : labels.startLocationOffice;
+
+    const getSelectedCompanyId = () =>
+        companySelect?.value || preview.dataset.selectedCompany;
+
+    const getSelectedStartLocation = () =>
+        startFromHomeCheckbox?.checked
+            ? startLocationHomeValue
+            : startLocationOfficeValue;
+
+    const renderStructure = (structure, startLocation) => {
         if (!structure) {
             if (metaContainer) {
                 metaContainer.innerHTML = `<p class="text-sm text-base-content/70">${labels.missing}</p>`;
@@ -55,6 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const steps = Array.isArray(structure.steps) ? structure.steps : [];
+        const structureStartLocation = structure.start_location || startLocation;
+        const locationLabel = resolveStartLocationLabel(structureStartLocation);
         const stepsRows = steps.length
             ? steps
                   .map(
@@ -76,15 +99,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="grid sm:grid-cols-2 gap-3">
                     <div>
                         <p class="text-xs uppercase text-base-content/60">${labels.vehicle}</p>
-                        <p class="font-semibold">${structure.vehicle?.label ?? labels.vehicleNone}</p>
+                        <p class="font-semibold">${
+                            structure.vehicle?.label ?? labels.vehicleNone
+                        }</p>
                     </div>
                     <div>
                         <p class="text-xs uppercase text-base-content/60">${labels.costPerKm}</p>
-                        <p class="font-semibold">${formatCurrency(structure.cost_per_km, 4)}</p>
+                        <p class="font-semibold">${formatCurrency(
+                            structure.cost_per_km,
+                            4
+                        )}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase text-base-content/60">${labels.startLocation}</p>
+                        <p class="font-semibold">${locationLabel}</p>
                     </div>
                     <div>
                         <p class="text-xs uppercase text-base-content/60">${labels.economicValue}</p>
-                        <p class="font-semibold">${formatCurrency(structure.economic_value)}</p>
+                        <p class="font-semibold">${formatCurrency(
+                            structure.economic_value
+                        )}</p>
                     </div>
                 </div>
             `;
@@ -98,16 +132,25 @@ document.addEventListener("DOMContentLoaded", () => {
         renderMap(structure);
     };
 
-    const handleChange = () => {
-        const companyId = companySelect?.value;
-        const structure = companyId ? structures[companyId] : null;
-        renderStructure(structure);
+    const renderCurrentSelection = () => {
+        const companyId = getSelectedCompanyId();
+        const selectedStartLocation = getSelectedStartLocation();
+        const structureGroup = companyId ? structures[companyId] : null;
+        const structure = structureGroup?.[selectedStartLocation] ?? null;
+        renderStructure(structure, selectedStartLocation);
     };
 
-    companySelect?.addEventListener("change", handleChange);
+    companySelect?.addEventListener("change", renderCurrentSelection);
+    startFromHomeCheckbox?.addEventListener("change", renderCurrentSelection);
 
-    const initialCompany = companySelect?.value || preview.dataset.selectedCompany;
-    renderStructure(structures[initialCompany] ?? null);
+    if (
+        startFromHomeCheckbox &&
+        preview.dataset.selectedStartLocation === startLocationHomeValue
+    ) {
+        startFromHomeCheckbox.checked = true;
+    }
+
+    renderCurrentSelection();
 
     function renderDistances(steps) {
         if (!distanceSummary) return;
@@ -280,7 +323,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 optimizeWaypoints: false,
             },
             (response, status) => {
-                if (status === "OK" || status === google.maps.DirectionsStatus.OK) {
+                if (
+                    status === "OK" ||
+                    status === google.maps.DirectionsStatus.OK
+                ) {
                     directionsRenderer.setDirections(response);
                     renderMarkers(map, validSteps);
                 } else {
@@ -298,7 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
             new google.maps.Marker({
                 position,
                 map,
-                label: step.step_number ? String(step.step_number) : String(index + 1),
+                label: step.step_number
+                    ? String(step.step_number)
+                    : String(index + 1),
                 title: step.address ?? "",
             });
         });

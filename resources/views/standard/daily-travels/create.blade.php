@@ -29,6 +29,15 @@
                 </fieldset>
 
                 <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.start_from_home_label') }}</legend>
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" name="start_from_home" id="start_from_home" value="1"
+                            class="toggle toggle-primary" @checked(old('start_from_home'))>
+                        <span class="label-text">{{ __('daily_travel.start_from_home_hint') }}</span>
+                    </label>
+                </fieldset>
+
+                <fieldset class="fieldset">
                     <legend class="fieldset-legend">{{ __('daily_travel.travel_date') }}</legend>
                     <input type="date" name="travel_date" class="input"
                         value="{{ old('travel_date', \Carbon\Carbon::today()->toDateString()) }}" />
@@ -46,12 +55,18 @@
         <div class="card bg-base-200">
             <div class="card-body" data-structure-preview
                 data-selected-company="{{ old('company_id', $selectedCompanyId) }}"
+                data-selected-start-location="{{ old('start_from_home') ? \App\Models\DailyTravelStructure::START_LOCATION_HOME : \App\Models\DailyTravelStructure::START_LOCATION_OFFICE }}"
                 data-structures='@json($structuresMap)'
                 data-missing-message="{{ __('daily_travel.preview_missing') }}"
                 data-vehicle-label="{{ __('daily_travel.preview_vehicle') }}"
                 data-vehicle-none="{{ __('daily_travel.preview_vehicle_none') }}"
                 data-cost-per-km-label="{{ __('daily_travel.preview_cost_per_km') }}"
                 data-economic-value-label="{{ __('daily_travel.preview_economic_value') }}"
+                data-start-location-label="{{ __('daily_travel.start_location_label') }}"
+                data-start-location-office-label="{{ __('daily_travel.start_location_office') }}"
+                data-start-location-home-label="{{ __('daily_travel.start_location_home') }}"
+                data-start-location-office-value="{{ \App\Models\DailyTravelStructure::START_LOCATION_OFFICE }}"
+                data-start-location-home-value="{{ \App\Models\DailyTravelStructure::START_LOCATION_HOME }}"
                 data-steps-title="{{ __('daily_travel.preview_steps_title') }}"
                 data-steps-empty="{{ __('daily_travel.preview_steps_empty') }}"
                 data-step-label="{{ __('daily_travel.preview_step_label', ['number' => ':number']) }}"

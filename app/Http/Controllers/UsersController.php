@@ -1183,6 +1183,20 @@ class UsersController extends Controller
         return redirect()->route('users.edit', $user->id)->with('success', __('personnel.users_updated'));
     }
 
+    public function updateDailyTravelPreferences(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'home_company_distance_km' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $user->home_company_distance_km = round((float) $validated['home_company_distance_km'], 2);
+        $user->save();
+
+        return redirect()
+            ->route('users.edit', $user)
+            ->with('success', __('personnel.users_home_company_distance_updated'));
+    }
+
     public function updateDefaultSchedules(Request $request, User $user)
     {
         $validated = $request->validate([

@@ -50,6 +50,7 @@ class User extends Authenticatable
         'location_latitude',
         'location_longitude',
         'color',
+        'home_company_distance_km',
     ];
 
     private $colorBank = [
@@ -87,6 +88,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'home_company_distance_km' => 'decimal:2',
         ];
     }
 

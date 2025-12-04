@@ -92,6 +92,7 @@
                                 <tr>
                                     <th>{{ __('daily_travel.travel_date') }}</th>
                                     <th>{{ __('daily_travel.company_label') }}</th>
+                                    <th>{{ __('daily_travel.start_location_label') }}</th>
                                     <th>{{ __('daily_travel.total_distance') }}</th>
                                     <th>{{ __('daily_travel.distance_cost') }}</th>
                                     <th>{{ __('daily_travel.time_total') }}</th>
@@ -105,6 +106,7 @@
                                     <tr>
                                         <td>{{ $data['travel']->travel_date?->format('d/m/Y') }}</td>
                                         <td>{{ $data['travel']->company?->name }}</td>
+                                        <td>{{ __('daily_travel.start_location_' . ($data['start_location'] ?? \App\Models\DailyTravelStructure::START_LOCATION_OFFICE)) }}</td>
                                         <td>{{ number_format($data['distance'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['distance_cost'], 2, ',', '.') }}</td>
                                         <td>{{ $data['time_difference'] }}</td>
@@ -117,7 +119,7 @@
                             @if ($totals)
                                 <tfoot>
                                     <tr class="font-semibold">
-                                        <td colspan="2">{{ __('daily_travel.admin_totals') }}</td>
+                                        <td colspan="3">{{ __('daily_travel.admin_totals') }}</td>
                                         <td>{{ number_format($totals['distance'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['distance_cost'], 2, ',', '.') }}</td>
                                         <td>{{ $totals['time_difference'] }}</td>

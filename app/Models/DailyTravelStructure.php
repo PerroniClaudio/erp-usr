@@ -7,18 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class DailyTravelStructure extends Model
 {
-    //
+    public const START_LOCATION_OFFICE = 'office';
+    public const START_LOCATION_HOME = 'home';
 
     protected $fillable = [
         'user_id',
         'company_id',
         'vehicle_id',
         'cost_per_km',
+        'start_location',
     ];
 
     protected $casts = [
         'cost_per_km' => 'decimal:4',
     ];
+
+    public static function startLocationOptions(): array
+    {
+        return [self::START_LOCATION_OFFICE, self::START_LOCATION_HOME];
+    }
 
     protected function economicValue(): Attribute
     {

@@ -117,6 +117,7 @@ Route::group([
 
     Route::middleware('role:admin|Responsabile HR')->group(function () {
         Route::put('/users/{user}', [UsersController::class, 'updateData'])->name('users.update');
+        Route::put('/users/{user}/daily-travel-preferences', [UsersController::class, 'updateDailyTravelPreferences'])->name('users.daily-travel-preferences.update');
         Route::post('/users/{user}/store-residence', [UsersController::class, 'updateResidence'])->name('users.store-residence');
         Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
     });

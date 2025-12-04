@@ -148,6 +148,42 @@
             </form>
         </div>
 
+        @if ($canUpdateAnagrafica)
+            <div class="card bg-base-300">
+                <form class="card-body space-y-4" method="POST"
+                    action="{{ route('users.daily-travel-preferences.update', $user) }}">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg">{{ __('personnel.users_home_company_distance_title') }}</h2>
+                        <button type="submit" class="btn btn-primary">
+                            <x-lucide-save class="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <hr>
+
+                    <label class="form-control w-full" for="home_company_distance_km">
+                        <div class="label">
+                            <span class="label-text">{{ __('personnel.users_home_company_distance_label') }}</span>
+                        </div>
+                        <input type="number" step="0.01" min="0" name="home_company_distance_km"
+                            id="home_company_distance_km" class="input w-full"
+                            value="{{ old('home_company_distance_km', number_format((float) $user->home_company_distance_km, 2, '.', '')) }}"
+                            placeholder="{{ __('personnel.users_home_company_distance_label') }}" />
+                        @error('home_company_distance_km')
+                            <span class="text-error text-sm">{{ $message }}</span>
+                        @enderror
+                    </label>
+
+                    <p class="text-sm text-base-content/70">
+                        {{ __('personnel.users_home_company_distance_help') }}
+                    </p>
+                </form>
+            </div>
+        @endif
+
         @if ($canManageRoles)
             @php
                 $assignedRoles = collect($user->getRoleNames());

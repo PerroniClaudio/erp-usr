@@ -35,30 +35,9 @@ class DailyTravelController extends Controller
             ->whereIn('company_id', $companyIds)
             ->get();
 
-        $structuresMap = $structures->mapWithKeys(function (DailyTravelStructure $structure) {
-            return [
-                $structure->company_id => [
-                    'cost_per_km' => (float) $structure->cost_per_km,
-                    'economic_value' => (float) $structure->economic_value,
-                    'vehicle' => $structure->vehicle ? [
-                        'id' => $structure->vehicle->id,
-                        'label' => trim($structure->vehicle->brand.' '.$structure->vehicle->model),
-                        'price_per_km' => (float) $structure->vehicle->price_per_km,
-                    ] : null,
-                    'steps' => $structure->steps->map(fn ($step) => [
-                        'step_number' => $step->step_number,
-                        'address' => $step->address,
-                        'city' => $step->city,
-                        'province' => $step->province,
-                        'zip_code' => $step->zip_code,
-                        'latitude' => (float) $step->latitude,
-                        'longitude' => (float) $step->longitude,
-                        'time_difference' => (int) $step->time_difference,
-                        'economic_value' => (float) $step->economic_value,
-                    ])->values(),
-                ],
-            ];
-        });
+        $structuresMap = $this->buildStructuresMap($structures)
+            ->map(fn ($items) => $items->toArray())
+            ->toArray();
 
         return view('standard.daily-travels.create', [
             'companies' => $companies,
@@ -83,10 +62,16 @@ class DailyTravelController extends Controller
                 'integer',
                 Rule::exists('user_companies', 'company_id')->where(fn ($query) => $query->where('user_id', $user->id)),
             ],
+            'start_from_home' => ['nullable', 'boolean'],
         ]);
+
+        $startLocation = $request->boolean('start_from_home')
+            ? DailyTravelStructure::START_LOCATION_HOME
+            : DailyTravelStructure::START_LOCATION_OFFICE;
 
         $structure = DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $validated['company_id'])
+            ->where('start_location', $startLocation)
             ->first();
 
         if (!$structure) {
@@ -194,7 +179,7 @@ class DailyTravelController extends Controller
         $companies = collect();
         $companyIds = collect();
         $structures = collect();
-        $structuresMap = collect();
+        $structuresMap = [];
         $selectedCompanyId = null;
 
         if ($selectedUser) {
@@ -214,30 +199,9 @@ class DailyTravelController extends Controller
                 ->whereIn('company_id', $companyIds)
                 ->get();
 
-            $structuresMap = $structures->mapWithKeys(function (DailyTravelStructure $structure) {
-                return [
-                    $structure->company_id => [
-                        'cost_per_km' => (float) $structure->cost_per_km,
-                        'economic_value' => (float) $structure->economic_value,
-                        'vehicle' => $structure->vehicle ? [
-                            'id' => $structure->vehicle->id,
-                            'label' => trim($structure->vehicle->brand.' '.$structure->vehicle->model),
-                            'price_per_km' => (float) $structure->vehicle->price_per_km,
-                        ] : null,
-                        'steps' => $structure->steps->map(fn ($step) => [
-                            'step_number' => $step->step_number,
-                            'address' => $step->address,
-                            'city' => $step->city,
-                            'province' => $step->province,
-                            'zip_code' => $step->zip_code,
-                            'latitude' => (float) $step->latitude,
-                            'longitude' => (float) $step->longitude,
-                            'time_difference' => (int) $step->time_difference,
-                            'economic_value' => (float) $step->economic_value,
-                        ])->values(),
-                    ],
-                ];
-            });
+            $structuresMap = $this->buildStructuresMap($structures)
+                ->map(fn ($items) => $items->toArray())
+                ->toArray();
         }
 
         return view('admin.daily-travels.create', [
@@ -261,12 +225,18 @@ class DailyTravelController extends Controller
                 'integer',
                 Rule::exists('user_companies', 'company_id')->where(fn ($query) => $query->where('user_id', $request->integer('user_id'))),
             ],
+            'start_from_home' => ['nullable', 'boolean'],
         ]);
 
         $user = User::findOrFail($validated['user_id']);
 
+        $startLocation = $request->boolean('start_from_home')
+            ? DailyTravelStructure::START_LOCATION_HOME
+            : DailyTravelStructure::START_LOCATION_OFFICE;
+
         $structure = DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $validated['company_id'])
+            ->where('start_location', $startLocation)
             ->first();
 
         if (!$structure) {
@@ -395,6 +365,42 @@ class DailyTravelController extends Controller
         return $pdf->download('nota_spese_daily_'.$year.'_'.str_pad($month, 2, '0', STR_PAD_LEFT).'.pdf');
     }
 
+    private function buildStructuresMap(Collection $structures): Collection
+    {
+        return $structures->groupBy('company_id')->map(function (Collection $items) {
+            return $items->mapWithKeys(function (DailyTravelStructure $structure) {
+                return [
+                    $structure->start_location => $this->serializeStructure($structure),
+                ];
+            });
+        });
+    }
+
+    private function serializeStructure(DailyTravelStructure $structure): array
+    {
+        return [
+            'start_location' => $structure->start_location,
+            'cost_per_km' => (float) $structure->cost_per_km,
+            'economic_value' => (float) $structure->economic_value,
+            'vehicle' => $structure->vehicle ? [
+                'id' => $structure->vehicle->id,
+                'label' => trim($structure->vehicle->brand.' '.$structure->vehicle->model),
+                'price_per_km' => (float) $structure->vehicle->price_per_km,
+            ] : null,
+            'steps' => $structure->steps->map(fn ($step) => [
+                'step_number' => $step->step_number,
+                'address' => $step->address,
+                'city' => $step->city,
+                'province' => $step->province,
+                'zip_code' => $step->zip_code,
+                'latitude' => (float) $step->latitude,
+                'longitude' => (float) $step->longitude,
+                'time_difference' => (int) $step->time_difference,
+                'economic_value' => (float) $step->economic_value,
+            ])->values(),
+        ];
+    }
+
     private function hasValidCoordinates($step): bool
     {
         return is_numeric($step->latitude ?? null) && is_numeric($step->longitude ?? null);
@@ -427,6 +433,7 @@ class DailyTravelController extends Controller
             'company',
             'structure.vehicle',
             'structure.steps' => fn ($q) => $q->orderBy('step_number'),
+            'user',
         ])
             ->where('user_id', $user->id)
             ->whereBetween('travel_date', [$startOfMonth, $endOfMonth])
@@ -458,6 +465,15 @@ class DailyTravelController extends Controller
 
             $costPerKm = (float) ($travel->structure?->cost_per_km ?? 0);
             $economicValue = (float) ($travel->structure?->economic_value ?? 0);
+            $startLocation = $travel->structure?->start_location;
+
+            if ($startLocation === DailyTravelStructure::START_LOCATION_HOME) {
+                $homeDistance = (float) ($travel->user?->home_company_distance_km ?? 0);
+                if ($homeDistance > 0) {
+                    $distance = max(0, $distance - $homeDistance);
+                }
+            }
+
             $distanceCost = $distance * $costPerKm;
             $timeCost = $costPerKm * $timeDifference;
             $indemnity = $distanceCost + $timeCost;
@@ -472,6 +488,7 @@ class DailyTravelController extends Controller
                 'indemnity' => $indemnity,
                 'economic_value' => $economicValue,
                 'total' => $total,
+                'start_location' => $startLocation,
             ];
         });
 

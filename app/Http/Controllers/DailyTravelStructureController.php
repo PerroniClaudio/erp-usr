@@ -7,6 +7,7 @@ use App\Models\DailyTravelStructure;
 use App\Models\User;
 use App\Models\DailyTravelStep;
 use App\Models\Vehicle;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -49,32 +50,19 @@ class DailyTravelStructureController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(User $user, Company $company)
+    public function edit(Request $request, User $user, Company $company)
     {
+        $startLocation = $this->resolveStartLocation($request->string('start_location'));
         $vehicles = $user->vehicles()
             ->with(['pricePerKmUpdates' => fn ($query) => $query->latest('update_date')->latest('created_at')])
             ->get();
 
-        // Controlla se esiste già un DailyTravelStructure per l'utente e l'azienda specificati
-        $dailyTravelStructure = DailyTravelStructure::where('user_id', $user->id)
-            ->where('company_id', $company->id)
-            ->first();
-
-        // Se non esiste, creane uno nuovo
-        if (!$dailyTravelStructure) {
-            $dailyTravelStructure = DailyTravelStructure::create([
-                'user_id' => $user->id,
-                'company_id' => $company->id,
-                'vehicle_id' => $vehicles->first()?->id,
-                'cost_per_km' => $this->getLatestVehicleCost($vehicles->first()),
-            ]);
-        }
+        $structuresByLocation = $this->ensureStructures($user, $company, $vehicles);
+        $dailyTravelStructure = $structuresByLocation[$startLocation];
 
         $dailyTravelStructure->load([
             'vehicle.pricePerKmUpdates' => fn ($query) => $query->latest('update_date')->latest('created_at'),
         ]);
-
-        // A questo punto fetcha tutti gli step 
 
         $steps = $dailyTravelStructure->steps()->orderBy('step_number')->get();
         $dailyTravelStructure->setRelation('steps', $steps);
@@ -114,6 +102,8 @@ class DailyTravelStructureController extends Controller
             'distancesBetweenSteps' => $distancesBetweenSteps,
             'mapSteps' => $mapSteps,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
+            'startLocation' => $startLocation,
+            'startLocations' => DailyTravelStructure::startLocationOptions(),
         ]);
            
 
@@ -130,9 +120,8 @@ class DailyTravelStructureController extends Controller
 
     public function storeStep(Request $request, User $user, Company $company)
     {
-        $dailyTravelStructure = DailyTravelStructure::where('user_id', $user->id)
-            ->where('company_id', $company->id)
-            ->firstOrFail();
+        $startLocation = $this->resolveStartLocation($request->string('start_location'));
+        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
 
         $validated = $request->validate([
             'address' => 'required|string|max:255',
@@ -163,9 +152,8 @@ class DailyTravelStructureController extends Controller
 
     public function reorderSteps(Request $request, User $user, Company $company)
     {
-        $dailyTravelStructure = DailyTravelStructure::where('user_id', $user->id)
-            ->where('company_id', $company->id)
-            ->firstOrFail();
+        $startLocation = $this->resolveStartLocation($request->string('start_location'));
+        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
 
         $validated = $request->validate([
             'order' => ['required', 'array'],
@@ -195,9 +183,8 @@ class DailyTravelStructureController extends Controller
 
     public function updateVehicle(Request $request, User $user, Company $company)
     {
-        $dailyTravelStructure = DailyTravelStructure::where('user_id', $user->id)
-            ->where('company_id', $company->id)
-            ->firstOrFail();
+        $startLocation = $this->resolveStartLocation($request->string('start_location'));
+        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
 
         $validated = $request->validate([
             'vehicle_id' => [
@@ -232,9 +219,8 @@ class DailyTravelStructureController extends Controller
 
     public function updateStep(Request $request, User $user, Company $company, DailyTravelStep $step)
     {
-        $dailyTravelStructure = DailyTravelStructure::where('user_id', $user->id)
-            ->where('company_id', $company->id)
-            ->firstOrFail();
+        $startLocation = $this->resolveStartLocation($request->string('start_location'));
+        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
 
         if ($step->daily_travel_structure_id !== $dailyTravelStructure->id) {
             abort(404);
@@ -264,9 +250,8 @@ class DailyTravelStructureController extends Controller
 
     public function destroyStep(Request $request, User $user, Company $company, DailyTravelStep $step)
     {
-        $dailyTravelStructure = DailyTravelStructure::where('user_id', $user->id)
-            ->where('company_id', $company->id)
-            ->firstOrFail();
+        $startLocation = $this->resolveStartLocation($request->string('start_location'));
+        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
 
         if ($step->daily_travel_structure_id !== $dailyTravelStructure->id) {
             abort(404);
@@ -309,6 +294,69 @@ class DailyTravelStructureController extends Controller
             ->each(function ($step, $index) {
                 $step->update(['step_number' => $index + 1]);
             });
+    }
+
+    private function ensureStructures(User $user, Company $company, Collection $vehicles): Collection
+    {
+        $structures = DailyTravelStructure::where('user_id', $user->id)
+            ->where('company_id', $company->id)
+            ->get()
+            ->keyBy('start_location');
+
+        $template = $structures->first();
+
+        foreach (DailyTravelStructure::startLocationOptions() as $location) {
+            if (! $structures->has($location)) {
+                $structures[$location] = $this->createStructureWithDefaults(
+                    $user,
+                    $company,
+                    $vehicles,
+                    $location,
+                    $template,
+                );
+
+                if (! $template) {
+                    $template = $structures[$location];
+                }
+            }
+        }
+
+        return $structures;
+    }
+
+    private function createStructureWithDefaults(
+        User $user,
+        Company $company,
+        Collection $vehicles,
+        string $startLocation,
+        ?DailyTravelStructure $template = null
+    ): DailyTravelStructure {
+        $vehicle = $template?->vehicle ?? $vehicles->first();
+        $vehicleId = $template?->vehicle_id ?? $vehicle?->id;
+        $cost = $template?->cost_per_km ?? $this->getLatestVehicleCost($vehicle);
+
+        return DailyTravelStructure::create([
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'vehicle_id' => $vehicleId,
+            'cost_per_km' => round((float) $cost, 4),
+            'start_location' => $startLocation,
+        ]);
+    }
+
+    private function getStructure(User $user, Company $company, string $startLocation): DailyTravelStructure
+    {
+        return DailyTravelStructure::where('user_id', $user->id)
+            ->where('company_id', $company->id)
+            ->where('start_location', $startLocation)
+            ->firstOrFail();
+    }
+
+    private function resolveStartLocation(?string $location): string
+    {
+        return in_array($location, DailyTravelStructure::startLocationOptions(), true)
+            ? $location
+            : DailyTravelStructure::START_LOCATION_OFFICE;
     }
 
     private function getLatestVehicleCost(?Vehicle $vehicle): float

@@ -45,6 +45,12 @@
                         <p class="font-semibold">€ {{ number_format((float) $structure?->cost_per_km, 4) }}</p>
                     </div>
                     <div>
+                        <p class="text-xs uppercase text-base-content/60">{{ __('daily_travel.start_location_label') }}</p>
+                        <p class="font-semibold">
+                            {{ $structure?->start_location === \App\Models\DailyTravelStructure::START_LOCATION_HOME ? __('daily_travel.start_location_home') : __('daily_travel.start_location_office') }}
+                        </p>
+                    </div>
+                    <div>
                         <p class="text-xs uppercase text-base-content/60">
                             {{ __('daily_travel.preview_economic_value') }}</p>
                         <p class="font-semibold">€ {{ number_format((float) $structure?->economic_value, 2) }}</p>
