@@ -238,6 +238,8 @@ return [
     "users_weekly_schedule_week_help" => "Compila il calendario della settimana in evidenza. Clicca sui giorni per aggiungere o modificare fasce orarie.",
     "users_weekly_schedule_week_selector" => "Cambia settimana",
     "users_weekly_schedule_week_selector_hint" => "Seleziona il lunedì della settimana che vuoi gestire e premi \"Vai\" per aggiornare l'elenco.",
+    "users_weekly_schedule_holiday_error" => "Non puoi inserire fasce orarie nelle giornate festive.",
+    "users_weekly_schedule_holiday_badge" => "Festività nazionale",
 
     "users_roles_management" => "Gestione ruoli utenti",
     "users_roles_label" => "Ruoli",

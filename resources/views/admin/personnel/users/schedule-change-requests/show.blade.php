@@ -34,6 +34,7 @@
         @include('admin.personnel.users.partials.weekly-schedule-card', [
             'user' => $changeRequest->user,
             'weekStart' => $weekStart,
+            'weekEnd' => $weekEnd,
             'scheduleRows' => $scheduleRows,
             'hasExisting' => false,
             'timeOffEntries' => collect(),
@@ -47,6 +48,7 @@
             'successMessage' => __('personnel.user_schedule_request_admin_success'),
             'successRedirect' => route('admin.user-schedule-requests.index'),
             'allowEditing' => $canApprove,
+            'holidayDays' => $holidayDays,
         ])
     </div>
 

@@ -36,6 +36,7 @@
         @include('admin.personnel.users.partials.weekly-schedule-card', [
             'user' => $user,
             'weekStart' => $weekStart,
+            'weekEnd' => $weekEnd,
             'scheduleRows' => $scheduleRows,
             'hasExisting' => false,
             'timeOffEntries' => collect(),
@@ -46,6 +47,7 @@
             'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
             'saveUrl' => route('user-schedule-request.store'),
             'saveButtonLabel' => __('personnel.user_schedule_request_submit'),
+            'holidayDays' => $holidayDays,
         ])
     </div>
 

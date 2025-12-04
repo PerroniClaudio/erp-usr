@@ -7,14 +7,19 @@ use App\Models\TimeOffRequest;
 use App\Models\User;
 use App\Models\UserSchedule;
 use App\Models\UserScheduleChangeRequest;
+use App\Services\NationalHolidayService;
 use App\Services\WeeklyScheduleCompletionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class UserScheduleController extends Controller
 {
-    public function __construct(private WeeklyScheduleCompletionService $weeklyScheduleCompletionService)
+    public function __construct(
+        private WeeklyScheduleCompletionService $weeklyScheduleCompletionService,
+        private NationalHolidayService $nationalHolidayService
+    )
     {
     }
 
@@ -27,6 +32,7 @@ class UserScheduleController extends Controller
             : $currentWeekStart->copy()->addWeek();
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+        $holidayDays = $this->nationalHolidayService->getHolidaysBetween($weekStart, $weekEnd);
 
         $users = User::with(['defaultSchedules' => function ($query) {
             $query->orderByRaw(
@@ -155,7 +161,7 @@ class UserScheduleController extends Controller
         });
 
         $attendanceTypes = AttendanceType::orderBy('name')->get();
-        $defaultAttendanceTypeId = $attendanceTypes->first()?->id;
+        $defaultAttendanceTypeId = $this->determineDefaultAttendanceTypeId($attendanceTypes);
         $colorPalette = ['#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#e73028', '#f472b6', '#2dd4bf', '#437f97'];
         $paletteCount = count($colorPalette);
         $attendanceTypesPayload = $attendanceTypes->values()->map(function ($type, $index) use ($colorPalette, $paletteCount) {
@@ -171,6 +177,7 @@ class UserScheduleController extends Controller
             'users' => $users,
             'weekStart' => $weekStart,
             'weekEnd' => $weekEnd,
+            'holidayDays' => $holidayDays,
             'defaultSchedulesByUser' => $defaultSchedulesByUser,
             'attendanceTypes' => $attendanceTypes,
             'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
@@ -309,7 +316,7 @@ class UserScheduleController extends Controller
         });
 
         $attendanceTypes = AttendanceType::orderBy('name')->get();
-        $defaultAttendanceTypeId = $attendanceTypes->first()?->id;
+        $defaultAttendanceTypeId = $this->determineDefaultAttendanceTypeId($attendanceTypes);
         $colorPalette = ['#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#e73028', '#f472b6', '#2dd4bf', '#437f97'];
         $paletteCount = count($colorPalette);
         $attendanceTypesPayload = $attendanceTypes->values()->map(function ($type, $index) use ($colorPalette, $paletteCount) {
@@ -343,6 +350,7 @@ class UserScheduleController extends Controller
         $html = view('admin.personnel.users.partials.weekly-schedule-card', [
             'user' => $user,
             'weekStart' => $weekStart,
+            'weekEnd' => $weekEnd,
             'scheduleRows' => $scheduleRows,
             'hasExisting' => $hasExisting,
             'timeOffEntries' => $timeOffEntries,
@@ -351,6 +359,7 @@ class UserScheduleController extends Controller
             'attendanceTypes' => $attendanceTypes,
             'attendanceTypesPayload' => $attendanceTypesPayload,
             'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
+            'holidayDays' => $holidayDays,
         ])->render();
 
         return response()->json(['html' => $html]);
@@ -420,7 +429,7 @@ class UserScheduleController extends Controller
             : $defaultSchedules;
 
         $attendanceTypes = AttendanceType::orderBy('name')->get();
-        $defaultAttendanceTypeId = $attendanceTypes->first()?->id;
+        $defaultAttendanceTypeId = $this->determineDefaultAttendanceTypeId($attendanceTypes);
         $colorPalette = ['#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#e73028', '#f472b6', '#2dd4bf', '#437f97'];
         $paletteCount = count($colorPalette);
         $attendanceTypesPayload = $attendanceTypes->values()->map(function ($type, $index) use ($colorPalette, $paletteCount) {
@@ -455,6 +464,7 @@ class UserScheduleController extends Controller
             'user' => $user,
             'weekStart' => $weekStart,
             'weekEnd' => $weekEnd,
+            'holidayDays' => $holidayDays,
             'scheduleRows' => $scheduleRows,
             'attendanceTypes' => $attendanceTypes,
             'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
@@ -515,6 +525,8 @@ class UserScheduleController extends Controller
             ]);
         }
 
+        $this->ensureNoHolidayConflicts($entries, $weekStart, $weekEnd);
+
         UserScheduleChangeRequest::updateOrCreate(
             [
                 'user_id' => $user->id,
@@ -560,11 +572,12 @@ class UserScheduleController extends Controller
 
         $weekStart = Carbon::parse($userScheduleChangeRequest->week_start)->startOfWeek(Carbon::MONDAY);
         $weekEnd = Carbon::parse($userScheduleChangeRequest->week_end ?? $weekStart->copy()->endOfWeek(Carbon::SUNDAY));
+        $holidayDays = $this->nationalHolidayService->getHolidaysBetween($weekStart, $weekEnd);
 
         $scheduleRows = collect($userScheduleChangeRequest->schedule ?? []);
 
         $attendanceTypes = AttendanceType::orderBy('name')->get();
-        $defaultAttendanceTypeId = $attendanceTypes->first()?->id;
+        $defaultAttendanceTypeId = $this->determineDefaultAttendanceTypeId($attendanceTypes);
         $colorPalette = ['#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#e73028', '#f472b6', '#2dd4bf', '#437f97'];
         $paletteCount = count($colorPalette);
         $attendanceTypesPayload = $attendanceTypes->values()->map(function ($type, $index) use ($colorPalette, $paletteCount) {
@@ -601,6 +614,7 @@ class UserScheduleController extends Controller
             'changeRequest' => $userScheduleChangeRequest,
             'weekStart' => $weekStart,
             'weekEnd' => $weekEnd,
+            'holidayDays' => $holidayDays,
             'scheduleRows' => $scheduleRows,
             'attendanceTypes' => $attendanceTypes,
             'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
@@ -649,14 +663,16 @@ class UserScheduleController extends Controller
             ];
         });
 
+        $weekStart = Carbon::parse($userScheduleChangeRequest->week_start)->startOfWeek(Carbon::MONDAY);
+        $weekEnd = Carbon::parse($userScheduleChangeRequest->week_end ?? $weekStart->copy()->endOfWeek(Carbon::SUNDAY));
+
         if ($entries->isEmpty()) {
             throw ValidationException::withMessages([
                 'schedule' => __('personnel.user_schedule_request_empty_error'),
             ]);
         }
 
-        $weekStart = Carbon::parse($userScheduleChangeRequest->week_start)->startOfWeek(Carbon::MONDAY);
-        $weekEnd = Carbon::parse($userScheduleChangeRequest->week_end ?? $weekStart->copy()->endOfWeek(Carbon::SUNDAY));
+        $this->ensureNoHolidayConflicts($entries, $weekStart, $weekEnd);
 
         UserSchedule::where('user_id', $userScheduleChangeRequest->user_id)
             ->whereBetween('date', [$weekStart->toDateString(), $weekEnd->toDateString()])
@@ -735,6 +751,7 @@ class UserScheduleController extends Controller
                 'updated_at' => now(),
             ];
         });
+        $this->ensureNoHolidayConflicts($entries, $weekStart, $weekEnd);
 
         // Replace schedules for that week and user to avoid duplicates
         UserSchedule::where('user_id', $userId)
@@ -749,5 +766,52 @@ class UserScheduleController extends Controller
 
         return redirect()->route('user-schedules.index', ['week_start' => $weekStart->toDateString()])
             ->with('success', __('personnel.users_default_schedule_save'));
+    }
+
+    private function determineDefaultAttendanceTypeId(Collection $attendanceTypes): ?int
+    {
+        if ($attendanceTypes->isEmpty()) {
+            return null;
+        }
+
+        $preferred = $attendanceTypes->first(function ($type) {
+            $name = strtolower($type->name ?? '');
+            $acronym = strtolower($type->acronym ?? '');
+
+            return $name === 'lavoro in sede' || $acronym === 'ls';
+        });
+
+        return $preferred?->id ?? $attendanceTypes->first()?->id;
+    }
+
+    private function ensureNoHolidayConflicts(Collection $entries, Carbon $weekStart, Carbon $weekEnd): void
+    {
+        if ($entries->isEmpty()) {
+            return;
+        }
+
+        $holidayDates = $this->nationalHolidayService
+            ->getHolidaysBetween($weekStart, $weekEnd)
+            ->pluck('date')
+            ->filter()
+            ->unique()
+            ->all();
+
+        if (empty($holidayDates)) {
+            return;
+        }
+
+        $holidayLookup = array_flip($holidayDates);
+
+        $hasConflict = $entries->contains(function ($entry) use ($holidayLookup) {
+            $date = $entry['date'] ?? null;
+            return $date && isset($holidayLookup[$date]);
+        });
+
+        if ($hasConflict) {
+            throw ValidationException::withMessages([
+                'schedule' => __('personnel.users_weekly_schedule_holiday_error'),
+            ]);
+        }
     }
 }

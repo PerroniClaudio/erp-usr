@@ -107,6 +107,7 @@
                 @include('admin.personnel.users.partials.weekly-schedule-card', [
                     'user' => $activeUser,
                     'weekStart' => $weekStart,
+                    'weekEnd' => $weekEnd,
                     'scheduleRows' => $activeScheduleRows,
                     'hasExisting' => $activeHasExisting,
                     'timeOffEntries' => $activeTimeOffEntries,
@@ -115,6 +116,7 @@
                     'attendanceTypes' => $attendanceTypes,
                     'attendanceTypesPayload' => $attendanceTypesPayload,
                     'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
+                    'holidayDays' => $holidayDays,
                 ])
             @else
                 <div class="card bg-base-200">

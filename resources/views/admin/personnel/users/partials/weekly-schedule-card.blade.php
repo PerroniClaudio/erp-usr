@@ -1,11 +1,39 @@
 @php
-    $scheduleRows = $scheduleRows ?? collect();
-    $timeOffEntries = $timeOffEntries ?? collect();
+    $scheduleRows = collect($scheduleRows ?? []);
+    $timeOffEntries = collect($timeOffEntries ?? []);
+    $holidayDays = collect($holidayDays ?? []);
     $saveUrl = $saveUrl ?? route('user-schedules.store');
     $saveButtonLabel = $saveButtonLabel ?? __('personnel.users_default_schedule_save');
     $successMessage = $successMessage ?? __('personnel.users_default_schedule_save_success');
     $successRedirect = $successRedirect ?? '';
     $allowEditing = $allowEditing ?? true;
+    $calendarWeekStart = $weekStart->copy();
+    $calendarWeekEnd = ($weekEnd ?? $calendarWeekStart->copy()->addDays(6))->copy();
+    $calendarWeekStartLabel = $calendarWeekStart->copy()->locale(app()->getLocale())->translatedFormat('d/m/Y');
+    $calendarWeekEndLabel = $calendarWeekEnd->copy()->locale(app()->getLocale())->translatedFormat('d/m/Y');
+
+    $holidayDates = $holidayDays->pluck('date')->filter()->unique()->values();
+    if ($holidayDates->isNotEmpty()) {
+        $scheduleRows = $scheduleRows->filter(function ($row) use ($holidayDates) {
+            $date = $row['date'] ?? null;
+            return empty($date) || ! $holidayDates->contains($date);
+        })->values();
+    }
+
+    $holidayPayload = $holidayDays
+        ->map(function ($holiday) {
+            $date = isset($holiday['date']) ? \Carbon\Carbon::parse($holiday['date'])->toDateString() : null;
+            if (! $date) {
+                return null;
+            }
+
+            return [
+                'date' => $date,
+                'label' => $holiday['label'] ?? __('personnel.users_weekly_schedule_holiday_badge'),
+            ];
+        })
+        ->filter()
+        ->values();
 @endphp
 
 <div class="card bg-base-300 shadow-lg" data-user-card="{{ $user->id }}">
@@ -41,6 +69,9 @@
             data-label-edit="{{ __('personnel.users_weekly_schedule_modal_edit') }}"
             data-error-end="{{ __('personnel.users_default_schedule_error_end_before_start') }}"
             data-error-save="{{ __('personnel.users_default_schedule_save_error') }}"
+            data-holiday-error="{{ __('personnel.users_weekly_schedule_holiday_error') }}"
+            data-holiday-label="{{ __('personnel.users_weekly_schedule_holiday_badge') }}"
+            data-holidays='@json($holidayPayload)'
             data-empty-text="{{ __('personnel.users_default_schedule_empty') }}"
             data-success-message="{{ $successMessage }}"
             data-success-redirect="{{ $successRedirect }}"
@@ -67,7 +98,7 @@
                 <div class="xl:col-span-3 bg-base-200 rounded-xl p-3 border border-base-300">
                     <div class="text-sm font-semibold text-base-content/70 flex items-center gap-2 mb-2">
                         <x-lucide-calendar class="w-4 h-4" />
-                        {{ __('personnel.users_weekly_schedule_calendar_title') }}
+                        {{ 'Settimana dal ' . $calendarWeekStartLabel . ' al ' . $calendarWeekEndLabel }}
                     </div>
                     <div class="user-weekly-calendar rounded-lg bg-base-100 p-2 border border-base-200 min-h-[320px]">
                     </div>

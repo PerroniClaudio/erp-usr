@@ -107,7 +107,7 @@ const renderSummary = (container, calendar) => {
     const emptyText = container.dataset.emptyText || "";
     const events = calendar
         .getEvents()
-        .filter((event) => !event.extendedProps.timeOff)
+        .filter((event) => !event.extendedProps.timeOff && !event.extendedProps.holiday)
         .slice()
         .sort((a, b) => {
             const dayA = dayOffsets[weekdayMap[a.start.getDay()]] ?? 7;
@@ -150,12 +150,17 @@ const renderSummary = (container, calendar) => {
     summaryEl.innerHTML = rows;
 };
 
-const serializeEvents = (calendar, helpers) => {
+const serializeEvents = (calendar, helpers, container) => {
     if (!helpers) return [];
+    const holidayMap = container?.__holidayMap;
 
     return calendar
         .getEvents()
         .filter((event) => !event.extendedProps.timeOff)
+        .filter((event) => {
+            if (!holidayMap) return true;
+            return !holidayMap.has(formatDateLocal(event.start));
+        })
         .map((event) => ({
             day: weekdayMap[event.start.getDay()],
             date: formatDateLocal(event.start),
@@ -206,18 +211,48 @@ const initializeScheduler = (container) => {
 
     const schedules = parseJson(container.dataset.schedules, []);
     const timeOff = parseJson(container.dataset.timeOff, []);
+    const holidays = parseJson(container.dataset.holidays, []);
     const weekStart = new Date(`${container.dataset.weekStart}T00:00:00`);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
 
     const weekdayShortLabels = parseJson(container.dataset.weekdayShortLabels, {});
+    const holidayLabelDefault = container.dataset.holidayLabel || "Festivita nazionale";
+    const holidayBackgroundColor = "#fef3c7";
+    const holidayBorderColor = "#facc15";
+    const holidayErrorMessage = container.dataset.holidayError || "Non puoi inserire fasce orarie nelle giornate festive.";
+    const holidayMap = new Map();
+    holidays.forEach((holiday) => {
+        if (!holiday || !holiday.date) return;
+        const normalized = String(holiday.date).slice(0, 10);
+        holidayMap.set(normalized, holiday.label || holidayLabelDefault);
+    });
+    const isHolidayDateString = (dateStr) => holidayMap.has(dateStr);
+    const isHolidayDate = (date) => isHolidayDateString(formatDateLocal(date));
+
+    const findFirstAvailableDate = () => {
+        for (let offset = 0; offset < 7; offset += 1) {
+            const candidate = new Date(weekStart);
+            candidate.setDate(candidate.getDate() + offset);
+            if (!isHolidayDate(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    };
+    container.__holidayMap = holidayMap;
+    container.__holidayErrorMessage = holidayErrorMessage;
 
     const toEvents = () =>
-        schedules.map((item) => {
+        schedules
+            .map((item) => {
             const baseDate = item.date
                 ? new Date(`${item.date}T00:00:00`)
                 : new Date(weekStart.getTime() + (dayOffsets[item.day] ?? 0) * 86400000);
             const dateStr = formatDateLocal(baseDate);
+            if (isHolidayDateString(dateStr)) {
+                return null;
+            }
             const start = `${dateStr}T${normalizeTime(item.hour_start)}`;
             const end = `${dateStr}T${normalizeTime(item.hour_end)}`;
             const attendanceTypeId = item.attendance_type_id ?? helpers.defaultAttendanceTypeId;
@@ -231,7 +266,8 @@ const initializeScheduler = (container) => {
                     attendanceTypeId,
                 },
             };
-        });
+        })
+            .filter(Boolean);
 
     const toTimeOffEvents = () =>
         timeOff.map((item) => {
@@ -257,6 +293,33 @@ const initializeScheduler = (container) => {
             };
         });
 
+    const toHolidayEvents = () =>
+        holidays
+            .map((holiday) => {
+                if (!holiday || !holiday.date) return null;
+                const baseDate = new Date(`${holiday.date}T00:00:00`);
+                const start = new Date(baseDate);
+                start.setHours(6, 0, 0, 0);
+                const end = new Date(baseDate);
+                end.setHours(22, 0, 0, 0);
+                const label = holiday.label || holidayLabelDefault;
+
+                return {
+                    title: label,
+                    start,
+                    end,
+                    display: "block",
+                    overlap: false,
+                    backgroundColor: holidayBackgroundColor,
+                    borderColor: holidayBorderColor,
+                    textColor: "#1f2937",
+                    extendedProps: {
+                        holiday: true,
+                    },
+                };
+            })
+            .filter(Boolean);
+
     const calendar = new Calendar(calendarEl, {
         plugins: [timeGridPlugin, interactionPlugin],
         initialView: "timeGridWeek",
@@ -273,18 +336,23 @@ const initializeScheduler = (container) => {
         headerToolbar: false,
         dayHeaderContent: (arg) =>
             weekdayShortLabels[weekdayMap[arg.date.getDay()]] || weekdayMap[arg.date.getDay()].slice(0, 3),
-        events: [...toEvents(), ...toTimeOffEvents()],
+        events: [...toEvents(), ...toTimeOffEvents(), ...toHolidayEvents()],
         select: (info) => {
             if (readOnly) return;
+            if (isHolidayDate(info.start)) {
+                alert(holidayErrorMessage);
+                calendar.unselect();
+                return;
+            }
             openModal({ calendar, container, start: info.start, end: info.end, attendanceTypeId: helpers.defaultAttendanceTypeId });
             calendar.unselect();
         },
         eventClick: (info) => {
-            if (readOnly || info.event.extendedProps.timeOff) return;
+            if (readOnly || info.event.extendedProps.timeOff || info.event.extendedProps.holiday) return;
             openModal({ calendar, container, event: info.event });
         },
         eventDidMount: (info) => {
-            if (info.event.extendedProps.timeOff) return;
+            if (info.event.extendedProps.timeOff || info.event.extendedProps.holiday) return;
             applyEventAppearance(info.event, helpers);
         },
     });
@@ -295,9 +363,14 @@ const initializeScheduler = (container) => {
     const addBtn = container.querySelector(".add-slot");
     if (addBtn && !readOnly) {
         addBtn.addEventListener("click", () => {
-            const start = new Date(weekStart);
+            const defaultDate = findFirstAvailableDate();
+            if (!defaultDate) {
+                alert(holidayErrorMessage);
+                return;
+            }
+            const start = new Date(defaultDate);
             start.setHours(9, 0, 0, 0);
-            const end = new Date(weekStart);
+            const end = new Date(defaultDate);
             end.setHours(12, 0, 0, 0);
             openModal({ calendar, container, start, end, attendanceTypeId: helpers.defaultAttendanceTypeId });
         });
@@ -307,7 +380,7 @@ const initializeScheduler = (container) => {
     saveBtn?.addEventListener("click", () => {
         if (readOnly) return;
         const saveUrl = container.dataset.saveUrl;
-        const schedule = serializeEvents(calendar, helpers);
+        const schedule = serializeEvents(calendar, helpers, container);
         const form = new FormData();
         form.append("user_id", container.dataset.userId || "");
         form.append("week_start", container.dataset.weekStart || "");
@@ -347,12 +420,17 @@ modalSave?.addEventListener("click", () => {
     if (!activeCalendar || !activeContainer) return;
 
     const helpers = activeContainer.__attendanceHelpers;
+    const holidayMap = activeContainer.__holidayMap || new Map();
     if (!helpers || activeContainer.dataset.readonly === "true") return;
     const selectedDay = modalDaySelect ? modalDaySelect.value : null;
     if (!selectedDay || !(selectedDay in dayOffsets)) return;
 
     const baseDate = new Date(`${activeContainer.dataset.weekStart}T00:00:00`);
     baseDate.setDate(baseDate.getDate() + dayOffsets[selectedDay]);
+    if (holidayMap.has(formatDateLocal(baseDate))) {
+        alert(activeContainer.dataset.holidayError || "Non puoi inserire fasce orarie nelle giornate festive.");
+        return;
+    }
 
     const newStart = combineDateTime(baseDate, modalHourStart.value);
     const newEnd = combineDateTime(baseDate, modalHourEnd.value);
