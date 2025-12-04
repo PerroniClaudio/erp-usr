@@ -36,10 +36,13 @@
             </fieldset>
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">{{ __('overtime_requests.type') }}</legend>
-                <select class="select" name="overtime_type_id" value="{{ old('overtime_type_id') }}">
+                @php
+                    $defaultOvertimeTypeId = old('overtime_type_id', optional($overtimeTypes->firstWhere('acronym', 'ST'))->id);
+                @endphp
+                <select class="select" name="overtime_type_id" value="{{ $defaultOvertimeTypeId }}">
                     @foreach ($overtimeTypes as $type)
                         <option value="{{ $type->id }}"
-                            {{ old('overtime_type_id') == $type->id ? 'selected' : '' }}>
+                            {{ $defaultOvertimeTypeId == $type->id ? 'selected' : '' }}>
                             {{ $type->name }} ({{ $type->acronym }})
                         </option>
                     @endforeach
