@@ -194,6 +194,8 @@ class UserScheduleController extends Controller
             : Carbon::now()->startOfWeek(Carbon::MONDAY);
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+        $holidayDays = $this->nationalHolidayService->getHolidaysBetween($weekStart, $weekEnd);
+
 
         $dayOffsets = [
             'monday' => 0,
@@ -381,6 +383,8 @@ class UserScheduleController extends Controller
         }
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+        $holidayDays = $this->nationalHolidayService->getHolidaysBetween($weekStart, $weekEnd);
+
 
         $dayOffsets = [
             'monday' => 0,
