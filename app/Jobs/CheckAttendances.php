@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\FailedAttendance;
 use App\Models\AttendanceType;
 use App\Models\User;
+use App\Services\NationalHolidayService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -25,7 +26,15 @@ class CheckAttendances implements ShouldQueue {
      * Execute the job.
      */
     public function handle(): void {
-        //
+        $holidayService = app(NationalHolidayService::class);
+        $today = Carbon::today();
+
+        if ($holidayService->isHoliday($today)) {
+            Log::info('Skipping attendance check because today is a national holiday', [
+                'date' => $today->toDateString(),
+            ]);
+            return;
+        }
 
         Log::info('Checking attendances for all users');
         $usersWithAnomalies = [];
@@ -34,9 +43,9 @@ class CheckAttendances implements ShouldQueue {
             ->orWhereHas('timeOffRequests')
             ->get();
 
-        foreach ($users as $user) {
-            $today = date('Y-m-d');
+        $todayDate = $today->toDateString();
 
+        foreach ($users as $user) {
             $totalHours = 0;
 
             $allowedTypes = AttendanceType::whereIn('acronym', [
@@ -47,7 +56,7 @@ class CheckAttendances implements ShouldQueue {
             ])->pluck('id')->toArray();
 
             $attendances = $user->attendances()
-                ->whereDate('date', $today)
+                ->whereDate('date', $todayDate)
                 ->whereIn('attendance_type_id', $allowedTypes)
                 ->get();
 
@@ -58,7 +67,7 @@ class CheckAttendances implements ShouldQueue {
                 $totalHours += $total;
             }
 
-            $timeOffRequests = $user->timeOffRequests()->whereLike('date_from', $today)->get();
+            $timeOffRequests = $user->timeOffRequests()->whereLike('date_from', $todayDate)->get();
 
             foreach ($timeOffRequests as $request) {
                 $total = Carbon::parse($request->date_from)
@@ -69,19 +78,19 @@ class CheckAttendances implements ShouldQueue {
 
 
             if ($totalHours < 8) {
-                $messages[] = "User ID {$user->id} has less than 8 hours of attendance for {$today}";
+                $messages[] = "User ID {$user->id} has less than 8 hours of attendance for {$todayDate}";
                 $lackingHours = 8 - $totalHours;
 
                 $usersWithAnomalies[] = [
                     'user_id' => $user->id,
                     'name' => $user->name,
                     'total_hours' => $totalHours,
-                    'date' => $today,
+                    'date' => $todayDate,
                 ];
 
                 FailedAttendance::create([
                     'user_id' => $user->id,
-                    'date' => $today,
+                    'date' => $todayDate,
                     'status' => 0,
                     'reason' => "Giustifica le $lackingHours ore mancanti...",
                     'requested_type' => 0,
@@ -90,7 +99,7 @@ class CheckAttendances implements ShouldQueue {
 
                 // Send notification or email to the user or admin
             } else {
-                $messages[] = "User ID {$user->id} total hours for {$today}: {$totalHours}";
+                $messages[] = "User ID {$user->id} total hours for {$todayDate}: {$totalHours}";
             }
         }
 
