@@ -95,7 +95,7 @@
                                     <th>{{ __('daily_travel.start_location_label') }}</th>
                                     <th>{{ __('daily_travel.total_distance') }}</th>
                                     <th>{{ __('daily_travel.distance_cost') }}</th>
-                                    <th>{{ __('daily_travel.time_total') }}</th>
+                                    <th>{{ __('daily_travel.time_total_hours') }}</th>
                                     <th>{{ __('daily_travel.indemnity') }}</th>
                                     <th>{{ __('daily_travel.economic_value') }}</th>
                                     <th>{{ __('daily_travel.total_label') }}</th>
@@ -109,7 +109,7 @@
                                         <td>{{ __('daily_travel.start_location_' . ($data['start_location'] ?? \App\Models\DailyTravelStructure::START_LOCATION_OFFICE)) }}</td>
                                         <td>{{ number_format($data['distance'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['distance_cost'], 2, ',', '.') }}</td>
-                                        <td>{{ $data['time_difference'] }}</td>
+                                        <td>{{ number_format($data['travel_hours'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['indemnity'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['economic_value'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['total'], 2, ',', '.') }}</td>
@@ -122,7 +122,7 @@
                                         <td colspan="3">{{ __('daily_travel.admin_totals') }}</td>
                                         <td>{{ number_format($totals['distance'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['distance_cost'], 2, ',', '.') }}</td>
-                                        <td>{{ $totals['time_difference'] }}</td>
+                                        <td>{{ number_format($totals['travel_hours'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['indemnity'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['economic_value'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['grand_total'], 2, ',', '.') }}</td>

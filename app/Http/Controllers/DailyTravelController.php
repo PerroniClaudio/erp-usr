@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyTravel;
 use App\Models\DailyTravelStructure;
+use App\Models\Headquarters;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ class DailyTravelController extends Controller
         $companies = $user->companies;
         $companyIds = $companies->pluck('id');
         $selectedCompanyId = $request->integer('company_id') ?? $companies->first()?->id;
+        $userHeadquarter = $this->getUserHeadquarter($user);
 
         if ($selectedCompanyId && !$companyIds->contains($selectedCompanyId)) {
             $selectedCompanyId = $companies->first()?->id;
@@ -39,6 +41,10 @@ class DailyTravelController extends Controller
             ->map(fn ($items) => $items->toArray())
             ->toArray();
 
+        $headquartersMap = $this->buildHeadquartersMap(
+            Headquarters::whereIn('company_id', $companyIds)->get()
+        )->toArray();
+
         $selectedStructure = $structures
             ->first(fn ($structure) => $structure->company_id === $selectedCompanyId
                 && $structure->start_location === DailyTravelStructure::START_LOCATION_OFFICE)
@@ -50,6 +56,8 @@ class DailyTravelController extends Controller
             'structuresMap' => $structuresMap,
             'selectedStructure' => $selectedStructure,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
+            'headquartersMap' => $headquartersMap,
+            'userHeadquarter' => $userHeadquarter,
         ]);
     }
 
@@ -67,7 +75,19 @@ class DailyTravelController extends Controller
                 'integer',
                 Rule::exists('user_companies', 'company_id')->where(fn ($query) => $query->where('user_id', $user->id)),
             ],
+            'intermediate_headquarter_ids' => ['array'],
+            'intermediate_headquarter_ids.*' => [
+                'integer',
+                Rule::exists('headquarters', 'id')->where(fn ($query) => $query->where('company_id', $request->integer('company_id'))),
+            ],
         ]);
+
+        $userHeadquarter = $this->getUserHeadquarter($user);
+        if (!$userHeadquarter) {
+            return back()
+                ->withErrors(['company_id' => __('daily_travel.validation_missing_user_headquarter')])
+                ->withInput();
+        }
 
         $structure = DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $validated['company_id'])
@@ -81,11 +101,18 @@ class DailyTravelController extends Controller
         }
 
         DailyTravel::create([
+        $dailyTravel = DailyTravel::create([
             'user_id' => $user->id,
             'company_id' => $validated['company_id'],
             'daily_travel_structure_id' => $structure->id,
             'travel_date' => $validated['travel_date'],
         ]);
+
+        $this->createRouteStepsForTravel(
+            $dailyTravel,
+            $userHeadquarter,
+            $validated['intermediate_headquarter_ids'] ?? []
+        );
 
         return redirect()
             ->route('daily-travels.index')
@@ -117,10 +144,9 @@ class DailyTravelController extends Controller
             abort(404);
         }
 
-        $structure = $dailyTravel->structure()->with(['vehicle', 'steps' => fn ($q) => $q->orderBy('step_number')])->first();
-
-        $steps = $structure?->steps ?? collect();
-        $mapSteps = $steps->map(fn ($step) => [
+        $structure = $dailyTravel->structure()->with('vehicle')->first();
+        $routeSteps = $dailyTravel->routeSteps()->orderBy('step_number')->get();
+        $mapSteps = $routeSteps->map(fn ($step) => [
             'step_number' => $step->step_number,
             'lat' => (float) $step->latitude,
             'lng' => (float) $step->longitude,
@@ -128,9 +154,9 @@ class DailyTravelController extends Controller
         ])->values();
 
         $distancesBetweenSteps = [];
-        for ($i = 0; $i < $steps->count() - 1; $i++) {
-            $from = $steps[$i];
-            $to = $steps[$i + 1];
+        for ($i = 0; $i < $routeSteps->count() - 1; $i++) {
+            $from = $routeSteps[$i];
+            $to = $routeSteps[$i + 1];
 
             if ($this->hasValidCoordinates($from) && $this->hasValidCoordinates($to)) {
                 $distancesBetweenSteps[] = [
@@ -149,7 +175,7 @@ class DailyTravelController extends Controller
         return view('standard.daily-travels.show', [
             'dailyTravel' => $dailyTravel,
             'structure' => $structure,
-            'steps' => $steps,
+            'steps' => $routeSteps,
             'mapSteps' => $mapSteps,
             'distancesBetweenSteps' => $distancesBetweenSteps,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
@@ -181,6 +207,8 @@ class DailyTravelController extends Controller
         $structures = collect();
         $structuresMap = [];
         $selectedCompanyId = null;
+        $headquartersMap = [];
+        $userHeadquarter = null;
 
         if ($selectedUser) {
             $companies = $selectedUser->companies;
@@ -202,6 +230,12 @@ class DailyTravelController extends Controller
             $structuresMap = $this->buildStructuresMap($structures)
                 ->map(fn ($items) => $items->toArray())
                 ->toArray();
+
+            $headquartersMap = $this->buildHeadquartersMap(
+                Headquarters::whereIn('company_id', $companyIds)->get()
+            )->toArray();
+
+            $userHeadquarter = $this->getUserHeadquarter($selectedUser);
         }
 
         $selectedStructure = $structures
@@ -217,6 +251,8 @@ class DailyTravelController extends Controller
             'structuresMap' => $structuresMap,
             'selectedStructure' => $selectedStructure,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
+            'headquartersMap' => $headquartersMap,
+            'userHeadquarter' => $userHeadquarter,
         ]);
     }
 
@@ -230,9 +266,20 @@ class DailyTravelController extends Controller
                 'integer',
                 Rule::exists('user_companies', 'company_id')->where(fn ($query) => $query->where('user_id', $request->integer('user_id'))),
             ],
+            'intermediate_headquarter_ids' => ['array'],
+            'intermediate_headquarter_ids.*' => [
+                'integer',
+                Rule::exists('headquarters', 'id')->where(fn ($query) => $query->where('company_id', $request->integer('company_id'))),
+            ],
         ]);
 
         $user = User::findOrFail($validated['user_id']);
+        $userHeadquarter = $this->getUserHeadquarter($user);
+        if (!$userHeadquarter) {
+            return back()
+                ->withErrors(['company_id' => __('daily_travel.validation_missing_user_headquarter')])
+                ->withInput();
+        }
 
         $structure = DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $validated['company_id'])
@@ -245,12 +292,18 @@ class DailyTravelController extends Controller
                 ->withInput();
         }
 
-        DailyTravel::create([
+        $dailyTravel = DailyTravel::create([
             'user_id' => $user->id,
             'company_id' => $validated['company_id'],
             'daily_travel_structure_id' => $structure->id,
             'travel_date' => $validated['travel_date'],
         ]);
+
+        $this->createRouteStepsForTravel(
+            $dailyTravel,
+            $userHeadquarter,
+            $validated['intermediate_headquarter_ids'] ?? []
+        );
 
         $travelDate = Carbon::parse($validated['travel_date']);
 
@@ -379,6 +432,26 @@ class DailyTravelController extends Controller
             });
     }
 
+    private function buildHeadquartersMap(Collection $headquarters): Collection
+    {
+        return $headquarters
+            ->groupBy('company_id')
+            ->map(function (Collection $items) {
+                return $items->map(function (Headquarters $headquarter) {
+                    return [
+                        'id' => $headquarter->id,
+                        'name' => $headquarter->name,
+                        'address' => $headquarter->address,
+                        'city' => $headquarter->city,
+                        'province' => $headquarter->province,
+                        'zip_code' => $headquarter->zip_code,
+                        'latitude' => (float) $headquarter->latitude,
+                        'longitude' => (float) $headquarter->longitude,
+                    ];
+                })->values();
+            });
+    }
+
     private function serializeStructure(DailyTravelStructure $structure): array
     {
         return [
@@ -435,7 +508,7 @@ class DailyTravelController extends Controller
         return DailyTravel::with([
             'company',
             'structure.vehicle',
-            'structure.steps' => fn ($q) => $q->orderBy('step_number'),
+            'routeSteps' => fn ($q) => $q->orderBy('step_number'),
             'user',
         ])
             ->where('user_id', $user->id)
@@ -447,7 +520,7 @@ class DailyTravelController extends Controller
     private function summarizeTravels(Collection $dailyTravels): array
     {
         $travelsData = $dailyTravels->map(function (DailyTravel $travel) {
-            $steps = $travel->structure?->steps ?? collect();
+            $steps = $travel->routeSteps ?? collect();
             $distance = 0;
 
             for ($i = 0; $i < $steps->count() - 1; $i++) {
@@ -464,13 +537,13 @@ class DailyTravelController extends Controller
                 }
             }
 
-            $timeDifference = $steps->sum(fn ($step) => (int) ($step->time_difference ?? 0));
+            $travelHours = (float) ($travel->structure?->travel_hours ?? 0);
 
             $costPerKm = (float) ($travel->structure?->cost_per_km ?? 0);
             $economicValue = (float) ($travel->structure?->economic_value ?? 0);
 
             $distanceCost = $distance * $costPerKm;
-            $timeCost = $costPerKm * $timeDifference;
+            $timeCost = $costPerKm * $travelHours;
             $indemnity = $distanceCost + $timeCost;
             $total = $indemnity + $economicValue;
 
@@ -478,7 +551,7 @@ class DailyTravelController extends Controller
                 'travel' => $travel,
                 'distance' => $distance,
                 'distance_cost' => $distanceCost,
-                'time_difference' => $timeDifference,
+                'travel_hours' => $travelHours,
                 'time_cost' => $timeCost,
                 'indemnity' => $indemnity,
                 'economic_value' => $economicValue,
@@ -490,7 +563,7 @@ class DailyTravelController extends Controller
         $totals = [
             'distance' => $travelsData->sum('distance'),
             'distance_cost' => $travelsData->sum('distance_cost'),
-            'time_difference' => $travelsData->sum('time_difference'),
+            'travel_hours' => $travelsData->sum('travel_hours'),
             'time_cost' => $travelsData->sum('time_cost'),
             'indemnity' => $travelsData->sum('indemnity'),
             'economic_value' => $travelsData->sum('economic_value'),
@@ -498,5 +571,48 @@ class DailyTravelController extends Controller
         ];
 
         return [$travelsData, $totals];
+    }
+
+    private function getUserHeadquarter(User $user): ?Headquarters
+    {
+        return $user->headquarters()->first();
+    }
+
+    private function createRouteStepsForTravel(DailyTravel $dailyTravel, Headquarters $userHeadquarter, array $intermediateHeadquarterIds): void
+    {
+        $orderedIntermediates = collect($intermediateHeadquarterIds)->map(fn ($id) => (int) $id)->filter();
+        $intermediateMap = Headquarters::whereIn('id', $orderedIntermediates)->get()->keyBy('id');
+
+        $steps = [];
+        $stepNumber = 1;
+
+        $steps[] = $this->normalizeHeadquarter($userHeadquarter, $stepNumber++);
+
+        foreach ($orderedIntermediates as $headquarterId) {
+            $headquarter = $intermediateMap->get($headquarterId);
+            if ($headquarter) {
+                $steps[] = $this->normalizeHeadquarter($headquarter, $stepNumber++);
+            }
+        }
+
+        $steps[] = $this->normalizeHeadquarter($userHeadquarter, $stepNumber++);
+
+        $dailyTravel->routeSteps()->delete();
+        $dailyTravel->routeSteps()->createMany($steps);
+    }
+
+    private function normalizeHeadquarter(Headquarters $headquarter, int $stepNumber): array
+    {
+        return [
+            'step_number' => $stepNumber,
+            'headquarter_id' => $headquarter->id,
+            'name' => $headquarter->name,
+            'address' => $headquarter->address,
+            'city' => $headquarter->city,
+            'province' => $headquarter->province,
+            'zip_code' => $headquarter->zip_code,
+            'latitude' => (float) $headquarter->latitude,
+            'longitude' => (float) $headquarter->longitude,
+        ];
     }
 }

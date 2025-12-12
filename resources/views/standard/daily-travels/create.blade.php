@@ -37,6 +37,40 @@
                     @enderror
                 </fieldset>
 
+                <fieldset class="fieldset space-y-3">
+                    <legend class="fieldset-legend">{{ __('daily_travel.route_title') }}</legend>
+                    <p class="text-sm text-base-content/70">
+                        {{ __('daily_travel.route_start_note') }}
+                    </p>
+
+                    @if (!$userHeadquarter)
+                        <div class="alert alert-warning text-sm">
+                            {{ __('daily_travel.route_missing_user_headquarter') }}
+                        </div>
+                    @endif
+
+                    <div class="space-y-2" data-intermediate-list>
+                        {{-- Populated by JS --}}
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2 items-end">
+                        <label class="form-control w-full">
+                            <div class="label">
+                                <span class="label-text">{{ __('daily_travel.route_intermediate_label') }}</span>
+                            </div>
+                            <select id="intermediate_headquarter_id" class="select select-bordered w-full">
+                                <option value="">{{ __('daily_travel.route_intermediate_none') }}</option>
+                            </select>
+                        </label>
+                        <button type="button" class="btn btn-primary" id="add_intermediate_button">
+                            {{ __('daily_travel.route_add_intermediate') }}
+                        </button>
+                    </div>
+                    @error('intermediate_headquarter_ids')
+                        <p class="text-sm text-error mt-1">{{ $message }}</p>
+                    @enderror
+                </fieldset>
+
                 <button id="submit-button" type="submit" class="hidden">
                     {{ __('daily_travel.save_daily_travel') }}
                 </button>
@@ -48,6 +82,8 @@
                 data-selected-company="{{ old('company_id', $selectedCompanyId) }}"
                 data-selected-start-location="{{ \App\Models\DailyTravelStructure::START_LOCATION_OFFICE }}"
                 data-structures='@json($structuresMap)'
+                data-headquarters='@json($headquartersMap)'
+                data-user-headquarter='@json($userHeadquarter?->only(['id', 'name', 'address', 'city', 'province', 'zip_code', 'latitude', 'longitude']))'
                 data-missing-message="{{ __('daily_travel.preview_missing') }}"
                 data-vehicle-label="{{ __('daily_travel.preview_vehicle') }}"
                 data-vehicle-none="{{ __('daily_travel.preview_vehicle_none') }}"
@@ -56,6 +92,11 @@
                 data-start-location-label="{{ __('daily_travel.start_location_label') }}"
                 data-start-location-office-label="{{ __('daily_travel.start_location_office') }}"
                 data-start-location-value="{{ \App\Models\DailyTravelStructure::START_LOCATION_OFFICE }}"
+                data-route-title="{{ __('daily_travel.route_title') }}"
+                data-route-start-label="{{ __('daily_travel.route_start_end') }}"
+                data-route-empty="{{ __('daily_travel.route_intermediate_list_empty') }}"
+                data-route-none="{{ __('daily_travel.route_intermediate_none') }}"
+                data-route-missing-headquarter="{{ __('daily_travel.route_missing_user_headquarter') }}"
                 data-steps-title="{{ __('daily_travel.preview_steps_title') }}"
                 data-steps-empty="{{ __('daily_travel.preview_steps_empty') }}"
                 data-step-label="{{ __('daily_travel.preview_step_label', ['number' => ':number']) }}"

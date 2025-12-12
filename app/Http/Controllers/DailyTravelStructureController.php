@@ -188,6 +188,7 @@ class DailyTravelStructureController extends Controller
                 Rule::exists('user_vehicle', 'vehicle_id')->where('user_id', $user->id),
             ],
             'cost_per_km' => ['nullable', 'numeric', 'min:0'],
+            'travel_hours' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $vehicle = $user->vehicles()
@@ -196,10 +197,12 @@ class DailyTravelStructureController extends Controller
 
         $cost = $validated['cost_per_km'] ?? $this->getLatestVehicleCost($vehicle);
         $cost = round((float) $cost, 4);
+        $travelHours = round((float) ($validated['travel_hours'] ?? $dailyTravelStructure->travel_hours ?? 0), 2);
 
         $dailyTravelStructure->update([
             'vehicle_id' => $validated['vehicle_id'],
             'cost_per_km' => $cost,
+            'travel_hours' => $travelHours,
         ]);
 
         return back()->with('success', __('daily_travel.vehicle_updated'));
@@ -328,6 +331,7 @@ class DailyTravelStructureController extends Controller
         $vehicle = $template?->vehicle ?? $vehicles->first();
         $vehicleId = $template?->vehicle_id ?? $vehicle?->id;
         $cost = $template?->cost_per_km ?? $this->getLatestVehicleCost($vehicle);
+        $travelHours = $template?->travel_hours ?? 0;
 
         return DailyTravelStructure::create([
             'user_id' => $user->id,
@@ -335,6 +339,7 @@ class DailyTravelStructureController extends Controller
             'vehicle_id' => $vehicleId,
             'cost_per_km' => round((float) $cost, 4),
             'start_location' => $startLocation,
+            'travel_hours' => round((float) $travelHours, 2),
         ]);
     }
 

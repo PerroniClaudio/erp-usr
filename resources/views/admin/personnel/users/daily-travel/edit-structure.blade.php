@@ -103,6 +103,22 @@
                                             <span class="text-error text-sm">{{ $message }}</span>
                                         @enderror
                                     </label>
+
+                                    <label class="form-control w-full" for="travel_hours">
+                                        <div class="label">
+                                            <span class="label-text">{{ __('daily_travel.travel_hours_label') }}</span>
+                                        </div>
+                                        <input type="number" step="0.01" min="0" name="travel_hours"
+                                            id="travel_hours" class="input input-bordered w-full"
+                                            value="{{ old('travel_hours') ?? number_format((float) ($dailyTravelStructure->travel_hours ?? 0), 2, '.', '') }}"
+                                            placeholder="{{ __('daily_travel.travel_hours_placeholder') }}">
+                                        @error('travel_hours')
+                                            <span class="text-error text-sm">{{ $message }}</span>
+                                        @enderror
+                                        <p class="text-xs text-base-content/70 mt-1">
+                                            {{ __('daily_travel.travel_hours_help') }}
+                                        </p>
+                                    </label>
                                 </div>
                             </div>
 

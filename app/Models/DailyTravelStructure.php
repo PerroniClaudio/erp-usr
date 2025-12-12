@@ -16,10 +16,12 @@ class DailyTravelStructure extends Model
         'vehicle_id',
         'cost_per_km',
         'start_location',
+        'travel_hours',
     ];
 
     protected $casts = [
         'cost_per_km' => 'decimal:4',
+        'travel_hours' => 'decimal:2',
     ];
 
     public static function startLocationOptions(): array

@@ -10,6 +10,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const googleApiKey = preview.dataset.googleApiKey;
     const distanceSummary = document.querySelector("[data-distance-summary]");
     const startLocationValue = preview.dataset.startLocationValue || "office";
+    const headquartersMap = JSON.parse(preview.dataset.headquarters || "{}");
+    const userHeadquarter = safeJsonParse(preview.dataset.userHeadquarter);
+    const intermediateSelect = document.getElementById(
+        "intermediate_headquarter_id"
+    );
+    const addIntermediateButton = document.getElementById(
+        "add_intermediate_button"
+    );
+    const intermediateList = document.querySelector("[data-intermediate-list]");
+    let intermediateSteps = [];
 
     const labels = {
         missing: preview.dataset.missingMessage || "",
@@ -28,6 +38,11 @@ document.addEventListener("DOMContentLoaded", () => {
         distanceEmpty: preview.dataset.distanceEmpty || "",
         mapPlaceholder: preview.dataset.mapPlaceholder || "",
         currency: preview.dataset.currencySymbol || "€",
+        routeTitle: preview.dataset.routeTitle || "",
+        routeStart: preview.dataset.routeStartLabel || "",
+        routeEmpty: preview.dataset.routeEmpty || "",
+        routeNone: preview.dataset.routeNone || "",
+        routeMissingHeadquarter: preview.dataset.routeMissingHeadquarter || "",
     };
 
     const formatCurrency = (value, decimals = 2) => {
@@ -129,8 +144,123 @@ document.addEventListener("DOMContentLoaded", () => {
         renderStructure(structure, selectedStartLocation);
     };
 
-    companySelect?.addEventListener("change", renderCurrentSelection);
+    const populateIntermediateSelect = () => {
+        if (!intermediateSelect) return;
+        const companyId = getSelectedCompanyId();
+        const list = Array.isArray(headquartersMap[companyId])
+            ? headquartersMap[companyId]
+            : [];
+        const options = [
+            `<option value="">${labels.routeNone}</option>`,
+            ...list.map(
+                (hq) =>
+                    `<option value="${hq.id}">${hq.name} - ${hq.city}</option>`
+            ),
+        ];
+        intermediateSelect.innerHTML = options.join("");
+    };
 
+    const renderIntermediates = () => {
+        if (!intermediateList) return;
+
+        if (!userHeadquarter) {
+            intermediateList.innerHTML = `<p class="text-sm text-error">${labels.routeMissingHeadquarter}</p>`;
+            return;
+        }
+
+        const steps = [
+            userHeadquarter,
+            ...intermediateSteps,
+            userHeadquarter,
+        ];
+
+        const rows = steps
+            .map((step, index) => {
+                const isEndpoint =
+                    index === 0 || index === steps.length - 1;
+                const label = isEndpoint
+                    ? labels.routeStart
+                    : labels.stepLabel.replace(":number", index);
+
+                const removeButton =
+                    !isEndpoint && intermediateSteps.length
+                        ? `<button type="button" class="btn btn-xs btn-ghost" data-remove-step="${step.id}">✕</button>`
+                        : "";
+
+                return `
+                    <div class="flex items-center justify-between p-3 bg-base-100 border border-base-200 rounded-lg mb-2">
+                        <div>
+                            <p class="text-xs uppercase text-base-content/60">${label}</p>
+                            <p class="font-semibold">${step.name ?? step.address ?? ""}</p>
+                            <p class="text-sm text-base-content/70">${[step.address, step.city].filter(Boolean).join(" - ")}</p>
+                        </div>
+                        ${removeButton}
+                    </div>
+                `;
+            })
+            .join("");
+
+        const hiddenInputs = intermediateSteps
+            .map(
+                (step) =>
+                    `<input type="hidden" name="intermediate_headquarter_ids[]" value="${step.id}">`
+            )
+            .join("");
+
+        intermediateList.innerHTML =
+            rows || `<p class="text-sm text-base-content/70">${labels.routeEmpty}</p>`;
+
+        intermediateList
+            .querySelectorAll("[data-remove-step]")
+            .forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const targetId = Number(btn.dataset.removeStep);
+                    intermediateSteps = intermediateSteps.filter(
+                        (item) => Number(item.id) !== targetId
+                    );
+                    renderIntermediates();
+                });
+            });
+
+        if (hiddenInputs) {
+            const container = document.createElement("div");
+            container.innerHTML = hiddenInputs;
+            intermediateList.appendChild(container);
+        }
+    };
+
+    const resetIntermediatesForCompany = () => {
+        intermediateSteps = [];
+        populateIntermediateSelect();
+        renderIntermediates();
+    };
+
+    const addIntermediate = () => {
+        if (!intermediateSelect) return;
+        const value = Number(intermediateSelect.value);
+        if (!value) return;
+        const companyId = getSelectedCompanyId();
+        const list = Array.isArray(headquartersMap[companyId])
+            ? headquartersMap[companyId]
+            : [];
+        const found = list.find((hq) => Number(hq.id) === value);
+        if (!found) return;
+        const already = intermediateSteps.some(
+            (item) => Number(item.id) === value
+        );
+        if (already) return;
+        intermediateSteps.push(found);
+        renderIntermediates();
+    };
+
+    companySelect?.addEventListener("change", () => {
+        renderCurrentSelection();
+        resetIntermediatesForCompany();
+    });
+
+    addIntermediateButton?.addEventListener("click", addIntermediate);
+
+    resetIntermediatesForCompany();
     renderCurrentSelection();
 
     function renderDistances(steps) {
@@ -348,5 +478,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderMarkersAndPolyline(map, steps) {
         renderMarkers(map, steps);
         renderPolyline(map, steps);
+    }
+
+    function safeJsonParse(value) {
+        try {
+            return value ? JSON.parse(value) : null;
+        } catch (_) {
+            return null;
+        }
     }
 });
