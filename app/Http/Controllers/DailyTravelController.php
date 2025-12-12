@@ -39,11 +39,16 @@ class DailyTravelController extends Controller
             ->map(fn ($items) => $items->toArray())
             ->toArray();
 
+        $selectedStructure = $structures
+            ->first(fn ($structure) => $structure->company_id === $selectedCompanyId
+                && $structure->start_location === DailyTravelStructure::START_LOCATION_OFFICE)
+            ?? $structures->firstWhere('company_id', $selectedCompanyId);
+
         return view('standard.daily-travels.create', [
             'companies' => $companies,
             'selectedCompanyId' => $selectedCompanyId,
             'structuresMap' => $structuresMap,
-            'selectedStructure' => $structures->firstWhere('company_id', $selectedCompanyId),
+            'selectedStructure' => $selectedStructure,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
         ]);
     }
@@ -62,16 +67,11 @@ class DailyTravelController extends Controller
                 'integer',
                 Rule::exists('user_companies', 'company_id')->where(fn ($query) => $query->where('user_id', $user->id)),
             ],
-            'start_from_home' => ['nullable', 'boolean'],
         ]);
-
-        $startLocation = $request->boolean('start_from_home')
-            ? DailyTravelStructure::START_LOCATION_HOME
-            : DailyTravelStructure::START_LOCATION_OFFICE;
 
         $structure = DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $validated['company_id'])
-            ->where('start_location', $startLocation)
+            ->where('start_location', DailyTravelStructure::START_LOCATION_OFFICE)
             ->first();
 
         if (!$structure) {
@@ -204,13 +204,18 @@ class DailyTravelController extends Controller
                 ->toArray();
         }
 
+        $selectedStructure = $structures
+            ->first(fn ($structure) => $structure->company_id === $selectedCompanyId
+                && $structure->start_location === DailyTravelStructure::START_LOCATION_OFFICE)
+            ?? $structures->firstWhere('company_id', $selectedCompanyId);
+
         return view('admin.daily-travels.create', [
             'users' => $users,
             'selectedUser' => $selectedUser,
             'companies' => $companies,
             'selectedCompanyId' => $selectedCompanyId,
             'structuresMap' => $structuresMap,
-            'selectedStructure' => $structures->firstWhere('company_id', $selectedCompanyId),
+            'selectedStructure' => $selectedStructure,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
         ]);
     }
@@ -225,18 +230,13 @@ class DailyTravelController extends Controller
                 'integer',
                 Rule::exists('user_companies', 'company_id')->where(fn ($query) => $query->where('user_id', $request->integer('user_id'))),
             ],
-            'start_from_home' => ['nullable', 'boolean'],
         ]);
 
         $user = User::findOrFail($validated['user_id']);
 
-        $startLocation = $request->boolean('start_from_home')
-            ? DailyTravelStructure::START_LOCATION_HOME
-            : DailyTravelStructure::START_LOCATION_OFFICE;
-
         $structure = DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $validated['company_id'])
-            ->where('start_location', $startLocation)
+            ->where('start_location', DailyTravelStructure::START_LOCATION_OFFICE)
             ->first();
 
         if (!$structure) {
@@ -367,13 +367,16 @@ class DailyTravelController extends Controller
 
     private function buildStructuresMap(Collection $structures): Collection
     {
-        return $structures->groupBy('company_id')->map(function (Collection $items) {
-            return $items->mapWithKeys(function (DailyTravelStructure $structure) {
-                return [
-                    $structure->start_location => $this->serializeStructure($structure),
-                ];
+        return $structures
+            ->where('start_location', DailyTravelStructure::START_LOCATION_OFFICE)
+            ->groupBy('company_id')
+            ->map(function (Collection $items) {
+                return $items->mapWithKeys(function (DailyTravelStructure $structure) {
+                    return [
+                        $structure->start_location => $this->serializeStructure($structure),
+                    ];
+                });
             });
-        });
     }
 
     private function serializeStructure(DailyTravelStructure $structure): array
@@ -465,14 +468,6 @@ class DailyTravelController extends Controller
 
             $costPerKm = (float) ($travel->structure?->cost_per_km ?? 0);
             $economicValue = (float) ($travel->structure?->economic_value ?? 0);
-            $startLocation = $travel->structure?->start_location;
-
-            if ($startLocation === DailyTravelStructure::START_LOCATION_HOME) {
-                $homeDistance = (float) ($travel->user?->home_company_distance_km ?? 0);
-                if ($homeDistance > 0) {
-                    $distance = max(0, $distance - $homeDistance);
-                }
-            }
 
             $distanceCost = $distance * $costPerKm;
             $timeCost = $costPerKm * $timeDifference;
@@ -488,7 +483,7 @@ class DailyTravelController extends Controller
                 'indemnity' => $indemnity,
                 'economic_value' => $economicValue,
                 'total' => $total,
-                'start_location' => $startLocation,
+                'start_location' => $travel->structure?->start_location,
             ];
         });
 

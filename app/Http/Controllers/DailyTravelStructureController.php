@@ -52,7 +52,7 @@ class DailyTravelStructureController extends Controller
      */
     public function edit(Request $request, User $user, Company $company)
     {
-        $startLocation = $this->resolveStartLocation($request->string('start_location'));
+        $startLocation = DailyTravelStructure::START_LOCATION_OFFICE;
         $vehicles = $user->vehicles()
             ->with(['pricePerKmUpdates' => fn ($query) => $query->latest('update_date')->latest('created_at')])
             ->get();
@@ -103,7 +103,6 @@ class DailyTravelStructureController extends Controller
             'mapSteps' => $mapSteps,
             'googleMapsApiKey' => config('services.google_maps.api_key'),
             'startLocation' => $startLocation,
-            'startLocations' => DailyTravelStructure::startLocationOptions(),
         ]);
            
 
@@ -120,8 +119,7 @@ class DailyTravelStructureController extends Controller
 
     public function storeStep(Request $request, User $user, Company $company)
     {
-        $startLocation = $this->resolveStartLocation($request->string('start_location'));
-        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
+        $dailyTravelStructure = $this->getStructure($user, $company);
 
         $validated = $request->validate([
             'address' => 'required|string|max:255',
@@ -152,8 +150,7 @@ class DailyTravelStructureController extends Controller
 
     public function reorderSteps(Request $request, User $user, Company $company)
     {
-        $startLocation = $this->resolveStartLocation($request->string('start_location'));
-        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
+        $dailyTravelStructure = $this->getStructure($user, $company);
 
         $validated = $request->validate([
             'order' => ['required', 'array'],
@@ -183,8 +180,7 @@ class DailyTravelStructureController extends Controller
 
     public function updateVehicle(Request $request, User $user, Company $company)
     {
-        $startLocation = $this->resolveStartLocation($request->string('start_location'));
-        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
+        $dailyTravelStructure = $this->getStructure($user, $company);
 
         $validated = $request->validate([
             'vehicle_id' => [
@@ -219,8 +215,7 @@ class DailyTravelStructureController extends Controller
 
     public function updateStep(Request $request, User $user, Company $company, DailyTravelStep $step)
     {
-        $startLocation = $this->resolveStartLocation($request->string('start_location'));
-        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
+        $dailyTravelStructure = $this->getStructure($user, $company);
 
         if ($step->daily_travel_structure_id !== $dailyTravelStructure->id) {
             abort(404);
@@ -250,8 +245,7 @@ class DailyTravelStructureController extends Controller
 
     public function destroyStep(Request $request, User $user, Company $company, DailyTravelStep $step)
     {
-        $startLocation = $this->resolveStartLocation($request->string('start_location'));
-        $dailyTravelStructure = $this->getStructure($user, $company, $startLocation);
+        $dailyTravelStructure = $this->getStructure($user, $company);
 
         if ($step->daily_travel_structure_id !== $dailyTravelStructure->id) {
             abort(404);
@@ -344,19 +338,12 @@ class DailyTravelStructureController extends Controller
         ]);
     }
 
-    private function getStructure(User $user, Company $company, string $startLocation): DailyTravelStructure
+    private function getStructure(User $user, Company $company): DailyTravelStructure
     {
         return DailyTravelStructure::where('user_id', $user->id)
             ->where('company_id', $company->id)
-            ->where('start_location', $startLocation)
+            ->where('start_location', DailyTravelStructure::START_LOCATION_OFFICE)
             ->firstOrFail();
-    }
-
-    private function resolveStartLocation(?string $location): string
-    {
-        return in_array($location, DailyTravelStructure::startLocationOptions(), true)
-            ? $location
-            : DailyTravelStructure::START_LOCATION_OFFICE;
     }
 
     private function getLatestVehicleCost(?Vehicle $vehicle): float

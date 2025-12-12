@@ -5,15 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const metaContainer = preview.querySelector("[data-preview-meta]");
     const stepsTable = document.querySelector("[data-steps-table]");
     const companySelect = document.getElementById("company_id");
-    const startFromHomeCheckbox = document.getElementById("start_from_home");
     const structures = JSON.parse(preview.dataset.structures || "{}");
     const mapContainer = document.getElementById("daily-travel-map");
     const googleApiKey = preview.dataset.googleApiKey;
     const distanceSummary = document.querySelector("[data-distance-summary]");
-    const startLocationOfficeValue =
-        preview.dataset.startLocationOfficeValue || "office";
-    const startLocationHomeValue =
-        preview.dataset.startLocationHomeValue || "home";
+    const startLocationValue = preview.dataset.startLocationValue || "office";
 
     const labels = {
         missing: preview.dataset.missingMessage || "",
@@ -23,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
         economicValue: preview.dataset.economicValueLabel || "",
         startLocation: preview.dataset.startLocationLabel || "",
         startLocationOffice: preview.dataset.startLocationOfficeLabel || "",
-        startLocationHome: preview.dataset.startLocationHomeLabel || "",
         stepsTitle: preview.dataset.stepsTitle || "",
         stepsEmpty: preview.dataset.stepsEmpty || "",
         stepLabel: preview.dataset.stepLabel || "",
@@ -45,18 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }`;
     };
 
-    const resolveStartLocationLabel = (value) =>
-        value === startLocationHomeValue
-            ? labels.startLocationHome
-            : labels.startLocationOffice;
+    const resolveStartLocationLabel = () => labels.startLocationOffice;
 
     const getSelectedCompanyId = () =>
         companySelect?.value || preview.dataset.selectedCompany;
 
-    const getSelectedStartLocation = () =>
-        startFromHomeCheckbox?.checked
-            ? startLocationHomeValue
-            : startLocationOfficeValue;
+    const getSelectedStartLocation = () => startLocationValue;
 
     const renderStructure = (structure, startLocation) => {
         if (!structure) {
@@ -141,14 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     companySelect?.addEventListener("change", renderCurrentSelection);
-    startFromHomeCheckbox?.addEventListener("change", renderCurrentSelection);
-
-    if (
-        startFromHomeCheckbox &&
-        preview.dataset.selectedStartLocation === startLocationHomeValue
-    ) {
-        startFromHomeCheckbox.checked = true;
-    }
 
     renderCurrentSelection();
 

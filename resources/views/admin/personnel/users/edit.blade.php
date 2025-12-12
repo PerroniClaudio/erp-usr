@@ -69,6 +69,31 @@
                             placeholder="{{ __('personnel.users_company_name') }}" />
                     </fieldset>
 
+                    @php
+                        $selectedHeadquarterId = old('headquarter_id', $user->headquarters->first()?->id);
+                    @endphp
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">
+                            {{ __('personnel.users_headquarter') }}
+                            @if ($mainCompany)
+                                <span class="text-xs text-base-content/60">({{ $mainCompany->name }})</span>
+                            @endif
+                        </legend>
+                        <select name="headquarter_id" class="select w-full form-input-activable" disabled>
+                            @if ($mainCompanyHeadquarters->isEmpty())
+                                <option value="">{{ __('personnel.users_headquarter_none') }}</option>
+                            @else
+                                <option value="">{{ __('personnel.users_headquarter_placeholder') }}</option>
+                                @foreach ($mainCompanyHeadquarters as $hq)
+                                    <option value="{{ $hq->id }}"
+                                        {{ $selectedHeadquarterId == $hq->id ? 'selected' : '' }}>
+                                        {{ $hq->name }} — {{ $hq->city }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </fieldset>
+
                     <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('personnel.users_vat_number') }}</legend>
                         <input type="text" name="vat_number" class="input w-full form-input-activable" disabled
@@ -147,42 +172,6 @@
                 </div>
             </form>
         </div>
-
-        @if ($canUpdateAnagrafica)
-            <div class="card bg-base-300">
-                <form class="card-body space-y-4" method="POST"
-                    action="{{ route('users.daily-travel-preferences.update', $user) }}">
-                    @csrf
-                    @method('PUT')
-
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg">{{ __('personnel.users_home_company_distance_title') }}</h2>
-                        <button type="submit" class="btn btn-primary">
-                            <x-lucide-save class="h-4 w-4" />
-                        </button>
-                    </div>
-
-                    <hr>
-
-                    <label class="form-control w-full" for="home_company_distance_km">
-                        <div class="label">
-                            <span class="label-text">{{ __('personnel.users_home_company_distance_label') }}</span>
-                        </div>
-                        <input type="number" step="0.01" min="0" name="home_company_distance_km"
-                            id="home_company_distance_km" class="input w-full"
-                            value="{{ old('home_company_distance_km', number_format((float) $user->home_company_distance_km, 2, '.', '')) }}"
-                            placeholder="{{ __('personnel.users_home_company_distance_label') }}" />
-                        @error('home_company_distance_km')
-                            <span class="text-error text-sm">{{ $message }}</span>
-                        @enderror
-                    </label>
-
-                    <p class="text-sm text-base-content/70">
-                        {{ __('personnel.users_home_company_distance_help') }}
-                    </p>
-                </form>
-            </div>
-        @endif
 
         @if ($canManageRoles)
             @php

@@ -20,8 +20,6 @@ return [
     'start_location_office' => 'Partenza dall\'ufficio',
     'start_location_home' => 'Partenza da casa',
     'start_location_helper' => 'Stai modificando la struttura con partenza da :location.',
-    'start_from_home_label' => 'Partenza da casa',
-    'start_from_home_hint' => 'Seleziona per utilizzare la struttura con partenza dalla tua abitazione.',
     'steps_title' => 'Tappe',
     'steps_address' => 'Indirizzo',
     'steps_city' => 'Città',

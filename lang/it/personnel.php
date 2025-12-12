@@ -66,10 +66,6 @@ return [
     "users_vat_number" => "Partita IVA",
     "users_badge_code" => "Codice badge",
     "users_employee_code" => "Codice dipendente",
-    "users_home_company_distance_title" => "Distanza casa-azienda",
-    "users_home_company_distance_label" => "Distanza casa-azienda (km)",
-    "users_home_company_distance_help" => "Imposta i km da detrarre quando il viaggio parte da casa.",
-    "users_home_company_distance_updated" => "Distanza casa-azienda aggiornata con successo.",
     "users_business_trips_access" => "Accesso al modulo trasferte",
     "users_business_trips_access_help" => "Consenti a questo utente di creare e gestire trasferte.",
     "users_time_off" => "Ferie",
@@ -278,4 +274,7 @@ return [
     "users_time_off_save" => "Salva",
     "users_time_off_close" => "Chiudi",
     "users_time_off_trend_title" => "Andamento utilizzo ferie/ROL",
+    "users_headquarter" => "Sede aziendale",
+    "users_headquarter_placeholder" => "Seleziona una sede",
+    "users_headquarter_none" => "Nessuna sede disponibile",
 ];

@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceType;
 use App\Models\Company;
 use App\Models\Group;
+use App\Models\Headquarters;
 use App\Models\OvertimeRequest;
 use Spatie\Permission\Models\Role;
 use App\Models\TimeOffRequest;
@@ -108,6 +109,11 @@ class UsersController extends Controller
         $canManageRoles = $currentUser?->hasRole('admin') ?? false;
         $availableRoles = $canManageRoles ? Role::orderBy('name')->get() : collect();
 
+        $mainCompanyName = env('MAIN_COMPANY_NAME', 'iFortech');
+        $mainCompany = Company::where('name', $mainCompanyName)->first()
+            ?? Company::where('name', 'iFortech')->first();
+        $mainCompanyHeadquarters = $mainCompany?->headquarters()->orderBy('name')->get() ?? collect();
+
         return view('admin.personnel.users.edit', compact(
             'user',
             'dayLabels',
@@ -117,6 +123,8 @@ class UsersController extends Controller
             'canPrintPayslips',
             'canManageRoles',
             'availableRoles',
+            'mainCompany',
+            'mainCompanyHeadquarters',
         ));
     }
 
@@ -1135,6 +1143,7 @@ class UsersController extends Controller
             'badge_code' => 'nullable|string|max:50',
             'employee_code' => 'nullable|string|max:50',
             'business_trips_access' => 'nullable|boolean',
+            'headquarter_id' => 'nullable|exists:headquarters,id',
         ]);
 
         $payload = $request->only([
@@ -1180,21 +1189,27 @@ class UsersController extends Controller
             }
         }
 
+        // Associazione sede principale (singola)
+        $headquarterId = $request->input('headquarter_id');
+        $mainCompanyName = env('MAIN_COMPANY_NAME', 'iFortech');
+        $allowedHeadquarter = null;
+
+        if ($headquarterId) {
+            $allowedHeadquarter = Headquarters::where('id', $headquarterId)
+                ->whereHas('company', function ($query) use ($mainCompanyName) {
+                    $query->where('name', $mainCompanyName)
+                        ->orWhere('name', 'iFortech');
+                })
+                ->first();
+        }
+
+        if ($allowedHeadquarter) {
+            $user->headquarters()->sync([$allowedHeadquarter->id]);
+        } else {
+            $user->headquarters()->detach();
+        }
+
         return redirect()->route('users.edit', $user->id)->with('success', __('personnel.users_updated'));
-    }
-
-    public function updateDailyTravelPreferences(Request $request, User $user)
-    {
-        $validated = $request->validate([
-            'home_company_distance_km' => ['required', 'numeric', 'min:0'],
-        ]);
-
-        $user->home_company_distance_km = round((float) $validated['home_company_distance_km'], 2);
-        $user->save();
-
-        return redirect()
-            ->route('users.edit', $user)
-            ->with('success', __('personnel.users_home_company_distance_updated'));
     }
 
     public function updateDefaultSchedules(Request $request, User $user)

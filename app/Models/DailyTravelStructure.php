@@ -24,7 +24,7 @@ class DailyTravelStructure extends Model
 
     public static function startLocationOptions(): array
     {
-        return [self::START_LOCATION_OFFICE, self::START_LOCATION_HOME];
+        return [self::START_LOCATION_OFFICE];
     }
 
     protected function economicValue(): Attribute
