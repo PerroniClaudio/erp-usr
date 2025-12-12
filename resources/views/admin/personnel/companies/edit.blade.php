@@ -11,71 +11,116 @@
 
     <hr>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div class="col-span-1 lg:col-span-1">
-            <div class="card bg-base-300 ">
-                <form class="card-body" method="POST" action="{{ route('companies.update', $company) }}">
-                    @csrf
-                    @method('PUT')
-                    <fieldset class="fieldset">
-                        <legend class="fieldset-legend">{{ __('personnel.companies_name') }}</legend>
-                        <input type="text" name="name" class="input" value="{{ old('name', $company->name) }}"
-                            placeholder="{{ __('personnel.companies_name') }}" />
-                    </fieldset>
+    <div class="flex flex-col gap-4">
+
+        <div class="card bg-base-300 ">
+            <form class="card-body" method="POST" action="{{ route('companies.update', $company) }}">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl">{{ __('personnel.companies_data_title') }}</h2>
+                </div>
+                <hr>
+                @csrf
+                @method('PUT')
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('personnel.companies_name') }}</legend>
+                    <input type="text" name="name" class="input" value="{{ old('name', $company->name) }}"
+                        placeholder="{{ __('personnel.companies_name') }}" />
+                </fieldset>
 
 
 
-                    <button id="submit-button" type="submit"
-                        class="hidden">{{ __('personnel.companies_save') }}</button>
-                </form>
+                <button id="submit-button" type="submit" class="hidden">{{ __('personnel.companies_save') }}</button>
+            </form>
+        </div>
+
+        <div class="card bg-base-300 ">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl">{{ __('personnel.companies_users') }}</h2>
+                    <div class="btn btn-primary" id="associate-users-modal-opener" onclick="associate_user.showModal()">
+                        <x-lucide-plus class="h-4 w-4" />
+                    </div>
+                </div>
+                <hr>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>{{ __('personnel.companies_personnel_name') }}</th>
+                            <th>{{ __('personnel.companies_personnel_email') }}</th>
+                            <th>{{ __('personnel.companies_actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($company->users as $user)
+                            <tr>
+                                <td>{{ $user->id }}</td>
+                                <td>{{ $user->name }}</td>
+                                <td>{{ $user->email }}</td>
+
+                                <td>
+                                    <form action="{{ route('companies.users.dissociate', [$company, $user]) }}"
+                                        method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-warning">
+                                            <x-lucide-trash-2 class="h-4 w-4" />
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
             </div>
         </div>
 
-        <div class="col-span-1 lg:col-span-3">
-            <div class="card bg-base-300 ">
-                <div class="card-body">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-2xl">{{ __('personnel.companies_users') }}</h2>
-                        <div class="btn btn-primary" id="associate-users-modal-opener"
-                            onclick="associate_user.showModal()">
-                            <x-lucide-plus class="h-4 w-4" />
-                        </div>
-                    </div>
-                    <hr>
-                    <table class="table">
-                        <thead>
+        <div class="card bg-base-300">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl">{{ __('headquarters.company_headquarters') }}</h2>
+                    <a href="{{ route('headquarters.create', ['company_id' => $company->id]) }}"
+                        class="btn btn-primary">
+                        <x-lucide-plus class="h-4 w-4" />
+                    </a>
+                </div>
+                <hr>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <td>{{ __('headquarters.name') }}</td>
+                            <td>{{ __('headquarters.address') }}</td>
+                            <td>{{ __('headquarters.actions') }}</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @unless ($company->headquarters->count())
                             <tr>
-                                <th>ID</th>
-                                <th>{{ __('personnel.companies_personnel_name') }}</th>
-                                <th>{{ __('personnel.companies_personnel_email') }}</th>
-                                <th>{{ __('personnel.companies_actions') }}</th>
+                                <td colspan="3" class="text-center">
+                                    {{ __('headquarters.no_headquarters') }}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($company->users as $user)
+                        @else
+                            @foreach ($company->headquarters as $headquarter)
                                 <tr>
-                                    <td>{{ $user->id }}</td>
-                                    <td>{{ $user->name }}</td>
-                                    <td>{{ $user->email }}</td>
-
+                                    <td>{{ $headquarter->name }}</td>
+                                    <td>{{ $headquarter->address }}, {{ $headquarter->city }},
+                                        {{ $headquarter->province }}, {{ $headquarter->zip_code }}</td>
                                     <td>
-                                        <form action="{{ route('companies.users.dissociate', [$company, $user]) }}"
-                                            method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-warning">
-                                                <x-lucide-trash-2 class="h-4 w-4" />
-                                            </button>
-                                        </form>
+                                        <a href="{{ route('headquarters.edit', $headquarter->id) }}"
+                                            class="btn btn-primary">
+                                            <x-lucide-edit-2 class="h-4 w-4" />
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-
-                </div>
+                        @endunless
+                    </tbody>
+                </table>
             </div>
         </div>
+
     </div>
 
     <dialog id="associate_user" class="modal">

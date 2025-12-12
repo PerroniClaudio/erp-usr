@@ -25,6 +25,7 @@ return [
     "companies_name" => "Nome dell'azienda",
     "companies_actions" => "Azioni",
     "companies_users" => "Utenti",
+    "companies_data_title" => "Dati azienda",
     "companies_personnel_name" => "Nome",
     "companies_personnel_email" => "Email",
     "companies_associate_users" => "Associa utenti",

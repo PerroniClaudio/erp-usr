@@ -119,6 +119,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Group::class, 'groups_users', 'user_id', 'group_id');
     }
 
+    public function headquarters()
+    {
+        return $this->belongsToMany(Headquarters::class, 'headquarters_user', 'user_id', 'headquarters_id')
+            ->withTimestamps();
+    }
+
     public function vehicles()
     {
         return $this->belongsToMany(Vehicle::class, 'user_vehicle', 'user_id', 'vehicle_id')

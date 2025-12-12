@@ -4,6 +4,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BusinessTripController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DailyTravelController;
+use App\Http\Controllers\HeadquartersController;
 use App\Http\Controllers\FailedAttendanceController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
@@ -122,6 +123,20 @@ Route::group([
         Route::post('/users/{user}/store-location', [UsersController::class, 'updateLocation'])->name('users.store-location');
     });
 });
+
+Route::group([
+    'middleware' => ['auth', 'role:admin'],
+    'prefix' => 'admin/headquarters',
+], function () {
+    Route::get('/search-address', [HeadquartersController::class, 'searchAddress'])->name('headquarters.search-address');
+    Route::get('/', [HeadquartersController::class, 'index'])->name('headquarters.index');
+    Route::get('/create', [HeadquartersController::class, 'create'])->name('headquarters.create');
+    Route::post('/', [HeadquartersController::class, 'store'])->name('headquarters.store');
+    Route::get('/{headquarter}/edit', [HeadquartersController::class, 'edit'])->name('headquarters.edit');
+    Route::put('/{headquarter}', [HeadquartersController::class, 'update'])->name('headquarters.update');
+    Route::delete('/{headquarter}', [HeadquartersController::class, 'destroy'])->name('headquarters.destroy');
+});
+
 
 Route::group([
     'middleware' => ['auth', 'role:admin'],

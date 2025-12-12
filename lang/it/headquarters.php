@@ -1,0 +1,26 @@
+<?php 
+
+return [
+    'headquarters' => 'Sedi',
+    'add_headquarter' => 'Aggiungi Sede',
+    'edit_headquarter' => 'Modifica Sede',
+    'name' => 'Nome',
+    'address' => 'Indirizzo',
+    'city' => 'Città',
+    'province' => 'Provincia',
+    'zip_code' => 'CAP',
+    'latitude' => 'Latitudine',
+    'longitude' => 'Longitudine',
+    'company' => 'Azienda',
+    'actions' => 'Azioni',
+    'no_headquarters' => 'Nessuna sede trovata.',
+    'company_headquarters' => 'Sedi Aziendali',
+    'select_company' => 'Seleziona un\'azienda',
+    'address_validation' => 'Convalida indirizzo',
+    'search_placeholder' => 'Cerca indirizzo',
+    'validate_address' => 'Convalida',
+    'created_success' => 'Sede creata correttamente.',
+    'missing_api_key' => 'Chiave API Google Maps mancante: aggiungi GOOGLE_MAPS_API_KEY per abilitare la convalida.',
+    'updated_success' => 'Sede aggiornata correttamente.',
+    'back_to_company' => 'Indietro',
+];
