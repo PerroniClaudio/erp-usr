@@ -29,19 +29,19 @@
     <div class="drawer lg:drawer-open">
         <input id="main-drawer" type="checkbox" class="drawer-toggle" />
         <div class="drawer-content flex flex-col @if ($shouldHavePadding) pb-16 @endif">
-            <main
-                class=" w-full flex flex-col gap-4 @if ($shouldHavePadding) p-4 menu-padding max-w-screen-2xl mx-auto @endif">
-                <!-- Page content here -->
-                <div
-                    class="max-w-screen-2xl mx-auto w-full flex @if ($shouldHavePadding) menu-padding @endif lg:hidden">
-                    <div class="p-4">
-                        <label for="main-drawer" class="btn btn-secondary drawer-button lg:hidden"
+            <main class="w-full flex flex-col gap-4">
+                <div class="navbar bg-base-300 shadow-sm lg:hidden">
+                    <div class="flex-none">
+                        <label for="main-drawer" class="btn btn-ghost drawer-button lg:hidden"
                             aria-label="open sidebar">
                             <x-lucide-menu class="h-6 w-6" id="main-drawer-mobile-opener" />
                         </label>
                     </div>
                 </div>
-                {{ $slot }}
+                <section
+                    class="w-full flex flex-col gap-4 @if ($shouldHavePadding) p-4 menu-padding max-w-screen-2xl mx-auto @endif">
+                    {{ $slot }}
+                </section>
             </main>
         </div>
         <div class="drawer-side z-50">
