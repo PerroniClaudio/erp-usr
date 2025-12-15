@@ -1,13 +1,6 @@
 <x-layouts.app>
-    <div class="flex flex-col gap-2">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-semibold">{{ __('personnel.user_schedule_request_title') }}</h1>
-                <p class="text-base-content/70">
-                    {{ __('personnel.user_schedule_request_description') }}
-                </p>
-            </div>
-
+    <x-layouts.header :title="__('personnel.user_schedule_request_title')">
+        <x-slot:actions>
             <form method="GET" action="{{ route('user-schedule-request.index') }}" class="flex items-center gap-2">
                 <input type="date" name="week_start" value="{{ $weekStart->toDateString() }}"
                     min="{{ $minimumWeekStart->toDateString() }}" class="input input-bordered" />
@@ -15,12 +8,11 @@
                     {{ __('personnel.users_default_schedule_go') }}
                 </button>
             </form>
-        </div>
-
+        </x-slot:actions>
         <p class="text-base-content/70">
             {{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}
         </p>
-    </div>
+    </x-layouts.header>
 
     @if ($pendingRequest)
         <div class="alert alert-info mt-4">

@@ -1,9 +1,5 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">Profilo utente</h1>
-    </div>
-
-    <hr>
+    <x-layouts.header title="Profilo utente" />
     <div id="profile-page" data-search-url="{{ route('standard.profile.search-address') }}">
 
 

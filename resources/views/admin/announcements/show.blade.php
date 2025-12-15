@@ -1,19 +1,18 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">Dettagli Annuncio</h1>
-        <div class="flex gap-2">
-            <a href="{{ route('admin.announcements.edit', $announcement) }}" class="btn btn-warning">
-                <x-lucide-edit class="h-4 w-4" />
-                Modifica
-            </a>
-            <a href="{{ route('admin.announcements.index') }}" class="btn btn-secondary">
-                <x-lucide-arrow-left class="h-4 w-4" />
-                Torna alla lista
-            </a>
-        </div>
-    </div>
-
-    <hr>
+    <x-layouts.header title="Dettagli Annuncio">
+        <x-slot:actions>
+            <div class="flex gap-2">
+                <a href="{{ route('admin.announcements.edit', $announcement) }}" class="btn btn-warning">
+                    <x-lucide-edit class="h-4 w-4" />
+                    Modifica
+                </a>
+                <a href="{{ route('admin.announcements.index') }}" class="btn btn-secondary">
+                    <x-lucide-arrow-left class="h-4 w-4" />
+                    Torna alla lista
+                </a>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2">

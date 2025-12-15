@@ -1,13 +1,12 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">Gestione Annunci</h1>
-        <a href="{{ route('admin.announcements.create') }}" class="btn btn-primary">
-            <x-lucide-plus class="h-4 w-4" />
-            Nuovo Annuncio
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header title="Gestione Annunci">
+        <x-slot:actions>
+            <a href="{{ route('admin.announcements.create') }}" class="btn btn-primary">
+                <x-lucide-plus class="h-4 w-4" />
+                Nuovo Annuncio
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     @if (session('success'))
         <div class="alert alert-success">

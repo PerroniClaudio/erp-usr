@@ -1,13 +1,12 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">Nuovo Annuncio</h1>
-        <a href="{{ route('admin.announcements.index') }}" class="btn btn-secondary">
-            <x-lucide-arrow-left class="h-4 w-4" />
-            Torna alla lista
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header title="Nuovo Annuncio">
+        <x-slot:actions>
+            <a href="{{ route('admin.announcements.index') }}" class="btn btn-secondary">
+                <x-lucide-arrow-left class="h-4 w-4" />
+                Torna alla lista
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     @if ($errors->any())
         <div class="alert alert-error">
