@@ -3,6 +3,8 @@
 use App\Http\Controllers\FileObjectController;
 use App\Models\Vehicle;
 use App\Services\AttendanceCheckService;
+use App\Services\UserWeeklyCalendarService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -48,10 +50,30 @@ Route::get('/home', function () {
     $attendanceCheckService = new AttendanceCheckService();
     $attendanceCheckService->performLoginAttendanceCheck($user);
 
+    $calendarService = app(UserWeeklyCalendarService::class);
+    $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY);
+    $weeklyPlan = $calendarService->buildForUser($user, $weekStart);
+
     return view('home', [
         'failedAttendances' => $user->failedAttendances()->where('status', 0)->get(),
+        'weeklyPlan' => $weeklyPlan,
     ]);
 })->middleware(['auth'])->name('home');
+
+Route::get('/home/weekly-events', function () {
+    $user = Auth::user();
+    abort_unless($user, 403);
+
+    $calendarService = app(UserWeeklyCalendarService::class);
+    $start = request('start')
+        ? Carbon::parse(request('start'))
+        : Carbon::now()->startOfWeek(Carbon::MONDAY);
+    $end = request('end') ? Carbon::parse(request('end')) : null;
+
+    $events = $calendarService->buildEventsForUser($user, $start, $end);
+
+    return response()->json($events->toArray());
+})->middleware(['auth'])->name('home.weekly-events');
 
 Route::get('/vehicles/search', function () {
     $query = request('query');

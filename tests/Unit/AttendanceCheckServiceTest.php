@@ -10,10 +10,15 @@ use App\Services\AttendanceCheckService;
 use Carbon\Carbon;
 
 beforeEach(function () {
+    Carbon::setTestNow(Carbon::create(2024, 3, 12));
     $this->service = new AttendanceCheckService();
     $this->user = User::factory()->create();
     $this->company = Company::factory()->create(['name' => 'iFortech']);
     $this->user->companies()->attach($this->company);
+});
+
+afterEach(function () {
+    Carbon::setTestNow();
 });
 
 it('rileva giorni con ore lavorative mancanti', function () {
@@ -178,4 +183,40 @@ it('salta i weekend nel controllo delle ore lavorative', function () {
         $date = Carbon::parse($day['date']);
         expect($date->isWeekend())->toBeFalse();
     }
+});
+
+it('ignora le festività nazionali durante il controllo di login', function () {
+    $referenceDate = Carbon::create(2024, 4, 26); // Giorno lavorativo dopo il 25/04 (festivo)
+    Carbon::setTestNow($referenceDate);
+
+    $workdays = [
+        Carbon::create(2024, 4, 24),
+        Carbon::create(2024, 4, 23),
+        Carbon::create(2024, 4, 22),
+        Carbon::create(2024, 4, 19),
+        Carbon::create(2024, 4, 18),
+        Carbon::create(2024, 4, 17),
+        Carbon::create(2024, 4, 16),
+        Carbon::create(2024, 4, 15),
+    ];
+
+    foreach ($workdays as $day) {
+        Attendance::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'date' => $day->toDateString(),
+            'hours' => 8,
+            'status' => 1,
+        ]);
+    }
+
+    $createdRecords = $this->service->performLoginAttendanceCheck($this->user);
+
+    expect($createdRecords)->toBeEmpty();
+
+    $failedAttendances = FailedAttendance::where('user_id', $this->user->id)
+        ->whereDate('date', '2024-04-25') // Festa della Liberazione
+        ->count();
+
+    expect($failedAttendances)->toBe(0);
 });

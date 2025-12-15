@@ -11,8 +11,10 @@ use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\TimeOffAmountController;
 use App\Http\Controllers\UsersController;
 use App\Services\AttendanceCheckService;
+use App\Services\UserWeeklyCalendarService;
 use App\Models\WeeklyScheduleCompletion;
 use App\Models\UserScheduleChangeRequest;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -54,8 +56,13 @@ Route::group([
         $attendanceCheckService = new AttendanceCheckService();
         $attendanceCheckService->performLoginAttendanceCheck($user);
 
+        $calendarService = app(UserWeeklyCalendarService::class);
+        $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $weeklyPlan = $calendarService->buildForUser($user, $weekStart);
+
         return view('home', [
             'failedAttendances' => $user->failedAttendances()->where('status', 0)->get(),
+            'weeklyPlan' => $weeklyPlan,
         ]);
     })->name('admin.home.as-standard');
 });

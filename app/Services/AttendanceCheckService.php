@@ -6,10 +6,16 @@ use App\Models\Attendance;
 use App\Models\FailedAttendance;
 use App\Models\TimeOffRequest;
 use App\Models\User;
+use App\Services\NationalHolidayService;
 use Carbon\Carbon;
 
 class AttendanceCheckService
 {
+    public function __construct(private ?NationalHolidayService $nationalHolidayService = null)
+    {
+        $this->nationalHolidayService = $nationalHolidayService ?? new NationalHolidayService();
+    }
+
     /**
      * Controlla se un utente ha completato le 8 ore lavorative necessarie
      * per le precedenti giornate lavorative dalla data corrente.
@@ -25,8 +31,8 @@ class AttendanceCheckService
         $checkedDays = 0;
 
         while ($checkedDays < $workDaysToCheck) {
-            // Salta i weekend (sabato = 6, domenica = 0)
-            if ($currentDate->dayOfWeek !== Carbon::SATURDAY && $currentDate->dayOfWeek !== Carbon::SUNDAY) {
+            // Salta i weekend e le festività nazionali
+            if ($this->isWorkday($currentDate)) {
                 $dateString = $currentDate->format('Y-m-d');
 
                 // Controlla se per questo giorno sono già presenti FailedAttendance non risolte
@@ -54,6 +60,13 @@ class AttendanceCheckService
         }
 
         return $missingDays;
+    }
+
+    private function isWorkday(Carbon $date): bool
+    {
+        return $date->dayOfWeek !== Carbon::SATURDAY
+            && $date->dayOfWeek !== Carbon::SUNDAY
+            && ! $this->nationalHolidayService->isHoliday($date);
     }
 
     /**
