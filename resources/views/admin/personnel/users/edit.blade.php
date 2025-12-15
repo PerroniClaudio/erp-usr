@@ -44,9 +44,9 @@
         <input id="user-drawer" type="checkbox" class="drawer-toggle" />
         <div class="drawer-content flex flex-col px-4 pb-16">
             <!-- Page content here -->
-            <div class="container mx-auto flex p-4">
-                <label for="user-drawer" class="btn btn-secondary drawer-button lg:hidden">
-                    <x-lucide-menu class="h-6 w-6" />
+            <div class="container mx-auto flex mb-4">
+                <label for="user-drawer" class="btn btn-secondary drawer-button w-full lg:hidden">
+                    {{ __('personnel.users_all_user_functions') }}
                 </label>
             </div>
             <main class="container mx-auto flex flex-col gap-4">

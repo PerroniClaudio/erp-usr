@@ -10,6 +10,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\TimeOffAmountController;
 use App\Http\Controllers\UsersController;
+use App\Services\AttendanceCheckService;
 use App\Models\WeeklyScheduleCompletion;
 use App\Models\UserScheduleChangeRequest;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,17 @@ Route::group([
             'pendingScheduleRequests' => $pendingScheduleRequests,
         ]);
     })->name('admin.home');
+
+    Route::get('/home-as-standard', function () {
+        $user = auth()->user();
+
+        $attendanceCheckService = new AttendanceCheckService();
+        $attendanceCheckService->performLoginAttendanceCheck($user);
+
+        return view('home', [
+            'failedAttendances' => $user->failedAttendances()->where('status', 0)->get(),
+        ]);
+    })->name('admin.home.as-standard');
 });
 
 Route::group([

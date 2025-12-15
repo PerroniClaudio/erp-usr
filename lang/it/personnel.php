@@ -49,6 +49,7 @@ return [
     "users_export_presenze" => "Presenze",
     "users_export_presenze_user" => "Esporta presenze utente",
     "users_edit_user" => "Modifica utente",
+    "users_all_user_functions" => "Tutte le funzioni utente",
     "users_personal_data" => "Dati personali",
     "users_save" => "Salva",
     "users_cfp" => "Codice fiscale",
