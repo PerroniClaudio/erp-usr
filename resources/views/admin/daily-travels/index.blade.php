@@ -1,13 +1,12 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
-        <h1 class="text-4xl">{{ __('daily_travel.admin_index_title') }}</h1>
-        <a class="btn btn-primary"
-            href="{{ route('admin.daily-travels.create', $selectedUser ? ['user_id' => $selectedUser->id] : []) }}">
-            {{ __('daily_travel.admin_new_travel') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('daily_travel.admin_index_title')" class="mb-4">
+        <x-slot:actions>
+            <a class="btn btn-primary"
+                href="{{ route('admin.daily-travels.create', $selectedUser ? ['user_id' => $selectedUser->id] : []) }}">
+                {{ __('daily_travel.admin_new_travel') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
     <div class="card bg-base-300 mb-6">
         <div class="card-body">
             <div class="card-title">{{ __('daily_travel.admin_filters_title') }}</div>

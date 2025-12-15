@@ -1,46 +1,43 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('attendances.edit_attendance') }}</h1>
-        <div class="flex items-center gap-1">
-            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-                {{ __('attendances.save_attendance') }}
-            </a>
+    <x-layouts.header :title="__('attendances.edit_attendance')">
+        <x-slot:actions>
+            <div class="flex items-center gap-1">
+                <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                    {{ __('attendances.save_attendance') }}
+                </a>
 
-            <button class="btn btn-warning" onclick="delete_attendance.showModal()">
-                {{ __('attendances.delete_attendance') }}
-            </button>
+                <button class="btn btn-warning" onclick="delete_attendance.showModal()">
+                    {{ __('attendances.delete_attendance') }}
+                </button>
 
-            <dialog id="delete_attendance" class="modal">
-                <div class="modal-box">
-                    <div class="flex flex-row-reverse items-end">
-                        <form method="dialog">
-                            <!-- if there is a button in form, it will close the modal -->
-                            <button class="btn btn-ghost">
-                                <x-lucide-x class="w-4 h-4" />
+                <dialog id="delete_attendance" class="modal">
+                    <div class="modal-box">
+                        <div class="flex flex-row-reverse items-end">
+                            <form method="dialog">
+                                <!-- if there is a button in form, it will close the modal -->
+                                <button class="btn btn-ghost">
+                                    <x-lucide-x class="w-4 h-4" />
+                                </button>
+                            </form>
+                        </div>
+                        <h3 class="text-lg font-bold"> {{ __('attendances.delete_attendance') }}</h3>
+                        <p class="py-4">
+                            {{ __('attendances.delete_attendance_confirmation') }}
+                        </p>
+                        <form method="POST"
+                            action="{{ route('attendances.destroy', ['attendance' => $attendance->id]) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-warning">
+                                {{ __('attendances.delete_attendance') }}
                             </button>
                         </form>
+
                     </div>
-                    <h3 class="text-lg font-bold"> {{ __('attendances.delete_attendance') }}</h3>
-                    <p class="py-4">
-                        {{ __('attendances.delete_attendance_confirmation') }}
-                    </p>
-                    <form method="POST" action="{{ route('attendances.destroy', ['attendance' => $attendance->id]) }}">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-warning">
-                            {{ __('attendances.delete_attendance') }}
-                        </button>
-                    </form>
-
-                </div>
-            </dialog>
-
-
-        </div>
-
-    </div>
-
-    <hr>
+                </dialog>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="card bg-base-200 ">
         <form class="card-body" method="POST"

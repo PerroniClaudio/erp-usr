@@ -298,3 +298,41 @@ if (scheduleContainer && scheduleTemplate && addScheduleRowButton) {
 
     addScheduleRowButton.addEventListener("click", () => addRow());
 }
+
+const functionSections = document.querySelectorAll("[data-function-section]");
+const functionMenuItems = document.querySelectorAll("[data-function-target]");
+const drawerToggle = document.getElementById("user-drawer");
+
+if (functionSections.length && functionMenuItems.length) {
+    const activateSection = (sectionId) => {
+        functionSections.forEach((section) => {
+            const isActive = section.dataset.functionSection === sectionId;
+            section.classList.toggle("hidden", !isActive);
+        });
+
+        functionMenuItems.forEach((menuItem) => {
+            const isActive = menuItem.dataset.functionTarget === sectionId;
+            menuItem.classList.toggle("btn-primary", isActive);
+            menuItem.classList.toggle("btn-ghost", !isActive);
+            menuItem.setAttribute("aria-current", isActive ? "page" : "false");
+        });
+
+        if (drawerToggle && window.innerWidth < 1024) {
+            drawerToggle.checked = false;
+        }
+    };
+
+    const defaultSectionId =
+        functionMenuItems[0]?.dataset.functionTarget ||
+        functionSections[0].dataset.functionSection;
+
+    if (defaultSectionId) {
+        activateSection(defaultSectionId);
+    }
+
+    functionMenuItems.forEach((menuItem) => {
+        menuItem.addEventListener("click", () =>
+            activateSection(menuItem.dataset.functionTarget)
+        );
+    });
+}

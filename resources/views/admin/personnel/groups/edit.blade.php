@@ -2,14 +2,13 @@
 
     <input type="hidden" name="group_id" id="group_id" value="{{ $group->id }}">
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('personnel.groups_edit_group') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-            {{ __('personnel.groups_save') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.groups_edit_group')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                {{ __('personnel.groups_save') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="col-span-1 lg:col-span-1">

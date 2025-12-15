@@ -2,12 +2,13 @@
 
     @vite('resources/js/color-picker.js')
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('files.sectors_edit_sector') }}</h1>
-        <a href="{{ route('admin.sectors.index') }}" class="btn btn-secondary"><x-lucide-arrow-left
-                class="w-4 h-4" />{{ __('files.sectors_back_to_sectors') }}</a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('files.sectors_edit_sector')">
+        <x-slot:actions>
+            <a href="{{ route('admin.sectors.index') }}" class="btn btn-secondary">
+                <x-lucide-arrow-left class="w-4 h-4" />{{ __('files.sectors_back_to_sectors') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="card bg-base-300">
         <div class="card-body">

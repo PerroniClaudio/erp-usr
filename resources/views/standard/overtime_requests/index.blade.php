@@ -1,11 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('overtime_requests.your_requests') }}</h1>
-        <a href="{{ route('overtime-requests.create') }}"
-            class="btn btn-primary mb-3">{{ __('overtime_requests.new') }}</a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('overtime_requests.your_requests')">
+        <x-slot:actions>
+            <a href="{{ route('overtime-requests.create') }}" class="btn btn-primary mb-3">
+                {{ __('overtime_requests.new') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div>
         <div id="calendar" class="max-w-full mb-6"></div>

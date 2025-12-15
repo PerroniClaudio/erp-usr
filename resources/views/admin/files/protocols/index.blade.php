@@ -2,12 +2,13 @@
 
     @vite('resources/js/file-protocols.js')
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('files.protocols_page_title') }}</h1>
-        <a href="{{ route('admin.protocols.create') }}" class="btn btn-primary"><x-lucide-plus
-                class="w-4 h-4" />{{ __('files.protocols_new_button') }}</a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('files.protocols_page_title')">
+        <x-slot:actions>
+            <a href="{{ route('admin.protocols.create') }}" class="btn btn-primary">
+                <x-lucide-plus class="w-4 h-4" />{{ __('files.protocols_new_button') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <table class="table overflow-x-scroll">
         <thead>

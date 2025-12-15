@@ -1,13 +1,12 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('business_trips.business_trip_create') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-            {{ __('business_trips.save') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('business_trips.business_trip_create')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                {{ __('business_trips.save') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="card bg-base-300 ">
         <form class="card-body" method="POST" action="{{ route('business-trips.store') }}">

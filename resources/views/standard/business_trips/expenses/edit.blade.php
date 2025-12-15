@@ -2,18 +2,15 @@
 
     <input type="hidden" id="is_edit" name="is_edit" value="1" />
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('business_trips.edit_expense') }}</h1>
-
-
-        <div class="hidden lg:inline-flex">
-            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-                {{ __('business_trips.save') }}
-            </a>
-        </div>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('business_trips.edit_expense')">
+        <x-slot:actions>
+            <div class="hidden lg:inline-flex">
+                <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                    {{ __('business_trips.save') }}
+                </a>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <form class="grid lg:grid-cols-2 gap-4" method="POST"
         action="{{ route('business-trips.expenses.update', [

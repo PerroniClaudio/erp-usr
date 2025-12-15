@@ -1,10 +1,6 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('business_trips.business_trip_edit') }}</h1>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('business_trips.business_trip_edit')" />
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="col-span-1 lg:col-span-1 flex flex-col gap-4">

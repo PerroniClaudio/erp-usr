@@ -1,18 +1,17 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('attendances.attendances') }}</h1>
-        <div class="hidden lg:flex items-center gap-2">
-            <button type="button" class="btn btn-primary" onclick="openModal('presenze')">
-                {{ __('personnel.users_export_presenze_user') }}
-            </button>
-            <a href="{{ route('attendances.create') }}" class="btn btn-primary">
-                {{ __('attendances.new_attendance') }}
-            </a>
-        </div>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('attendances.attendances')">
+        <x-slot:actions>
+            <div class="hidden lg:flex items-center gap-2">
+                <button type="button" class="btn btn-primary" onclick="openModal('presenze')">
+                    {{ __('personnel.users_export_presenze_user') }}
+                </button>
+                <a href="{{ route('attendances.create') }}" class="btn btn-primary">
+                    {{ __('attendances.new_attendance') }}
+                </a>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="flex lg:hidden flex-col gap-2">
         <button type="button" class="btn btn-primary" onclick="openModal('presenze')">

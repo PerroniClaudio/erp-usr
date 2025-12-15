@@ -2,24 +2,24 @@
 
     @vite('resources/js/file_explorer.js')
 
-    <div class="flex justify-between items-center flex-wrap gap-2">
-        <h1 class="text-4xl">{{ __('files.files_index_title') }}</h1>
-        <div class="flex gap-2 flex-wrap justify-end">
-            <a class="btn btn-ghost" href="{{ route('admin.files.search') }}">
-                <x-lucide-search class="w-4 h-4" />
-                {{ __('files.files_search_button') }}
-            </a>
-            <button class="btn btn-outline" onclick="create_folder_modal.showModal()">
-                <x-lucide-folder-plus class="w-4 h-4" />
-                {{ __('files.files_create_folder_button') }}
-            </button>
-            <button class="btn btn-primary" id="upload-file-button" onclick="upload_file_modal.showModal()">
-                <x-lucide-upload class="w-4 h-4" />
-                {{ __('files.files_upload_button') }}
-            </button>
-        </div>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('files.files_index_title')" class="flex-wrap gap-2">
+        <x-slot:actions>
+            <div class="flex gap-2 flex-wrap justify-end">
+                <a class="btn btn-ghost" href="{{ route('admin.files.search') }}">
+                    <x-lucide-search class="w-4 h-4" />
+                    {{ __('files.files_search_button') }}
+                </a>
+                <button class="btn btn-outline" onclick="create_folder_modal.showModal()">
+                    <x-lucide-folder-plus class="w-4 h-4" />
+                    {{ __('files.files_create_folder_button') }}
+                </button>
+                <button class="btn btn-primary" id="upload-file-button" onclick="upload_file_modal.showModal()">
+                    <x-lucide-upload class="w-4 h-4" />
+                    {{ __('files.files_upload_button') }}
+                </button>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="card bg-base-300">
         <div class="card-body">

@@ -100,7 +100,6 @@ class DailyTravelController extends Controller
                 ->withInput();
         }
 
-        DailyTravel::create([
         $dailyTravel = DailyTravel::create([
             'user_id' => $user->id,
             'company_id' => $validated['company_id'],

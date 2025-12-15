@@ -1,13 +1,12 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('time_off_requests.time_off_requests') }}</h1>
-        <a href="{{ route('admin.time-off.create') }}" class="btn btn-primary">
-            <x-lucide-plus class="w-4 h-4" />
-            {{ __('time_off_requests.new_admin_request') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('time_off_requests.time_off_requests')">
+        <x-slot:actions>
+            <a href="{{ route('admin.time-off.create') }}" class="btn btn-primary">
+                <x-lucide-plus class="w-4 h-4" />
+                {{ __('time_off_requests.new_admin_request') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="card bg-base-300">
         <div class="card-body">

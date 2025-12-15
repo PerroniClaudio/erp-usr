@@ -1,13 +1,12 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('personnel.groups_new_group') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-            {{ __('personnel.groups_save') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.groups_new_group')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                {{ __('personnel.groups_save') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="card bg-base-300 ">
         <form class="card-body" method="POST" action="{{ route('groups.store') }}">

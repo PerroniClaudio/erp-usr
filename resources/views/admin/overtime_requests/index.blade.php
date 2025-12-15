@@ -1,10 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('overtime_requests.admin_list') }}</h1>
-        <a href="{{ route('admin.overtime-requests.create') }}" class="btn btn-primary"><x-lucide-plus
-                class="w-4 h-4" />{{ __('overtime_requests.new_admin') }}</a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('overtime_requests.admin_list')">
+        <x-slot:actions>
+            <a href="{{ route('admin.overtime-requests.create') }}" class="btn btn-primary">
+                <x-lucide-plus class="w-4 h-4" />{{ __('overtime_requests.new_admin') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
     <div class="card bg-base-300">
         <div class="card-body">
             <div class="card-title">Filtra</div>

@@ -1,13 +1,12 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('personnel.groups') }}</h1>
-        <a href="{{ route('groups.create') }}" class="btn btn-primary">
-            {{ __('personnel.groups_new_group') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.groups')">
+        <x-slot:actions>
+            <a href="{{ route('groups.create') }}" class="btn btn-primary">
+                {{ __('personnel.groups_new_group') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="overflow-x-auto">
         <table class="table">

@@ -1,9 +1,6 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-4xl">{{ __('business_trips.admin_index_title') }}</h1>
-    </div>
+    <x-layouts.header :title="__('business_trips.admin_index_title')" id="page-header" />
 
-    <hr>
 
     <div class="card bg-base-300 mb-6">
         <div class="card-body">
@@ -14,8 +11,7 @@
                     <select name="user_id" class="select select-bordered w-full">
                         <option value="">{{ __('business_trips.admin_user_placeholder') }}</option>
                         @foreach ($users as $userOption)
-                            <option value="{{ $userOption->id }}"
-                                @selected($selectedUser && $selectedUser->id === $userOption->id)>
+                            <option value="{{ $userOption->id }}" @selected($selectedUser && $selectedUser->id === $userOption->id)>
                                 {{ $userOption->name }}
                             </option>
                         @endforeach
@@ -73,7 +69,9 @@
                     <h2 class="text-2xl">
                         {{ __('business_trips.admin_results_title', [
                             'user' => $selectedUser->name,
-                            'period' => ucfirst(\Carbon\Carbon::createFromDate($selectedYear, (int) $selectedMonth, 1)->locale('it')->translatedFormat('F Y')),
+                            'period' => ucfirst(
+                                \Carbon\Carbon::createFromDate($selectedYear, (int) $selectedMonth, 1)->locale('it')->translatedFormat('F Y'),
+                            ),
                         ]) }}
                     </h2>
                 </div>
@@ -111,7 +109,9 @@
                                 <tfoot>
                                     <tr class="font-semibold">
                                         <td>{{ __('business_trips.admin_totals') }}</td>
-                                        <td colspan="2">{{ $totals['trips'] }} {{ \Illuminate\Support\Str::lower(__('business_trips.business_trips')) }}</td>
+                                        <td colspan="2">{{ $totals['trips'] }}
+                                            {{ \Illuminate\Support\Str::lower(__('business_trips.business_trips')) }}
+                                        </td>
                                         <td>{{ $totals['transfers'] }} {{ __('business_trips.admin_transfers') }}</td>
                                         <td colspan="2">€ {{ number_format($totals['expenses'], 2, ',', '.') }}</td>
                                     </tr>

@@ -1,18 +1,17 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-4xl">{{ __('daily_travel.index_title') }}</h1>
-        <div class="flex gap-2 justify-end">
-            <button class="btn btn-primary" onclick="document.getElementById('export_nota_spese').showModal()">
-                <x-lucide-file-text class="w-4 h-4" />
-                <span class="ml-2">{{ __('daily_travel.export_nota_spese') }}</span>
-            </button>
-            <a class="btn btn-primary" href="{{ route('daily-travels.create') }}">
-                {{ __('daily_travel.create_title') }}
-            </a>
-        </div>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('daily_travel.index_title')" class="mb-4">
+        <x-slot:actions>
+            <div class="flex gap-2 justify-end">
+                <button class="btn btn-primary" onclick="document.getElementById('export_nota_spese').showModal()">
+                    <x-lucide-file-text class="w-4 h-4" />
+                    <span class="ml-2">{{ __('daily_travel.export_nota_spese') }}</span>
+                </button>
+                <a class="btn btn-primary" href="{{ route('daily-travels.create') }}">
+                    {{ __('daily_travel.create_title') }}
+                </a>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     @if (session('success'))
         <div class="alert alert-success mb-4">

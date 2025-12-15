@@ -1,14 +1,11 @@
 <x-layouts.app>
-    <div class="flex items-center justify-between">
-        <h1 class="text-4xl font-semibold">{{ __('personnel.users_default_schedule_title') }}</h1>
-
-
-        <a href="{{ route('users.edit', $user) }}"
-            class="btn btn-primary">{{ __('personnel.users_default_schedule_back') }}</a>
-
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.users_default_schedule_title')">
+        <x-slot:actions>
+            <a href="{{ route('users.edit', $user) }}" class="btn btn-primary">
+                {{ __('personnel.users_default_schedule_back') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div id="default-schedule-toast" class="toast toast-bottom toast-end hidden">
         <div class="alert alert-success">

@@ -1,9 +1,5 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('personnel.users') }}</h1>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.users')" />
 
     <div class="overflow-x-auto">
         <table class="table h-full">

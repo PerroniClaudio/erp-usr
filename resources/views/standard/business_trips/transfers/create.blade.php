@@ -1,17 +1,15 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('business_trips.new_transfer') }}</h1>
-
-
-        <div class="hidden submit-button-container">
-            <a class="btn btn-primary hidden lg:inline-flex" onclick="document.getElementById('submit-button').click()">
-                {{ __('business_trips.save') }}
-            </a>
-        </div>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('business_trips.new_transfer')">
+        <x-slot:actions>
+            <div class="hidden submit-button-container">
+                <a class="btn btn-primary hidden lg:inline-flex"
+                    onclick="document.getElementById('submit-button').click()">
+                    {{ __('business_trips.save') }}
+                </a>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div role="alert" class="alert alert-info lg:w-1/3">
         <x-lucide-info class="w-8 h-8" />

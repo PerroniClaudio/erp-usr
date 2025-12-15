@@ -1,11 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('overtime_requests.new_request') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-            {{ __('overtime_requests.save_request') }}
-        </a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('overtime_requests.new_request')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                {{ __('overtime_requests.save_request') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
     <div class="card bg-base-300 ">
         <form class="card-body" method="POST" action="{{ route('overtime-requests.store') }}">
             @csrf

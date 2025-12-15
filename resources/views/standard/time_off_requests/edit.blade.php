@@ -2,11 +2,7 @@
 
     <input type="hidden" name="batch_id" id="batch_id" value="{{ $batch_id }}">
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('time_off_requests.edit_request') }}</h1>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('time_off_requests.edit_request')" />
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
 

@@ -1,12 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('daily_travel.create_title') }}</h1>
-        <button class="btn btn-primary" type="button" onclick="document.getElementById('submit-button').click()">
-            {{ __('daily_travel.save_daily_travel') }}
-        </button>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('daily_travel.create_title')">
+        <x-slot:actions>
+            <button class="btn btn-primary" type="button" onclick="document.getElementById('submit-button').click()">
+                {{ __('daily_travel.save_daily_travel') }}
+            </button>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="flex flex-col gap-4">
         <div class="card bg-base-300">
@@ -81,9 +80,8 @@
             <div class="card-body" data-structure-preview
                 data-selected-company="{{ old('company_id', $selectedCompanyId) }}"
                 data-selected-start-location="{{ \App\Models\DailyTravelStructure::START_LOCATION_OFFICE }}"
-                data-structures='@json($structuresMap)'
-                data-headquarters='@json($headquartersMap)'
-                data-user-headquarter='@json($userHeadquarter?->only(['id', 'name', 'address', 'city', 'province', 'zip_code', 'latitude', 'longitude']))'
+                data-structures='@json($structuresMap)' data-headquarters='@json($headquartersMap)'
+                data-user-headquarter='@json($userHeadquarter)'
                 data-missing-message="{{ __('daily_travel.preview_missing') }}"
                 data-vehicle-label="{{ __('daily_travel.preview_vehicle') }}"
                 data-vehicle-none="{{ __('daily_travel.preview_vehicle_none') }}"

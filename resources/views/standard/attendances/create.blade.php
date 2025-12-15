@@ -1,12 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('attendances.new_attendance') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-            {{ __('attendances.save_attendance') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('attendances.new_attendance')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                {{ __('attendances.save_attendance') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="grid md:grid-cols-2 gap-4">
 

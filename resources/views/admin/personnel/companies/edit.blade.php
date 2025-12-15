@@ -2,14 +2,13 @@
 
     <input type="hidden" name="company_id" id="company_id" value="{{ $company->id }}">
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('personnel.companies_edit_company') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-            {{ __('personnel.companies_save') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.companies_edit_company')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                {{ __('personnel.companies_save') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="flex flex-col gap-4">
 

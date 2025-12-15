@@ -1,12 +1,13 @@
 <x-layouts.app>
 
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('personnel.user_schedule_request_admin_title') }}</h1>
-        <a href="{{ route('admin.sectors.index') }}" class="btn btn-secondary"><x-lucide-arrow-left
-                class="w-4 h-4" />{{ __('files.sectors_back_to_sectors') }}</a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('personnel.user_schedule_request_admin_title')">
+        <x-slot:actions>
+            <a href="{{ route('admin.sectors.index') }}" class="btn btn-secondary">
+                <x-lucide-arrow-left class="w-4 h-4" />{{ __('files.sectors_back_to_sectors') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
         <div class="card bg-base-300">

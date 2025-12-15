@@ -1,8 +1,5 @@
 <x-layouts.app>
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-semibold">{{ __('personnel.users_weekly_schedule_title') }}</h1>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('personnel.users_weekly_schedule_title')" />
 
     <div class="card bg-base-200 shadow-sm mt-4">
         <div class="card-body flex flex-col gap-4">

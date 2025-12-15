@@ -1,15 +1,13 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-start flex-wrap gap-2">
-        <div class="flex flex-col gap-1">
-            <h1 class="text-4xl">{{ __('files.files_search_title') }}</h1>
-        </div>
-        <a class="btn btn-outline" href="{{ route('admin.files.index') }}">
-            <x-lucide-folder class="w-4 h-4" />
-            {{ __('files.files_index_title') }}
-        </a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('files.files_search_title')" class="flex-wrap gap-2">
+        <x-slot:actions>
+            <a class="btn btn-outline" href="{{ route('admin.files.index') }}">
+                <x-lucide-folder class="w-4 h-4" />
+                {{ __('files.files_index_title') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div class="card bg-base-300">
         <div class="card-body space-y-4">

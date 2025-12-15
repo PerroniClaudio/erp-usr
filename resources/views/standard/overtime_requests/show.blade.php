@@ -1,9 +1,6 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('overtime_requests.type') }}: {{ $overtimeRequest->overtimeType->name ?? '' }}
-            ({{ $overtimeRequest->overtimeType->acronym ?? '' }})</h1>
-    </div>
-    <hr>
+    <x-layouts.header
+        :title="__('overtime_requests.type') . ': ' . ($overtimeRequest->overtimeType->name ?? '') . ' (' . ($overtimeRequest->overtimeType->acronym ?? '') . ')'" />
     <div class="card bg-base-300 w-full md:w-1/2 xl:w-1/3">
         <div class="card-body flex flex-col gap-2 ">
             <fieldset class="fieldset">

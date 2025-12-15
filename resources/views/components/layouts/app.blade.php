@@ -1,3 +1,7 @@
+@props([
+    'shouldHavePadding' => true,
+])
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -23,39 +27,24 @@
 
 <body class="antialiased">
     <div class="drawer lg:drawer-open">
-        <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
-        <div class="drawer-content flex flex-col">
-            <!-- Page content here -->
-            <div class="container mx-auto flex p-4">
-                <label for="my-drawer-2" class="btn btn-outline border-base-200 drawer-button lg:hidden">
-                    <x-lucide-menu class="h-6 w-6" />
-                </label>
-            </div>
-            <main class="container mx-auto flex flex-col gap-4 px-4 pb-16">
+        <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+        <div class="drawer-content flex flex-col pb-16">
+            <main
+                class="max-w-screen-2xl mx-auto w-full flex flex-col gap-4 @if ($shouldHavePadding) menu-padding @endif">
+                <!-- Page content here -->
+                <div
+                    class="max-w-screen-2xl mx-auto w-full flex @if ($shouldHavePadding) menu-padding @endif lg:hidden">
+                    <label for="main-drawer" class="btn btn-outline border-base-200 drawer-button lg:hidden">
+                        <x-lucide-menu class="h-6 w-6" id="main-drawer-mobile-opener" />
+                    </label>
+                </div>
                 {{ $slot }}
             </main>
         </div>
         <div class="drawer-side z-50">
-            <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
-            <ul class="menu bg-base-300 text-base-content min-h-full w-80 p-4 ">
-                <li class="border-b-2 border-base-100 pb-2 mb-2">
-                    <div class="flex items-center gap-2">
-                        <div
-                            class="bg-primary w-8 aspect-square rounded-full flex flex-col justify-center items-center text-primary-content font-bold">
-                            @php
-                                $initials = collect(explode(' ', auth()->user()->name))
-                                    ->map(fn($part) => strtoupper(substr($part, 0, 1)))
-                                    ->take(2)
-                                    ->implode('');
-
-                                echo $initials[0] . ($initials[1] ?? '');
-                            @endphp
-                        </div>
-                        <span>
-                            {{ auth()->user()->name }}
-                        </span>
-                    </div>
-                </li>
+            <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+            <ul class="menu bg-base-300 text-base-content min-h-full w-80">
+                <x-sidebar.user-label :user="auth()->user()" />
                 <!-- Sidebar content here -->
                 @php
                     $loggedUser = auth()->user();

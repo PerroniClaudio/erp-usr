@@ -1,21 +1,18 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('business_trips.business_trips') }}</h1>
-        <div class="flex items-center gap-2">
-            <a href="{{ route('business-trips.create') }}" class="btn btn-primary">
-                {{ __('business_trips.business_trip_create') }}
-            </a>
-            <button class="btn btn-primary" onclick="export_nota_spese.showModal()">
-                <x-lucide-file-text class="w-4 h-4" />
-                {{ __('business_trips.export_nota_spese') }}
-            </button>
-        </div>
-    </div>
-
-
-
-    <hr>
+    <x-layouts.header :title="__('business_trips.business_trips')">
+        <x-slot:actions>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('business-trips.create') }}" class="btn btn-primary">
+                    {{ __('business_trips.business_trip_create') }}
+                </a>
+                <button class="btn btn-primary" onclick="export_nota_spese.showModal()">
+                    <x-lucide-file-text class="w-4 h-4" />
+                    {{ __('business_trips.export_nota_spese') }}
+                </button>
+            </div>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <div>
         <div class="overflow-x-auto">

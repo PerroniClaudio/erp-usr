@@ -1,10 +1,6 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('time_off_requests.new_admin_request') }}</h1>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('time_off_requests.new_admin_request')" />
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="flex flex-col gap-4 h-fit">

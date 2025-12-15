@@ -1,11 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('attendances.failed_attendance') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
-            {{ __('attendances.submit_justification') }}
-        </a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('attendances.failed_attendance')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('submit-button').click()">
+                {{ __('attendances.submit_justification') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <form
         action="{{ route('failed-attendances.send-justification', [

@@ -1,10 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('files.protocols_new_button') }}</h1>
-        <a href="{{ route('admin.protocols.index') }}" class="btn btn-secondary"><x-lucide-arrow-left
-                class="w-4 h-4" />{{ __('files.protocols_back_to_protocols') }}</a>
-    </div>
-    <hr>
+    <x-layouts.header :title="__('files.protocols_new_button')">
+        <x-slot:actions>
+            <a href="{{ route('admin.protocols.index') }}" class="btn btn-secondary">
+                <x-lucide-arrow-left class="w-4 h-4" />{{ __('files.protocols_back_to_protocols') }}
+            </a>
+        </x-slot:actions>
+    </x-layouts.header>
 
     <form action="{{ route('admin.protocols.store') }}" method="POST">
         @csrf
