@@ -86,6 +86,9 @@ Route::group([
         Route::get('/user-schedule-requests/{userScheduleChangeRequest}', [\App\Http\Controllers\UserScheduleController::class, 'adminRequestsShow'])->name('admin.user-schedule-requests.show');
         Route::post('/user-schedule-requests/{userScheduleChangeRequest}/approve', [\App\Http\Controllers\UserScheduleController::class, 'adminRequestsApprove'])->name('admin.user-schedule-requests.approve');
         Route::post('/user-schedule-requests/{userScheduleChangeRequest}/deny', [\App\Http\Controllers\UserScheduleController::class, 'adminRequestsDeny'])->name('admin.user-schedule-requests.deny');
+        Route::get('/weekly-scheduled-timeoff', [\App\Http\Controllers\WeeklyScheduledTimeOffController::class, 'index'])->name('weekly-scheduled-timeoff.index');
+        Route::get('/weekly-scheduled-timeoff/{user}', [\App\Http\Controllers\WeeklyScheduledTimeOffController::class, 'show'])->name('weekly-scheduled-timeoff.show');
+        Route::post('/weekly-scheduled-timeoff', [\App\Http\Controllers\WeeklyScheduledTimeOffController::class, 'store'])->name('weekly-scheduled-timeoff.store');
         Route::get('/users/{user}/export-nota-spese', [\App\Http\Controllers\NotaSpeseController::class, 'exportMonthly'])->name('users.export-nota-spese');
         Route::get('/users/{user}/add-vehicles', [UsersController::class, 'addVehicles'])->name('users.add-vehicles');
         Route::post('/users/{user}/store-vehicles', [UsersController::class, 'associateVehicle'])->name('users.store-vehicles');
@@ -122,6 +125,8 @@ Route::group([
         Route::get('/users/{user}/default-schedules/calendar', [UsersController::class, 'showDefaultSchedule'])->name('users.default-schedules.calendar');
         Route::post('/users/{user}/default-schedules', [UsersController::class, 'updateDefaultSchedules'])->name('users.default-schedules.update');
         Route::post('/users/{user}/default-schedules/generate', [UsersController::class, 'generateDefaultSchedules'])->name('users.default-schedules.generate');
+        Route::get('/users/{user}/scheduled-time-off/calendar', [UsersController::class, 'showScheduledTimeOff'])->name('users.scheduled-time-off.calendar');
+        Route::post('/users/{user}/scheduled-time-off', [UsersController::class, 'updateScheduledTimeOff'])->name('users.scheduled-time-off.update');
         Route::post('/time-off-amounts/calculate', [TimeOffAmountController::class, 'calculateResidual'])->name('time-off-amounts.calculate');
         Route::post('/time-off-amounts/monthly', [TimeOffAmountController::class, 'getMonthlyAmounts'])->name('time-off-amounts.monthly');
         Route::post('/time-off-amounts/usage', [TimeOffAmountController::class, 'getMonthlyUsage'])->name('time-off-amounts.usage');

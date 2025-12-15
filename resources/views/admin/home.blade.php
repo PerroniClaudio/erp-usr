@@ -40,6 +40,15 @@
                     </p>
                 </div>
             </a>
+            <a href="{{ route('weekly-scheduled-timeoff.index') }}" class="card bg-base-200 hover:shadow-2xl">
+                <div class="card-body">
+                    <x-lucide-sun-moon class="h-6 w-6 text-primary" />
+                    <h2 class="card-title">{{ __('navbar.weekly_scheduled_time_off') }}</h2>
+                    <p>
+                        {{ __('navbar.weekly_scheduled_time_off_description') }}
+                    </p>
+                </div>
+            </a>
         </div>
 
         <x-home.attendances-today :usersStatus="$usersStatus" />

@@ -11,6 +11,8 @@ return [
     "attendances_description" => "Visualizza le presenze",
     "business_trips_description" => "Visualizza le trasferte",
     "time_off_description" => "Visualizza le richieste di ferie/permessi",
+    "weekly_scheduled_time_off" => "Ferie programmate (settimanali)",
+    "weekly_scheduled_time_off_description" => "Approva le ferie ricorrenti degli utenti settimana per settimana.",
     "personnel_users" => "Utenti",
     "personnel_groups" => "Gruppi",
     "personnel_companies" => "Aziende",

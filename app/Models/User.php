@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\AttendanceType;
+use App\Models\ScheduledTimeOff;
 use App\Models\UserDefaultSchedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -156,6 +157,11 @@ class User extends Authenticatable
     public function defaultSchedules()
     {
         return $this->hasMany(UserDefaultSchedule::class);
+    }
+
+    public function scheduledTimeOffs()
+    {
+        return $this->hasMany(ScheduledTimeOff::class);
     }
 
     public function ensureDefaultSchedule()

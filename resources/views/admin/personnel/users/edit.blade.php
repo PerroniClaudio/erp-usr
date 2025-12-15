@@ -21,6 +21,13 @@
                 'icon' => 'calendar-clock',
             ],
             [
+                'id' => 'scheduled-time-off',
+                'label' => __('personnel.users_scheduled_time_off_title'),
+                'show' => true,
+                'href' => route('users.scheduled-time-off.calendar', $user),
+                'icon' => 'sun-moon',
+            ],
+            [
                 'id' => 'time-off',
                 'label' => __('personnel.users_time_off_and_rol_management'),
                 'show' => true,
@@ -328,6 +335,24 @@
                                 <hr>
                                 <p class="text-sm ">
                                     {{ __('personnel.users_default_schedule_edit_intro', ['name' => $user->name]) }}
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="function-section flex flex-col gap-4" data-function-section="scheduled-time-off">
+                        <div class="card bg-base-300">
+                            <div class="card-body flex flex-col gap-4">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-lg">{{ __('personnel.users_scheduled_time_off_title') }}</h2>
+                                    <a href="{{ route('users.scheduled-time-off.calendar', $user) }}"
+                                        class="btn btn-primary">
+                                        {{ __('personnel.users_scheduled_time_off_view') }}
+                                    </a>
+                                </div>
+                                <hr>
+                                <p class="text-sm ">
+                                    {{ __('personnel.users_scheduled_time_off_edit_intro', ['name' => $user->name]) }}
                                 </p>
                             </div>
                         </div>

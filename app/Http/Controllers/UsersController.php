@@ -10,7 +10,9 @@ use App\Models\Group;
 use App\Models\Headquarters;
 use App\Models\OvertimeRequest;
 use Spatie\Permission\Models\Role;
+use App\Models\ScheduledTimeOff;
 use App\Models\TimeOffRequest;
+use App\Models\TimeOffType;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\UserDefaultSchedule;
@@ -18,6 +20,7 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -192,6 +195,103 @@ class UsersController extends Controller
             'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
             'attendanceTypesPayload' => $attendanceTypesPayload,
         ]);
+    }
+
+    public function showScheduledTimeOff(User $user)
+    {
+        $referenceMonday = Carbon::now()->startOfWeek(Carbon::MONDAY);
+
+        $weekdayOrder = "CASE weekday
+                WHEN 'monday' THEN 1
+                WHEN 'tuesday' THEN 2
+                WHEN 'wednesday' THEN 3
+                WHEN 'thursday' THEN 4
+                WHEN 'friday' THEN 5
+                WHEN 'saturday' THEN 6
+                WHEN 'sunday' THEN 7
+                ELSE 8 END";
+
+        $scheduledEntries = $user->scheduledTimeOffs()
+            ->with('timeOffType')
+            ->orderByRaw($weekdayOrder)
+            ->orderBy('hour_from')
+            ->get();
+
+        $scheduledEntriesPayload = $scheduledEntries->map(function ($entry) {
+            return [
+                'weekday' => $entry->weekday,
+                'hour_from' => $entry->hour_from instanceof Carbon ? $entry->hour_from->format('H:i') : $entry->hour_from,
+                'hour_to' => $entry->hour_to instanceof Carbon ? $entry->hour_to->format('H:i') : $entry->hour_to,
+                'time_off_type_id' => $entry->time_off_type_id,
+            ];
+        });
+
+        $timeOffTypes = TimeOffType::orderBy('name')->get();
+        $defaultTimeOffTypeId = $timeOffTypes->first()?->id;
+        $colorPalette = ['#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#e73028', '#f472b6', '#2dd4bf', '#437f97'];
+        $paletteCount = count($colorPalette);
+        $timeOffTypesPayload = $timeOffTypes->values()->map(function ($type, $index) use ($colorPalette, $paletteCount) {
+            return [
+                'id' => $type->id,
+                'name' => $type->name,
+                'color' => $colorPalette[$index % $paletteCount],
+            ];
+        });
+
+        return view('admin.personnel.users.scheduled-time-off', [
+            'user' => $user,
+            'scheduledEntries' => $scheduledEntries,
+            'scheduledEntriesPayload' => $scheduledEntriesPayload,
+            'timeOffTypes' => $timeOffTypes,
+            'defaultTimeOffTypeId' => $defaultTimeOffTypeId,
+            'timeOffTypesPayload' => $timeOffTypesPayload,
+            'initialDate' => $referenceMonday->toDateString(),
+        ]);
+    }
+
+    public function updateScheduledTimeOff(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'schedule' => 'array',
+            'schedule.*.weekday' => 'required|string|in:' . implode(',', ScheduledTimeOff::WEEKDAYS),
+            'schedule.*.hour_from' => 'required|date_format:H:i',
+            'schedule.*.hour_to' => 'required|date_format:H:i',
+            'schedule.*.time_off_type_id' => 'required|exists:time_off_types,id',
+        ]);
+
+        $scheduleItems = $validated['schedule'] ?? [];
+
+        $normalized = collect($scheduleItems)->map(function (array $item) {
+            $start = Carbon::createFromFormat('H:i', $item['hour_from']);
+            $end = Carbon::createFromFormat('H:i', $item['hour_to']);
+
+            if ($end->lte($start)) {
+                throw ValidationException::withMessages([
+                    'hour_to' => __("personnel.users_scheduled_time_off_error_end_before_start"),
+                ]);
+            }
+
+            return [
+                'weekday' => $item['weekday'],
+                'hour_from' => $start->format('H:i'),
+                'hour_to' => $end->format('H:i'),
+                'time_off_type_id' => $item['time_off_type_id'],
+            ];
+        });
+
+        DB::transaction(function () use ($user, $normalized) {
+            $user->scheduledTimeOffs()->delete();
+            if ($normalized->isNotEmpty()) {
+                $user->scheduledTimeOffs()->createMany($normalized->toArray());
+            }
+        });
+
+        if ($request->wantsJson()) {
+            return response()->json(['status' => 'ok']);
+        }
+
+        return redirect()->route('users.scheduled-time-off.calendar', $user)
+            ->with('success', __('personnel.users_scheduled_time_off_save_success'));
     }
 
     public function exportPdf(User $user, Request $request)
