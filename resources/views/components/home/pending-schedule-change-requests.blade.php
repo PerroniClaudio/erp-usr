@@ -12,33 +12,38 @@
                 {{ __('personnel.user_schedule_request_admin_quicklook_empty') }}
             </div>
         @else
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>{{ __('personnel.users') }}</th>
-                        <th>{{ __('personnel.user_schedule_request_admin_week_label') }}</th>
-                        <th class="text-right">{{ __('personnel.user_schedule_request_admin_actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($pendingScheduleRequests as $request)
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
                         <tr>
-                            <td>{{ $request->user->name }}</td>
-                            <td>
-                                {{ \Carbon\Carbon::parse($request->week_start)->format('d/m/Y') }}
-                                -
-                                {{ \Carbon\Carbon::parse($request->week_end ?? $request->week_start)->format('d/m/Y') }}
-                            </td>
-                            <td class="text-right">
-                                <a href="{{ route('admin.user-schedule-requests.show', $request) }}"
-                                    class="btn btn-primary btn-xs">
-                                    {{ __('personnel.user_schedule_request_admin_handle') }}
-                                </a>
-                            </td>
+                            <th>{{ __('personnel.users') }}</th>
+                            <th>{{ __('personnel.user_schedule_request_admin_week_label') }}</th>
+                            <th class="text-right">{{ __('personnel.user_schedule_request_admin_actions') }}</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($pendingScheduleRequests as $request)
+                            <tr>
+                                <td>{{ $request->user->name }}</td>
+                                <td>
+                                    {{ \Carbon\Carbon::parse($request->week_start)->format('d/m/Y') }}
+                                    -
+                                    {{ \Carbon\Carbon::parse($request->week_end ?? $request->week_start)->format('d/m/Y') }}
+                                </td>
+                                <td class="text-right">
+                                    <a href="{{ route('admin.user-schedule-requests.show', $request) }}"
+                                        class="btn btn-primary btn-xs">
+                                        {{ __('personnel.user_schedule_request_admin_handle') }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                {{ $pendingScheduleRequests->links() }}
+            </div>
         @endif
     </div>
 </div>

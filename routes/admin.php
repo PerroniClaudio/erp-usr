@@ -36,8 +36,8 @@ Route::group([
         $pendingScheduleRequests = UserScheduleChangeRequest::with('user')
             ->where('status', UserScheduleChangeRequest::STATUS_PENDING)
             ->orderBy('week_start')
-            ->limit(5)
-            ->get();
+            ->paginate(10, ['*'], 'pending_schedule_page')
+            ->withQueryString();
 
         return view('admin.home', [
             'usersStatus' => $usersStatus,

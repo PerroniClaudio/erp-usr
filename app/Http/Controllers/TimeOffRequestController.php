@@ -9,6 +9,7 @@ use App\Models\TimeOffType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -882,9 +883,29 @@ class TimeOffRequestController extends Controller
                 'type' => $firstEvent['type'],
                 'start_end' => $start_formatted.' - '.$end_formatted,
                 'batch' => $group['metadata']['groupId'],
+                'start_sort' => \Carbon\Carbon::parse($firstEvent['start'])->timestamp,
             ]);
         }
 
-        return collect($event_result);
+        $perPage = 10;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage('pending_time_off_page');
+
+        $sortedResults = collect($event_result)->sortBy('start_sort');
+        $itemsForPage = $sortedResults
+            ->slice(($currentPage - 1) * $perPage, $perPage)
+            ->values()
+            ->map(fn ($item) => collect($item)->except('start_sort')->toArray());
+
+        return new LengthAwarePaginator(
+            $itemsForPage,
+            $sortedResults->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => request()->url(),
+                'pageName' => 'pending_time_off_page',
+                'query' => request()->query(),
+            ]
+        );
     }
 }

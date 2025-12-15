@@ -10,33 +10,38 @@
         @if ($failedAttendancesRequests->isEmpty())
             <div class="text-sm text-gray-500">{{ __('attendances.no_failed_attendances') }}</div>
         @else
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>{{ __('attendances.name') }}</th>
-                        <th>{{ __('attendances.date') }}</th>
-                        <th>{{ __('attendances.requested_hours') }}</th>
-                        <th>{{ __('attendances.requested_type') }}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($failedAttendancesRequests as $attendance)
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
                         <tr>
-                            <td>{{ $attendance->user->name }}</td>
-                            <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td>
-                            <td>{{ $attendance->requested_hours }}</td>
-                            <td>{{ $attendance->requested_type == 0 ? 'ROL' : 'Ferie' }}</td>
-                            <td>
-                                <a href="{{ route('admin.failed-attendances.edit', $attendance) }}"
-                                    class="btn btn-xs btn-primary">
-                                    {{ __('attendances.handle') }}
-                                </a>
-                            </td>
+                            <th>{{ __('attendances.name') }}</th>
+                            <th>{{ __('attendances.date') }}</th>
+                            <th>{{ __('attendances.requested_hours') }}</th>
+                            <th>{{ __('attendances.requested_type') }}</th>
+                            <th class="text-right">{{ __('attendances.handle') }}</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($failedAttendancesRequests as $attendance)
+                            <tr>
+                                <td>{{ $attendance->user->name }}</td>
+                                <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td>
+                                <td>{{ $attendance->requested_hours }}</td>
+                                <td>{{ $attendance->requested_type == 0 ? 'ROL' : 'Ferie' }}</td>
+                                <td class="text-right">
+                                    <a href="{{ route('admin.failed-attendances.edit', $attendance) }}"
+                                        class="btn btn-xs btn-primary">
+                                        {{ __('attendances.handle') }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                {{ $failedAttendancesRequests->links() }}
+            </div>
         @endif
     </div>
 </div>

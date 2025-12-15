@@ -204,7 +204,8 @@ class OvertimeRequestController extends Controller {
         return OvertimeRequest::with(['user', 'company', 'overtimeType'])
             ->where('status', 0)
             ->orderBy('date', 'asc')
-            ->get();
+            ->paginate(10, ['*'], 'pending_overtime_page')
+            ->withQueryString();
     }
 
     public function adminCreate() {

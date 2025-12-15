@@ -94,7 +94,8 @@ class FailedAttendanceController extends Controller {
     public function getPendingFailedAttendances() {
         return FailedAttendance::where('status', 1)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10, ['*'], 'pending_failed_attendances_page')
+            ->withQueryString();
     }
 
     public function handleFailedAttendance(FailedAttendance $failedAttendance) {
