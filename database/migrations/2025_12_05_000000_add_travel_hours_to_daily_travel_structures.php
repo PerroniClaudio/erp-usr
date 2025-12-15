@@ -11,8 +11,13 @@ return new class extends Migration {
     public function up(): void
     {
         if (!Schema::hasColumn('daily_travel_structures', 'travel_hours')) {
-            Schema::table('daily_travel_structures', function (Blueprint $table) {
-                $table->decimal('travel_hours', 6, 2)->default(0)->after('economic_value');
+            // economic_value may have been removed by a previous migration, so fall back to an existing column
+            $afterColumn = Schema::hasColumn('daily_travel_structures', 'economic_value')
+                ? 'economic_value'
+                : 'cost_per_km';
+
+            Schema::table('daily_travel_structures', function (Blueprint $table) use ($afterColumn) {
+                $table->decimal('travel_hours', 6, 2)->default(0)->after($afterColumn);
             });
         }
     }
