@@ -1,39 +1,4 @@
-<x-layouts.app>
-    <x-layouts.header :title="__('personnel.users_weekly_schedule_title')" />
-
-    <div class="card bg-base-200 shadow-sm mt-4">
-        <div class="card-body flex flex-col gap-4">
-            <div class="space-y-1">
-                <p class="text-xs uppercase font-semibold text-base-content/60">
-                    {{ __('personnel.users_weekly_schedule_week_label') }}
-                </p>
-                <p class="text-lg font-semibold">
-                    {{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}
-                </p>
-                <p class="text-sm text-base-content/70">
-                    {{ __('personnel.users_weekly_schedule_week_help') }}
-                </p>
-            </div>
-            <div class="w-full md:w-1/3">
-                <form method="GET" action="{{ route('user-schedules.index') }}"
-                    class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center">
-                    <label class="form-control w-full">
-
-                        <input type="date" name="week_start" value="{{ $weekStart->toDateString() }}"
-                            class="input input-bordered w-full" />
-                    </label>
-                    <div class="flex sm:items-end">
-                        <button class="btn btn-secondary w-full sm:w-auto"
-                            type="submit">{{ __('personnel.users_default_schedule_go') }}</button>
-                    </div>
-                    <p class="text-xs text-base-content/60 sm:col-span-2">
-                        {{ __('personnel.users_weekly_schedule_week_selector_hint') }}
-                    </p>
-                </form>
-            </div>
-        </div>
-    </div>
-
+<x-layouts.app :shouldHavePadding=false>
     @php
         $orderedDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         $dayLabelsLong = [
@@ -65,10 +30,88 @@
         $activeTimeOffEntries = collect($activeUser ? $timeOffByUser[$activeUser->id] ?? [] : []);
     @endphp
 
-    <div class="flex flex-col lg:flex-row gap-4 mt-4">
-        <aside class="lg:w-72">
-            <div class="card bg-base-200 shadow-lg">
-                <div class="card-body p-3 gap-2">
+    <div class="drawer lg:drawer-open">
+        <input id="weekly-schedules-drawer" type="checkbox" class="drawer-toggle" />
+        <div class="drawer-content flex flex-col px-4 pb-16">
+            <div class="container mx-auto flex mb-4">
+                <label for="weekly-schedules-drawer" class="btn btn-secondary drawer-button w-full lg:hidden">
+                    {{ __('personnel.users_weekly_schedule_title') }}
+                </label>
+            </div>
+
+
+            <main class="container mx-auto flex flex-col gap-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="space-y-1">
+                        <h1 class="text-3xl sm:text-4xl">{{ __('personnel.users_weekly_schedule_title') }}</h1>
+                    </div>
+                    <div class="badge badge-outline">
+                        {{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="flex-1 space-y-4" id="user-schedule-detail"
+                    data-week-start="{{ $weekStart->toDateString() }}" data-active-user="{{ $activeUser->id ?? '' }}">
+                    @if ($activeUser)
+                        @include('admin.personnel.users.partials.weekly-schedule-card', [
+                            'user' => $activeUser,
+                            'weekStart' => $weekStart,
+                            'weekEnd' => $weekEnd,
+                            'scheduleRows' => $activeScheduleRows,
+                            'hasExisting' => $activeHasExisting,
+                            'timeOffEntries' => $activeTimeOffEntries,
+                            'dayLabelsLong' => $dayLabelsLong,
+                            'dayLabelsShort' => $dayLabelsShort,
+                            'attendanceTypes' => $attendanceTypes,
+                            'attendanceTypesPayload' => $attendanceTypesPayload,
+                            'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
+                            'holidayDays' => $holidayDays,
+                        ])
+                    @else
+                        <div class="card bg-base-200">
+                            <div class="card-body">
+                                <p class="text-sm text-base-content/70">
+                                    {{ __('personnel.users_default_schedule_empty') }}</p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </main>
+        </div>
+        <div class="drawer-side z-50">
+            <label for="weekly-schedules-drawer" class="drawer-overlay" aria-label="Chiudi il menu"></label>
+            <div class="bg-base-200 text-base-content min-h-full w-80 p-4 space-y-6 overflow-y-auto">
+                <div class="space-y-3">
+                    <div class="space-y-1">
+                        <p class="text-xs uppercase font-semibold text-base-content/60">
+                            {{ __('personnel.users_weekly_schedule_week_label') }}
+                        </p>
+                        <p class="text-xl font-semibold text-primary">
+                            {{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}
+                        </p>
+                        <p class="text-sm text-base-content/70">
+                            {{ __('personnel.users_weekly_schedule_week_help') }}
+                        </p>
+                    </div>
+                    <form method="GET" action="{{ route('user-schedules.index') }}"
+                        class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-end">
+                        <label class="form-control w-full">
+                            <input type="date" name="week_start" value="{{ $weekStart->toDateString() }}"
+                                class="input input-bordered w-full" />
+                        </label>
+                        <div class="flex sm:items-end">
+                            <button class="btn btn-secondary w-full sm:w-auto"
+                                type="submit">{{ __('personnel.users_default_schedule_go') }}</button>
+                        </div>
+                        <p class="text-xs text-base-content/60 sm:col-span-2">
+                            {{ __('personnel.users_weekly_schedule_week_selector_hint') }}
+                        </p>
+                    </form>
+                </div>
+
+                <div class="space-y-2">
                     <h2 class="text-sm font-semibold text-base-content/70 uppercase">{{ __('personnel.users') }}</h2>
                     <div class="flex flex-col gap-1">
                         @foreach ($users as $user)
@@ -82,7 +125,8 @@
                                 data-user-nav="{{ $user->id }}" data-has-existing="{{ $hasExisting ? '1' : '0' }}"
                                 data-fetch-url="{{ route('user-schedules.show', $user) }}">
                                 <span class="flex items-center gap-2">
-                                    <span class="status-dot inline-flex h-2.5 w-2.5 rounded-full ring-4 {{ $hasExisting ? 'bg-success/80 ring-success/10' : 'bg-error/80 ring-error/10' }}"
+                                    <span
+                                        class="status-dot inline-flex h-2.5 w-2.5 rounded-full ring-4 {{ $hasExisting ? 'bg-success/80 ring-success/10' : 'bg-error/80 ring-error/10' }}"
                                         data-status-dot aria-hidden="true"></span>
                                     <span>{{ $user->name }}</span>
                                 </span>
@@ -96,32 +140,6 @@
                     </div>
                 </div>
             </div>
-        </aside>
-
-        <div class="flex-1 space-y-4" id="user-schedule-detail" data-week-start="{{ $weekStart->toDateString() }}"
-            data-active-user="{{ $activeUser->id ?? '' }}">
-            @if ($activeUser)
-                @include('admin.personnel.users.partials.weekly-schedule-card', [
-                    'user' => $activeUser,
-                    'weekStart' => $weekStart,
-                    'weekEnd' => $weekEnd,
-                    'scheduleRows' => $activeScheduleRows,
-                    'hasExisting' => $activeHasExisting,
-                    'timeOffEntries' => $activeTimeOffEntries,
-                    'dayLabelsLong' => $dayLabelsLong,
-                    'dayLabelsShort' => $dayLabelsShort,
-                    'attendanceTypes' => $attendanceTypes,
-                    'attendanceTypesPayload' => $attendanceTypesPayload,
-                    'defaultAttendanceTypeId' => $defaultAttendanceTypeId,
-                    'holidayDays' => $holidayDays,
-                ])
-            @else
-                <div class="card bg-base-200">
-                    <div class="card-body">
-                        <p class="text-sm text-base-content/70">{{ __('personnel.users_default_schedule_empty') }}</p>
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
 
@@ -165,7 +183,9 @@
                                 'X-Requested-With': 'XMLHttpRequest',
                             },
                         })
-                        .then(({ data }) => {
+                        .then(({
+                            data
+                        }) => {
                             detail.innerHTML = data.html;
                             detail.dataset.activeUser = userId;
                             window.initWeeklySchedulers?.(detail);

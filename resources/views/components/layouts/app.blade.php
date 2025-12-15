@@ -28,7 +28,7 @@
 <body class="antialiased">
     <div class="drawer lg:drawer-open">
         <input id="main-drawer" type="checkbox" class="drawer-toggle" />
-        <div class="drawer-content flex flex-col pb-16">
+        <div class="drawer-content flex flex-col @if ($shouldHavePadding) pb-16 @endif">
             <main
                 class=" w-full flex flex-col gap-4 @if ($shouldHavePadding) p-4 menu-padding max-w-screen-2xl mx-auto @endif">
                 <!-- Page content here -->
