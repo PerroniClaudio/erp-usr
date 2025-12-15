@@ -1,26 +1,40 @@
 <x-layouts.app :shouldHavePadding=false>
     @php
         $functionSectionsMenu = [
-            ['id' => 'personal-data', 'label' => __('personnel.users_personal_data'), 'show' => true],
-            ['id' => 'roles', 'label' => __('personnel.users_roles_label'), 'show' => $canManageRoles ?? false],
+            [
+                'id' => 'personal-data',
+                'label' => __('personnel.users_personal_data'),
+                'show' => true,
+                'icon' => 'user-circle',
+            ],
+            [
+                'id' => 'roles',
+                'label' => __('personnel.users_roles_label'),
+                'show' => $canManageRoles ?? false,
+                'icon' => 'shield-check',
+            ],
             [
                 'id' => 'default-schedule',
                 'label' => __('personnel.users_default_schedule_title'),
                 'show' => true,
+                'href' => route('users.default-schedules.calendar', $user),
+                'icon' => 'calendar-clock',
             ],
             [
                 'id' => 'time-off',
                 'label' => __('personnel.users_time_off_and_rol_management'),
                 'show' => true,
+                'icon' => 'sun',
             ],
             [
                 'id' => 'residence-location',
                 'label' => __('personnel.users_residence') . ' e ' . __('personnel.users_location'),
                 'show' => true,
+                'icon' => 'map-pin',
             ],
-            ['id' => 'vehicles', 'label' => 'Automezzi', 'show' => true],
-            ['id' => 'companies', 'label' => 'Aziende', 'show' => true],
-            ['id' => 'groups', 'label' => 'Gruppi', 'show' => true],
+            ['id' => 'vehicles', 'label' => 'Automezzi', 'show' => true, 'icon' => 'car'],
+            ['id' => 'companies', 'label' => 'Aziende', 'show' => true, 'icon' => 'building-2'],
+            ['id' => 'groups', 'label' => 'Gruppi', 'show' => true, 'icon' => 'users'],
         ];
 
         $functionSectionsMenu = array_values(array_filter($functionSectionsMenu, fn($section) => $section['show']));
@@ -567,10 +581,26 @@
             <ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4 gap-2">
                 @foreach ($functionSectionsMenu as $section)
                     <li>
-                        <button type="button" class="btn btn-ghost justify-start w-full"
-                            data-function-target="{{ $section['id'] }}">
-                            {{ $section['label'] }}
-                        </button>
+                        @if (isset($section['href']))
+                            <a href="{{ $section['href'] }}" class="btn btn-ghost justify-start w-full">
+                                <span class="flex items-center gap-2">
+                                    @isset($section['icon'])
+                                        <x-dynamic-component :component="'lucide-' . $section['icon']" class="h-4 w-4" />
+                                    @endisset
+                                    <span>{{ $section['label'] }}</span>
+                                </span>
+                            </a>
+                        @else
+                            <button type="button" class="btn btn-ghost justify-start w-full"
+                                data-function-target="{{ $section['id'] }}">
+                                <span class="flex items-center gap-2">
+                                    @isset($section['icon'])
+                                        <x-dynamic-component :component="'lucide-' . $section['icon']" class="h-4 w-4" />
+                                    @endisset
+                                    <span>{{ $section['label'] }}</span>
+                                </span>
+                            </button>
+                        @endif
                     </li>
                 @endforeach
             </ul>

@@ -30,7 +30,7 @@
         <input id="main-drawer" type="checkbox" class="drawer-toggle" />
         <div class="drawer-content flex flex-col pb-16">
             <main
-                class="max-w-screen-2xl mx-auto w-full flex flex-col gap-4 @if ($shouldHavePadding) menu-padding @endif">
+                class="max-w-screen-2xl mx-auto w-full flex flex-col gap-4 @if ($shouldHavePadding) p-4 menu-padding @endif">
                 <!-- Page content here -->
                 <div
                     class="max-w-screen-2xl mx-auto w-full flex @if ($shouldHavePadding) menu-padding @endif lg:hidden">

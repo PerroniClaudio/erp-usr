@@ -91,12 +91,12 @@ dialog:focus {
 
 .menu-padding {
     padding-top: calc(0.25rem * 2);
-    padding-left: calc(0.25rem * 2);
-    padding-right: calc(0.25rem * 2);
 }
 
 .menu-user-label {
     padding: 0;
+    pointer-events: none;
+    cursor: default;
 }
 
 .menu-user-label > div {
