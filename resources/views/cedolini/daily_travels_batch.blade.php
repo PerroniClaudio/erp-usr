@@ -60,7 +60,6 @@
         <thead>
             <tr>
                 <th>Data</th>
-                <th>Azienda</th>
                 <th>Km totali</th>
                 <th>Costo km</th>
                 <th>Ore viaggio</th>
@@ -73,7 +72,6 @@
             @foreach ($travelsData as $data)
                 <tr>
                     <td>{{ $data['travel']->travel_date?->format('d/m/Y') }}</td>
-                    <td>{{ $data['travel']->company?->name }}</td>
                     <td>{{ number_format($data['distance'], 2, ',', '.') }}</td>
                     <td>€ {{ number_format($data['distance_cost'], 2, ',', '.') }}</td>
                     <td>{{ number_format($data['travel_hours'], 2, ',', '.') }}</td>

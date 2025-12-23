@@ -4,21 +4,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const metaContainer = preview.querySelector("[data-preview-meta]");
     const stepsTable = document.querySelector("[data-steps-table]");
-    const companySelect = document.getElementById("company_id");
-    const structures = JSON.parse(preview.dataset.structures || "{}");
     const mapContainer = document.getElementById("daily-travel-map");
     const googleApiKey = preview.dataset.googleApiKey;
     const distanceSummary = document.querySelector("[data-distance-summary]");
     const startLocationValue = preview.dataset.startLocationValue || "office";
     const headquartersMap = JSON.parse(preview.dataset.headquarters || "{}");
     const userHeadquarter = safeJsonParse(preview.dataset.userHeadquarter);
+    const structures = JSON.parse(preview.dataset.structures || "{}");
+    const selectedCompanyId = preview.dataset.selectedCompany || "";
+
+    const intermediateList = document.querySelector("[data-intermediate-list]");
+    const openModalButton = document.getElementById("open_intermediate_modal");
+    const intermediateModal = document.getElementById("intermediate_modal");
+    const companySelect = document.getElementById("intermediate_company_id");
     const intermediateSelect = document.getElementById(
         "intermediate_headquarter_id"
     );
     const addIntermediateButton = document.getElementById(
         "add_intermediate_button"
     );
-    const intermediateList = document.querySelector("[data-intermediate-list]");
+
     let intermediateSteps = [];
 
     const labels = {
@@ -57,47 +62,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const resolveStartLocationLabel = () => labels.startLocationOffice;
 
-    const getSelectedCompanyId = () =>
-        companySelect?.value || preview.dataset.selectedCompany;
+    const renderStructureMeta = () => {
+        const structureGroup = selectedCompanyId
+            ? structures[selectedCompanyId]
+            : null;
+        const structure = structureGroup?.[startLocationValue] ?? null;
 
-    const getSelectedStartLocation = () => startLocationValue;
-
-    const renderStructure = (structure, startLocation) => {
         if (!structure) {
             if (metaContainer) {
                 metaContainer.innerHTML = `<p class="text-sm text-base-content/70">${labels.missing}</p>`;
             }
-            if (stepsTable) {
-                stepsTable.innerHTML = `<tr><td colspan="5" class="text-center text-sm text-base-content/70">${labels.stepsEmpty}</td></tr>`;
-            }
-            if (mapContainer) {
-                mapContainer.innerHTML = `<p class="text-sm text-base-content/70">${labels.mapPlaceholder}</p>`;
-            }
-            if (distanceSummary) {
-                distanceSummary.innerHTML = `<p class="text-sm text-base-content/70">${labels.distanceEmpty}</p>`;
-            }
             return;
         }
 
-        const steps = Array.isArray(structure.steps) ? structure.steps : [];
-        const structureStartLocation = structure.start_location || startLocation;
-        const locationLabel = resolveStartLocationLabel(structureStartLocation);
-        const stepsRows = steps.length
-            ? steps
-                  .map(
-                      (step) => `
-                                <tr>
-                                    <td class="w-12">${step.step_number}</td>
-                                    <td>${step.address}</td>
-                                    <td>${step.city}</td>
-                                    <td>${step.province}</td>
-                                    <td>${step.zip_code}</td>
-                                </tr>
-                            `
-                  )
-                  .join("")
-            : `<tr><td colspan="5" class="text-center text-sm text-base-content/70">${labels.stepsEmpty}</td></tr>`;
-
+        const locationLabel = resolveStartLocationLabel();
         if (metaContainer) {
             metaContainer.innerHTML = `
                 <div class="grid sm:grid-cols-2 gap-3">
@@ -127,29 +105,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
         }
-
-        if (stepsTable) {
-            stepsTable.innerHTML = stepsRows;
-        }
-
-        renderDistances(steps);
-        renderMap(structure);
     };
 
-    const renderCurrentSelection = () => {
-        const companyId = getSelectedCompanyId();
-        const selectedStartLocation = getSelectedStartLocation();
-        const structureGroup = companyId ? structures[companyId] : null;
-        const structure = structureGroup?.[selectedStartLocation] ?? null;
-        renderStructure(structure, selectedStartLocation);
-    };
+    const getCompanyHeadquarters = (companyId) =>
+        Array.isArray(headquartersMap[companyId])
+            ? headquartersMap[companyId]
+            : [];
 
     const populateIntermediateSelect = () => {
         if (!intermediateSelect) return;
-        const companyId = getSelectedCompanyId();
-        const list = Array.isArray(headquartersMap[companyId])
-            ? headquartersMap[companyId]
-            : [];
+        const companyId = companySelect?.value || "";
+        const list = getCompanyHeadquarters(companyId);
         const options = [
             `<option value="">${labels.routeNone}</option>`,
             ...list.map(
@@ -187,12 +153,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         ? `<button type="button" class="btn btn-xs btn-ghost" data-remove-step="${step.id}">✕</button>`
                         : "";
 
+                const companyName = step.company_name
+                    ? `<p class="text-xs uppercase text-base-content/60">${step.company_name}</p>`
+                    : "";
+
                 return `
                     <div class="flex items-center justify-between p-3 bg-base-100 border border-base-200 rounded-lg mb-2">
                         <div>
                             <p class="text-xs uppercase text-base-content/60">${label}</p>
                             <p class="font-semibold">${step.name ?? step.address ?? ""}</p>
                             <p class="text-sm text-base-content/70">${[step.address, step.city].filter(Boolean).join(" - ")}</p>
+                            ${companyName}
                         </div>
                         ${removeButton}
                     </div>
@@ -219,6 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         (item) => Number(item.id) !== targetId
                     );
                     renderIntermediates();
+                    renderRoutePreview();
                 });
             });
 
@@ -229,20 +201,57 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const resetIntermediatesForCompany = () => {
-        intermediateSteps = [];
-        populateIntermediateSelect();
-        renderIntermediates();
+    const normalizeStep = (step, index) => {
+        const latitude = Number(step.latitude);
+        const longitude = Number(step.longitude);
+        return {
+            ...step,
+            step_number: index + 1,
+            latitude: Number.isFinite(latitude) ? latitude : step.latitude,
+            longitude: Number.isFinite(longitude) ? longitude : step.longitude,
+        };
+    };
+
+    const buildRouteSteps = () => {
+        if (!userHeadquarter) return [];
+        return [userHeadquarter, ...intermediateSteps, userHeadquarter].map(
+            (step, index) => normalizeStep(step, index)
+        );
+    };
+
+    const renderRoutePreview = () => {
+        const steps = buildRouteSteps();
+
+        if (stepsTable) {
+            if (!steps.length) {
+                stepsTable.innerHTML = `<tr><td colspan="5" class="text-center text-sm text-base-content/70">${labels.stepsEmpty}</td></tr>`;
+            } else {
+                stepsTable.innerHTML = steps
+                    .map(
+                        (step) => `
+                            <tr>
+                                <td class="w-12">${step.step_number}</td>
+                                <td>${step.address ?? ""}</td>
+                                <td>${step.city ?? ""}</td>
+                                <td>${step.province ?? ""}</td>
+                                <td>${step.zip_code ?? ""}</td>
+                            </tr>
+                        `
+                    )
+                    .join("");
+            }
+        }
+
+        renderDistances(steps);
+        renderMap(steps);
     };
 
     const addIntermediate = () => {
-        if (!intermediateSelect) return;
+        if (!intermediateSelect || !companySelect) return;
         const value = Number(intermediateSelect.value);
         if (!value) return;
-        const companyId = getSelectedCompanyId();
-        const list = Array.isArray(headquartersMap[companyId])
-            ? headquartersMap[companyId]
-            : [];
+        const companyId = companySelect.value;
+        const list = getCompanyHeadquarters(companyId);
         const found = list.find((hq) => Number(hq.id) === value);
         if (!found) return;
         const already = intermediateSteps.some(
@@ -251,17 +260,40 @@ document.addEventListener("DOMContentLoaded", () => {
         if (already) return;
         intermediateSteps.push(found);
         renderIntermediates();
+        renderRoutePreview();
+        if (intermediateModal) {
+            intermediateModal.close();
+        }
     };
 
+    const setDefaultCompany = () => {
+        if (!companySelect) return;
+        if (companySelect.value) return;
+        const firstOption = Array.from(companySelect.options).find(
+            (option) => option.value
+        );
+        if (firstOption) {
+            companySelect.value = firstOption.value;
+        }
+    };
+
+    openModalButton?.addEventListener("click", () => {
+        if (intermediateModal?.showModal) {
+            setDefaultCompany();
+            populateIntermediateSelect();
+            intermediateModal.showModal();
+        }
+    });
+
     companySelect?.addEventListener("change", () => {
-        renderCurrentSelection();
-        resetIntermediatesForCompany();
+        populateIntermediateSelect();
     });
 
     addIntermediateButton?.addEventListener("click", addIntermediate);
 
-    resetIntermediatesForCompany();
-    renderCurrentSelection();
+    renderStructureMeta();
+    renderIntermediates();
+    renderRoutePreview();
 
     function renderDistances(steps) {
         if (!distanceSummary) return;
@@ -343,21 +375,22 @@ document.addEventListener("DOMContentLoaded", () => {
         return R * c;
     }
 
-    function renderMap(structure) {
+    function renderMap(steps) {
         if (!mapContainer || !googleApiKey) return;
 
-        const steps = (structure?.steps || []).filter(
+        const validSteps = (steps || []).filter(
             (step) =>
-                Number.isFinite(step.latitude) && Number.isFinite(step.longitude)
+                Number.isFinite(step.latitude) &&
+                Number.isFinite(step.longitude)
         );
 
-        if (steps.length < 2) {
+        if (validSteps.length < 2) {
             mapContainer.innerHTML = `<p class="text-sm text-base-content/70">${labels.mapPlaceholder}</p>`;
             return;
         }
 
         loadGoogleMapsScript(googleApiKey)
-            .then(() => drawRoute(mapContainer, steps))
+            .then(() => drawRoute(mapContainer, validSteps))
             .catch(() => {
                 mapContainer.innerHTML = `<p class="text-sm text-base-content/70">${labels.missing}</p>`;
             });
@@ -396,11 +429,11 @@ document.addEventListener("DOMContentLoaded", () => {
             fullscreenControl: false,
         });
 
-        const validSteps = steps.map((step) => ({
+        const validSteps = steps.map((step, index) => ({
             lat: step.latitude,
             lng: step.longitude,
             address: step.address,
-            step_number: step.step_number,
+            step_number: step.step_number ?? index + 1,
         }));
 
         const directionsService = new google.maps.DirectionsService();

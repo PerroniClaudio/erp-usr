@@ -18,6 +18,8 @@ class DailyTravelRouteStep extends Model
         'zip_code',
         'latitude',
         'longitude',
+        'distance_km',
+        'travel_minutes',
     ];
 
     public function dailyTravel()

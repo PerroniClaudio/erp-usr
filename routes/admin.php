@@ -206,6 +206,8 @@ Route::group([
     Route::get('/create', [DailyTravelController::class, 'adminCreate'])->name('admin.daily-travels.create');
     Route::post('/', [DailyTravelController::class, 'adminStore'])->name('admin.daily-travels.store');
     Route::get('/export', [DailyTravelController::class, 'adminPdfBatch'])->name('admin.daily-travels.export');
+    Route::get('/{dailyTravel}/review', [DailyTravelController::class, 'adminReview'])->name('admin.daily-travels.review');
+    Route::put('/{dailyTravel}/review', [DailyTravelController::class, 'adminApprove'])->name('admin.daily-travels.review.update');
 });
 
 Route::group([

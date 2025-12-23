@@ -90,41 +90,53 @@
                             <thead>
                                 <tr>
                                     <th>{{ __('daily_travel.travel_date') }}</th>
-                                    <th>{{ __('daily_travel.company_label') }}</th>
                                     <th>{{ __('daily_travel.start_location_label') }}</th>
+                                    <th>{{ __('daily_travel.status_label') }}</th>
                                     <th>{{ __('daily_travel.total_distance') }}</th>
                                     <th>{{ __('daily_travel.distance_cost') }}</th>
                                     <th>{{ __('daily_travel.time_total_hours') }}</th>
                                     <th>{{ __('daily_travel.indemnity') }}</th>
                                     <th>{{ __('daily_travel.economic_value') }}</th>
                                     <th>{{ __('daily_travel.total_label') }}</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($travelsData as $data)
                                     <tr>
                                         <td>{{ $data['travel']->travel_date?->format('d/m/Y') }}</td>
-                                        <td>{{ $data['travel']->company?->name }}</td>
                                         <td>{{ __('daily_travel.start_location_' . ($data['start_location'] ?? \App\Models\DailyTravelStructure::START_LOCATION_OFFICE)) }}</td>
+                                        <td>
+                                            <span class="badge {{ $data['travel']->isApproved() ? 'badge-success' : 'badge-warning' }}">
+                                                {{ __('daily_travel.status_' . $data['travel']->approvalStatus()) }}
+                                            </span>
+                                        </td>
                                         <td>{{ number_format($data['distance'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['distance_cost'], 2, ',', '.') }}</td>
                                         <td>{{ number_format($data['travel_hours'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['indemnity'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['economic_value'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['total'], 2, ',', '.') }}</td>
+                                        <td class="text-right">
+                                            <a class="btn btn-sm btn-primary"
+                                                href="{{ route('admin.daily-travels.review', $data['travel']) }}">
+                                                {{ __('daily_travel.admin_review_action') }}
+                                            </a>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                             @if ($totals)
                                 <tfoot>
                                     <tr class="font-semibold">
-                                        <td colspan="3">{{ __('daily_travel.admin_totals') }}</td>
+                                        <td colspan="4">{{ __('daily_travel.admin_totals') }}</td>
                                         <td>{{ number_format($totals['distance'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['distance_cost'], 2, ',', '.') }}</td>
                                         <td>{{ number_format($totals['travel_hours'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['indemnity'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['economic_value'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['grand_total'], 2, ',', '.') }}</td>
+                                        <td></td>
                                     </tr>
                                 </tfoot>
                             @endif

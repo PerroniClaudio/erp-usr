@@ -62,7 +62,7 @@
     <div class="title">Nota spese viaggio giornaliero</div>
 
     <p>Il/La Sig./Sig.ra {{ $dailyTravel->user->name }} ha effettuato il viaggio del
-        {{ $dailyTravel->travel_date?->format('d/m/Y') }} per l'azienda {{ $dailyTravel->company?->name }}.</p>
+        {{ $dailyTravel->travel_date?->format('d/m/Y') }}.</p>
 
     <table style="margin-top: 10px;">
         <tr>

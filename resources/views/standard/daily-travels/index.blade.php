@@ -26,7 +26,7 @@
                     <thead>
                         <tr>
                             <th>{{ __('daily_travel.travel_date') }}</th>
-                            <th>{{ __('daily_travel.company_label') }}</th>
+                            <th>{{ __('daily_travel.status_label') }}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -34,7 +34,11 @@
                         @forelse ($dailyTravels as $travel)
                             <tr>
                                 <td>{{ $travel->travel_date?->format('d/m/Y') }}</td>
-                                <td>{{ $travel->company?->name }}</td>
+                                <td>
+                                    <span class="badge {{ $travel->isApproved() ? 'badge-success' : 'badge-warning' }}">
+                                        {{ __('daily_travel.status_' . $travel->approvalStatus()) }}
+                                    </span>
+                                </td>
                                 <td class="text-right">
                                     <div class="flex justify-end gap-2">
                                         <a class="btn btn-sm btn-primary"

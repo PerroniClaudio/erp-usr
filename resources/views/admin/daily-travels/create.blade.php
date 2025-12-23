@@ -44,23 +44,6 @@
                     <input type="hidden" name="user_id" value="{{ $selectedUser->id }}">
 
                     <fieldset class="fieldset">
-                        <legend class="fieldset-legend">{{ __('daily_travel.company_label') }}</legend>
-                        <select id="company_id" class="select" name="company_id"
-                            value="{{ old('company_id', $selectedCompanyId) }}" @disabled($companies->isEmpty())>
-                            @forelse ($companies as $company)
-                                <option value="{{ $company->id }}" @selected(old('company_id', $selectedCompanyId) == $company->id)>
-                                    {{ $company->name }}
-                                </option>
-                            @empty
-                                <option value="">{{ __('daily_travel.admin_no_companies') }}</option>
-                            @endforelse
-                        </select>
-                        @error('company_id')
-                            <p class="text-sm text-error mt-1">{{ $message }}</p>
-                        @enderror
-                    </fieldset>
-
-                    <fieldset class="fieldset">
                         <legend class="fieldset-legend">{{ __('daily_travel.travel_date') }}</legend>
                         <input type="date" name="travel_date" class="input"
                             value="{{ old('travel_date', \Carbon\Carbon::today()->toDateString()) }}" />
@@ -85,23 +68,16 @@
                             {{-- Populated by JS --}}
                         </div>
 
-                        <div class="flex flex-col sm:flex-row gap-2 items-end">
-                            <label class="form-control w-full">
-                                <div class="label">
-                                    <span class="label-text">{{ __('daily_travel.route_intermediate_label') }}</span>
-                                </div>
-                                <select id="intermediate_headquarter_id" class="select select-bordered w-full">
-                                    <option value="">{{ __('daily_travel.route_intermediate_none') }}</option>
-                                </select>
-                            </label>
-                            <button type="button" class="btn btn-primary" id="add_intermediate_button">
-                                {{ __('daily_travel.route_add_intermediate') }}
-                            </button>
-                        </div>
+                        <button type="button" class="btn btn-primary" id="open_intermediate_modal">
+                            {{ __('daily_travel.route_add_intermediate') }}
+                        </button>
                         @error('intermediate_headquarter_ids')
                             <p class="text-sm text-error mt-1">{{ $message }}</p>
                         @enderror
                     </fieldset>
+                    @error('structure')
+                        <p class="text-sm text-error mt-1">{{ $message }}</p>
+                    @enderror
 
                     <button id="submit-button" type="submit" class="hidden">
                         {{ __('daily_travel.save_daily_travel') }}
@@ -109,9 +85,53 @@
                 </form>
             </div>
 
+            <dialog id="intermediate_modal" class="modal">
+                <div class="modal-box">
+                    <div class="flex flex-row-reverse items-end">
+                        <form method="dialog">
+                            <button class="btn btn-ghost">
+                                <x-lucide-x class="w-4 h-4" />
+                            </button>
+                        </form>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">{{ __('daily_travel.route_add_intermediate') }}</h3>
+                    <div class="space-y-3">
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend">{{ __('daily_travel.company_label') }}</legend>
+                            <select id="intermediate_company_id" class="select select-bordered w-full">
+                                <option value="">{{ __('daily_travel.company_placeholder') }}</option>
+                                @forelse ($companies as $company)
+                                    <option value="{{ $company->id }}">{{ $company->name }}</option>
+                                @empty
+                                    <option value="">{{ __('daily_travel.admin_no_companies') }}</option>
+                                @endforelse
+                            </select>
+                        </fieldset>
+
+                        <fieldset class="fieldset">
+                            <legend class="fieldset-legend">{{ __('daily_travel.route_intermediate_label') }}</legend>
+                            <select id="intermediate_headquarter_id" class="select select-bordered w-full">
+                                <option value="">{{ __('daily_travel.route_intermediate_none') }}</option>
+                            </select>
+                        </fieldset>
+                    </div>
+
+                    <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                        <button type="button" class="btn btn-primary w-full sm:w-auto" id="add_intermediate_button">
+                            {{ __('daily_travel.route_add_intermediate') }}
+                        </button>
+                        <form method="dialog" class="w-full sm:w-auto">
+                            <button type="submit" class="btn btn-ghost w-full sm:w-auto">
+                                {{ __('daily_travel.close') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </dialog>
+
             <div class="card bg-base-200">
-                <div class="card-body" data-structure-preview
-                    data-selected-company="{{ old('company_id', $selectedCompanyId) }}"
+            <div class="card-body" data-structure-preview
+                data-selected-company="{{ $selectedCompanyId }}"
                     data-selected-start-location="{{ \App\Models\DailyTravelStructure::START_LOCATION_OFFICE }}"
                     data-structures='@json($structuresMap)' data-headquarters='@json($headquartersMap)'
                     data-user-headquarter='@json($userHeadquarter)'

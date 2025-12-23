@@ -10,17 +10,22 @@ class DailyTravel extends Model
 {
     use SoftDeletes;
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+
     protected $table = 'daily_travels';
 
     protected $fillable = [
         'user_id',
-        'company_id',
         'daily_travel_structure_id',
         'travel_date',
+        'approved_at',
+        'approved_by',
     ];
 
     protected $casts = [
         'travel_date' => 'date',
+        'approved_at' => 'datetime',
     ];
 
     public function user()
@@ -28,9 +33,9 @@ class DailyTravel extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function company()
+    public function approver()
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     public function structure()
@@ -43,4 +48,13 @@ class DailyTravel extends Model
         return $this->hasMany(DailyTravelRouteStep::class)->orderBy('step_number');
     }
 
+    public function isApproved(): bool
+    {
+        return (bool) $this->approved_at;
+    }
+
+    public function approvalStatus(): string
+    {
+        return $this->isApproved() ? self::STATUS_APPROVED : self::STATUS_PENDING;
+    }
 }

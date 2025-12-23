@@ -26,8 +26,10 @@
                 <hr>
                 <div class="grid sm:grid-cols-2 gap-3">
                     <div>
-                        <p class="text-xs uppercase text-base-content/60">{{ __('daily_travel.company_label') }}</p>
-                        <p class="font-semibold">{{ $dailyTravel->company?->name }}</p>
+                        <p class="text-xs uppercase text-base-content/60">{{ __('daily_travel.status_label') }}</p>
+                        <p class="font-semibold">
+                            {{ __('daily_travel.status_' . $dailyTravel->approvalStatus()) }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-xs uppercase text-base-content/60">{{ __('daily_travel.travel_date') }}</p>
