@@ -67,7 +67,7 @@
                     <section class="function-section flex flex-col gap-4" data-function-section="personal-data"
                         data-user-section>
                         <div class="card bg-base-300/80 border border-base-200/60 shadow-sm">
-                            <form class="card-body" method="POST" action="{{ route('users.update', $user) }}">
+                            <form class="card-body gap-4" method="POST" action="{{ route('users.update', $user) }}">
                                 @csrf
                                 @method('PUT')
                                 <div class="flex items-center justify-between">

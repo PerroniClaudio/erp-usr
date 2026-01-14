@@ -64,7 +64,7 @@
                     @else
                         <div class="card bg-base-200">
                             <div class="card-body">
-                                <p class="text-sm text-base-content/70">
+                                <p class="empty-state">
                                     {{ __('personnel.users_default_schedule_empty') }}</p>
                             </div>
                         </div>
@@ -74,7 +74,8 @@
         </div>
         <div class="drawer-side z-50">
             <label for="weekly-timeoff-drawer" class="drawer-overlay" aria-label="Chiudi il menu"></label>
-            <div class="bg-base-200 text-base-content min-h-full w-80 p-4 space-y-6 overflow-y-auto">
+            <div
+                class="bg-base-200/90 text-base-content min-h-full w-80 p-4 space-y-6 overflow-y-auto border-r border-base-200/70 backdrop-blur">
                 <div class="space-y-3">
                     <div class="space-y-1">
                         <p class="text-xs uppercase font-semibold text-base-content/60">

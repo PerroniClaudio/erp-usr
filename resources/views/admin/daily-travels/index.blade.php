@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <x-layouts.header :title="__('daily_travel.admin_index_title')" class="mb-4">
+    <x-layouts.header :title="__('daily_travel.admin_index_title')">
         <x-slot:actions>
             <a class="btn btn-primary"
                 href="{{ route('admin.daily-travels.create', $selectedUser ? ['user_id' => $selectedUser->id] : []) }}">
@@ -81,7 +81,7 @@
                 </div>
 
                 @if ($travelsData->isEmpty())
-                    <div class="text-base-content/70">
+                    <div class="empty-state">
                         {{ __('daily_travel.admin_empty') }}
                     </div>
                 @else

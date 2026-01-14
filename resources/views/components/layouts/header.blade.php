@@ -1,6 +1,6 @@
 @props(['title'])
 
-<div
+<div data-page-header
     {{ $attributes->class([
         'flex',
         'flex-col',

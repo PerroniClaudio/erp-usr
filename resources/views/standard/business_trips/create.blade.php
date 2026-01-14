@@ -9,7 +9,7 @@
     </x-layouts.header>
 
     <div class="card bg-base-300 ">
-        <form class="card-body" method="POST" action="{{ route('business-trips.store') }}">
+        <form class="card-body gap-4" method="POST" action="{{ route('business-trips.store') }}">
             @csrf
 
             <fieldset class="fieldset">

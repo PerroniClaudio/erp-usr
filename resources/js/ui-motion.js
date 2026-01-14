@@ -91,9 +91,56 @@ const runUserPageMotion = () => {
     });
 };
 
+const runGlobalPageMotion = () => {
+    const container = document.querySelector("[data-page-content]");
+    if (!container) return;
+    if (container.dataset.motionPlayed === "true") return;
+
+    const header = container.querySelector("[data-page-header]");
+    if (header) {
+        animate(
+            header,
+            { opacity: [0, 1], y: [10, 0] },
+            { duration: 0.35, ease: "easeOut" }
+        );
+    }
+
+    const cards = Array.from(container.querySelectorAll(".card")).filter(
+        (card) => !card.closest("dialog") && !card.closest(".hidden")
+    );
+
+    const looseBlocks = Array.from(
+        container.querySelectorAll(".overflow-x-auto, .collapse")
+    ).filter(
+        (block) =>
+            !block.closest(".card") &&
+            !block.closest("dialog") &&
+            !block.closest(".hidden")
+    );
+
+    const targets = [...cards, ...looseBlocks];
+    const seen = new Set();
+    const uniqueTargets = targets.filter((item) => {
+        if (seen.has(item)) return false;
+        seen.add(item);
+        return true;
+    });
+
+    uniqueTargets.slice(0, 12).forEach((target, index) => {
+        animate(
+            target,
+            { opacity: [0, 1], y: [14, 0] },
+            { duration: 0.4, delay: 0.08 + index * 0.04, ease: "easeOut" }
+        );
+    });
+
+    container.dataset.motionPlayed = "true";
+};
+
 if (!prefersReducedMotion) {
     runHomepageMotion();
     runUserPageMotion();
+    runGlobalPageMotion();
 
     const drawerToggle = document.getElementById("main-drawer");
     const isDesktop = () => window.matchMedia("(min-width: 1024px)").matches;

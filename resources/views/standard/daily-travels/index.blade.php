@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <x-layouts.header :title="__('daily_travel.index_title')" class="mb-4">
+    <x-layouts.header :title="__('daily_travel.index_title')">
         <x-slot:actions>
             <div class="flex gap-2 justify-end">
                 <button class="btn btn-primary" onclick="document.getElementById('export_nota_spese').showModal()">
@@ -60,7 +60,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-center text-base-content/70">
+                                <td colspan="3" class="empty-state">
                                     {{ __('daily_travel.index_empty') }}
                                 </td>
                             </tr>

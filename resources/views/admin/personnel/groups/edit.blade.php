@@ -13,7 +13,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="col-span-1 lg:col-span-1">
             <div class="card bg-base-300 ">
-                <form class="card-body" method="POST" action="{{ route('groups.update', $group) }}">
+                <form class="card-body gap-4" method="POST" action="{{ route('groups.update', $group) }}">
                     @csrf
                     @method('PUT')
                     <fieldset class="fieldset">

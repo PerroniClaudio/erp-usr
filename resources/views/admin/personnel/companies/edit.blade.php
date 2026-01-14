@@ -13,7 +13,7 @@
     <div class="flex flex-col gap-4">
 
         <div class="card bg-base-300 ">
-            <form class="card-body" method="POST" action="{{ route('companies.update', $company) }}">
+            <form class="card-body gap-4" method="POST" action="{{ route('companies.update', $company) }}">
                 <div class="flex items-center justify-between">
                     <h2 class="text-2xl">{{ __('personnel.companies_data_title') }}</h2>
                 </div>

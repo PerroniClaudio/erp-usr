@@ -40,7 +40,7 @@
     </x-layouts.header>
 
     <div class="card bg-base-200 ">
-        <form class="card-body" method="POST"
+        <form class="card-body gap-4" method="POST"
             action="{{ route('attendances.update', [
                 'attendance' => $attendance->id,
             ]) }}">

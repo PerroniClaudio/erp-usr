@@ -109,3 +109,36 @@ dialog:focus {
     border-width: 0 0 1px 0;
     border-color: var(--border-color);
 }
+
+.fieldset .input,
+.fieldset .select,
+.fieldset .textarea,
+.fieldset .file-input {
+    width: 100%;
+}
+
+.empty-state {
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+.table thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+}
+
+.table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:last-child {
+    border-bottom: 0;
+}
+
+.table tbody td {
+    vertical-align: middle;
+}

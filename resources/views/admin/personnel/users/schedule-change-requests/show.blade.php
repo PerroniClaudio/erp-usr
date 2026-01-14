@@ -7,7 +7,7 @@
         <span>{{ $changeRequest->user->name }}</span>
     </div>
 
-    <x-layouts.header :title="__('personnel.user_schedule_request_admin_request_info')" class="mb-4">
+    <x-layouts.header :title="__('personnel.user_schedule_request_admin_request_info')">
         <x-slot:actions>
             <div class="flex items-center gap-2">
                 <span class="badge {{ $changeRequest->status === \App\Models\UserScheduleChangeRequest::STATUS_PENDING ? 'badge-warning' : ($changeRequest->status === \App\Models\UserScheduleChangeRequest::STATUS_APPROVED ? 'badge-success' : 'badge-error') }}">

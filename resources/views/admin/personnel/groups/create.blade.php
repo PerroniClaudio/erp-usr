@@ -9,7 +9,7 @@
     </x-layouts.header>
 
     <div class="card bg-base-300 ">
-        <form class="card-body" method="POST" action="{{ route('groups.store') }}">
+        <form class="card-body gap-4" method="POST" action="{{ route('groups.store') }}">
             @csrf
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">{{ __('personnel.groups_name') }}</legend>

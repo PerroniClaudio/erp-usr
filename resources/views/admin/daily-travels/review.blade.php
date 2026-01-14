@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <x-layouts.header :title="__('daily_travel.admin_review_title')" class="mb-4">
+    <x-layouts.header :title="__('daily_travel.admin_review_title')">
         <x-slot:actions>
             <a class="btn btn-secondary" href="{{ route('admin.daily-travels.index') }}">
                 {{ __('daily_travel.back_to_list') }}

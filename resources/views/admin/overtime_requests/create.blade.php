@@ -10,7 +10,7 @@
         </x-slot:actions>
     </x-layouts.header>
     <div class="card bg-base-300 ">
-        <form class="card-body" method="POST" action="{{ route('admin.overtime-requests.store') }}">
+        <form class="card-body gap-4" method="POST" action="{{ route('admin.overtime-requests.store') }}">
             @csrf
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">{{ __('time_off_requests.select_user') }}</legend>

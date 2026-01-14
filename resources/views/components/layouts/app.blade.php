@@ -38,7 +38,7 @@
                         </label>
                     </div>
                 </div>
-                <section
+                <section data-page-content
                     class="w-full flex flex-col gap-4 @if ($shouldHavePadding) p-4 menu-padding max-w-screen-2xl mx-auto @endif">
                     {{ $slot }}
                 </section>

@@ -5,7 +5,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="col-span-1 lg:col-span-1 flex flex-col gap-4">
             <div class="card bg-base-300 w-full ">
-                <form class="card-body" method="POST"
+                <form class="card-body gap-4" method="POST"
                     action="{{ route('business-trips.update', ['businessTrip' => $businessTrip->id]) }}">
                     @csrf
                     @method('PUT')
