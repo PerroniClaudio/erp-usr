@@ -139,7 +139,12 @@ if (form) {
         ].filter(Boolean);
 
         setFieldValue("address", addressParts.join(" "));
-        setFieldValue("city", address_details?.city);
+        setFieldValue(
+            "city",
+            address_details?.city ??
+                address_details?.town ??
+                address_details?.village
+        );
         setFieldValue("province", address_details?.county);
         setFieldValue("zip_code", address_details?.postcode);
         setFieldValue("latitude", latitude);
