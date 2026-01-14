@@ -1,4 +1,5 @@
 import "./bootstrap";
+import "./ui-motion";
 
 // Utility per il refresh del token CSRF
 window.refreshCsrfToken = async function () {

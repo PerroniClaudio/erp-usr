@@ -3,27 +3,19 @@
     @vite('resources/js/daily-travel-structure.js')
 
 
-    <div class="flex flex-col gap-2">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-semibold">{{ __('daily_travel.user_structure_title') }}</h1>
+    <x-layouts.header :title="__('daily_travel.user_structure_title')">
+        <x-slot:actions>
+            <div class="btn btn-primary">
+                {{ __('daily_travel.save_structure') }}
             </div>
-            <div>
-                <div class="btn btn-primary">
-                    {{ __('daily_travel.save_structure') }}
-                </div>
-
-                <div class="btn btn-primary">
-                    <x-lucide-arrow-left class="h-4 w-4" />
-                    <a href="{{ route('users.edit', $user) }}" class="ml-2">
-                        {{ __('daily_travel.user_back') }}
-                    </a>
-                </div>
+            <div class="btn btn-primary">
+                <x-lucide-arrow-left class="h-4 w-4" />
+                <a href="{{ route('users.edit', $user) }}" class="ml-2">
+                    {{ __('daily_travel.user_back') }}
+                </a>
             </div>
-        </div>
-    </div>
-
-    <hr>
+        </x-slot>
+    </x-layouts.header>
 
     <div class="flex flex-col gap-4">
 

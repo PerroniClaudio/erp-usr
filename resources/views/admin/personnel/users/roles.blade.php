@@ -12,11 +12,7 @@
         @vite('resources/js/roles.js')
     @endpush
 
-    <div class="flex items-center justify-between mb-4">
-        <h1 class="text-3xl font-bold">{{ __('personnel.users_roles_management') }}</h1>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.users_roles_management')" />
 
     <div class="card bg-base-300">
         <div class="card-body">

@@ -1,17 +1,13 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl flex items-center gap-2">
-            <x-lucide-alert-triangle class="h-8 w-8 text-warning" />
-            {{ __('anomalies.title', ['name' => $user->name]) }}
-        </h1>
-        <a href="{{ route('users.edit', $user) }}" class="btn btn-outline">
-            <x-lucide-arrow-left class="h-4 w-4" />
-            {{ __('anomalies.back_to_user') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('anomalies.title', ['name' => $user->name])">
+        <x-slot:actions>
+            <a href="{{ route('users.edit', $user) }}" class="btn btn-outline">
+                <x-lucide-arrow-left class="h-4 w-4" />
+                {{ __('anomalies.back_to_user') }}
+            </a>
+        </x-slot>
+    </x-layouts.header>
 
     <!-- Informazioni periodo -->
     <div class="alert alert-warning">

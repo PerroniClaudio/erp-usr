@@ -1,7 +1,6 @@
 <x-layouts.app>
-    <div class="flex items-center justify-between mb-4">
-        <h1 class="text-3xl font-semibold">{{ __('daily_travel.show_title') }}</h1>
-        <div class="flex gap-2">
+    <x-layouts.header :title="__('daily_travel.show_title')">
+        <x-slot:actions>
             <a class="btn btn-primary" href="{{ route('daily-travels.index') }}">{{ __('daily_travel.back_to_list') }}</a>
             <form method="POST" action="{{ route('daily-travels.destroy', $dailyTravel) }}"
                 onsubmit="return confirm('{{ __('daily_travel.delete_confirm') }}')">
@@ -11,10 +10,8 @@
                     <x-lucide-trash-2 class="w-4 h-4" />
                 </button>
             </form>
-        </div>
-    </div>
-
-    <hr>
+        </x-slot>
+    </x-layouts.header>
 
     <div class="grid md:grid-cols-2 gap-4">
         <div class="card bg-base-200">

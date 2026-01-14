@@ -1,12 +1,11 @@
 <x-layouts.app>
-    <div class="flex items-center justify-between">
-        <h1 class="text-4xl">{{ __('headquarters.add_headquarter') }}</h1>
-        <a class="btn btn-primary" onclick="document.getElementById('headquarter-submit').click()">
-            {{ __('headquarters.add_headquarter') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('headquarters.add_headquarter')">
+        <x-slot:actions>
+            <a class="btn btn-primary" onclick="document.getElementById('headquarter-submit').click()">
+                {{ __('headquarters.add_headquarter') }}
+            </a>
+        </x-slot>
+    </x-layouts.header>
 
     @unless ($googleMapsApiKey)
         <div class="alert alert-warning mb-4">

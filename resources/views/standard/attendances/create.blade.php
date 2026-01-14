@@ -10,70 +10,67 @@
     <div class="grid md:grid-cols-2 gap-4">
 
         <div class="card bg-base-300">
-            <form class="card-body" method="POST" action="{{ route('attendances.store') }}">
+            <form class="card-body gap-4" method="POST" action="{{ route('attendances.store') }}">
                 @csrf
 
-                @if (auth()->user()->hasRole('admin'))
-                    <fieldset class="fieldset">
-                        <legend class="fieldset-legend">Utente</legend>
-                        <select class="select" name="user_id" value="{{ old('user_id') }}">
-                            @foreach ($users as $user)
-                                <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                    {{ $user->name }}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if (auth()->user()->hasRole('admin'))
+                        <fieldset class="fieldset sm:col-span-2">
+                            <legend class="fieldset-legend">Utente</legend>
+                            <select class="select w-full" name="user_id" value="{{ old('user_id') }}">
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}"
+                                        {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                        {{ $user->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </fieldset>
+                    @endif
+
+                    <fieldset class="fieldset sm:col-span-2">
+                        <legend class="fieldset-legend">Azienda</legend>
+                        <select class="select w-full" name="company_id" value="{{ old('company_id') }}">
+                            @foreach ($companies as $company)
+                                <option value="{{ $company->id }}"
+                                    {{ old('company_id') == $company->id ? 'selected' : '' }}>
+                                    {{ $company->name }}
                                 </option>
                             @endforeach
                         </select>
-
                     </fieldset>
-                @endif
 
+                    <fieldset class="fieldset sm:col-span-2">
+                        <legend class="fieldset-legend">Data presenza</legend>
+                        <input type="date" name="date" class="input w-full"
+                            value="{{ old('date', \Carbon\Carbon::today()->toDateString()) }}"
+                            placeholder="{{ \Carbon\Carbon::today()->toDateString() }}" />
+                    </fieldset>
 
-                <fieldset class="fieldset">
-                    <legend class="fieldset-legend">Azienda</legend>
-                    <select class="select" name="company_id" value="{{ old('company_id') }}">
-                        @foreach ($companies as $company)
-                            <option value="{{ $company->id }}"
-                                {{ old('company_id') == $company->id ? 'selected' : '' }}>
-                                {{ $company->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">Orario inizio</legend>
+                        <input type="time" name="time_in" class="input w-full" placeholder="00:00"
+                            value="{{ old('time_in') }}" />
+                    </fieldset>
 
-                </fieldset>
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">Orario fine</legend>
+                        <input type="time" name="time_out" class="input w-full" placeholder="00:00"
+                            value="{{ old('time_out') }}" />
+                    </fieldset>
 
-                <fieldset class="fieldset">
-                    <legend class="fieldset-legend">Data presenza</legend>
-                    <input type="date" name="date" class="input"
-                        value="{{ old('date', \Carbon\Carbon::today()->toDateString()) }}"
-                        placeholder="{{ \Carbon\Carbon::today()->toDateString() }}" />
-
-                </fieldset>
-
-                <fieldset class="fieldset">
-                    <legend class="fieldset-legend">Orario inizio</legend>
-                    <input type="time" name="time_in" class="input" placeholder="00:00"
-                        value="{{ old('time_in') }}" />
-
-                </fieldset>
-
-                <fieldset class="fieldset">
-                    <legend class="fieldset-legend">Orario fine</legend>
-                    <input type="time" name="time_out" class="input" placeholder="00:00"
-                        value="{{ old('time_out') }}" />
-
-                </fieldset>
-                <fieldset class="fieldset">
-                    <legend class="fieldset-legend">Tipo di presenza</legend>
-                    <select class="select" name="attendance_type_id" value="{{ old('attendance_type_id') }}">
-                        @foreach ($attendanceTypes as $attendanceType)
-                            <option value="{{ $attendanceType->id }}"
-                                {{ old('attendance_type_id') == $attendanceType->id ? 'selected' : '' }}>
-                                {{ $attendanceType->name }}
-                            </option>
-                        @endforeach
-                    </select>
-
-                </fieldset>
+                    <fieldset class="fieldset sm:col-span-2">
+                        <legend class="fieldset-legend">Tipo di presenza</legend>
+                        <select class="select w-full" name="attendance_type_id" value="{{ old('attendance_type_id') }}">
+                            @foreach ($attendanceTypes as $attendanceType)
+                                <option value="{{ $attendanceType->id }}"
+                                    {{ old('attendance_type_id') == $attendanceType->id ? 'selected' : '' }}>
+                                    {{ $attendanceType->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </fieldset>
+                </div>
 
                 <button id="submit-button" type="submit"
                     class="hidden">{{ __('attendances.save_attendance') }}</button>

@@ -1,22 +1,15 @@
 <x-layouts.app>
-    <div class="flex">
-        <a href="{{ route('companies.edit', $headquarter->company_id) }}" class="btn btn-secondary">
-            <x-lucide-arrow-left class="w-4 h-4 mr-2" />
-            {{ __('headquarters.back_to_company', ['company' => $headquarter->company->name ?? '']) }}
-        </a>
-    </div>
-
-    <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-
-            <h1 class="text-4xl">{{ __('headquarters.edit_headquarter') }}</h1>
-        </div>
-        <a class="btn btn-primary" onclick="document.getElementById('headquarter-submit').click()">
-            {{ __('headquarters.edit_headquarter') }}
-        </a>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('headquarters.edit_headquarter')">
+        <x-slot:actions>
+            <a href="{{ route('companies.edit', $headquarter->company_id) }}" class="btn btn-secondary">
+                <x-lucide-arrow-left class="w-4 h-4 mr-2" />
+                {{ __('headquarters.back_to_company', ['company' => $headquarter->company->name ?? '']) }}
+            </a>
+            <a class="btn btn-primary" onclick="document.getElementById('headquarter-submit').click()">
+                {{ __('headquarters.edit_headquarter') }}
+            </a>
+        </x-slot>
+    </x-layouts.header>
 
     @unless ($googleMapsApiKey)
         <div class="alert alert-warning mb-4">

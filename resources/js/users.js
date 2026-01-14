@@ -305,9 +305,14 @@ const drawerToggle = document.getElementById("user-drawer");
 
 if (functionSections.length && functionMenuItems.length) {
     const activateSection = (sectionId) => {
+        let targetSection = null;
+
         functionSections.forEach((section) => {
             const isActive = section.dataset.functionSection === sectionId;
             section.classList.toggle("hidden", !isActive);
+            if (isActive) {
+                targetSection = section;
+            }
         });
 
         functionMenuItems.forEach((menuItem) => {
@@ -319,6 +324,14 @@ if (functionSections.length && functionMenuItems.length) {
 
         if (drawerToggle && window.innerWidth < 1024) {
             drawerToggle.checked = false;
+        }
+
+        if (targetSection) {
+            window.dispatchEvent(
+                new CustomEvent("user-section-change", {
+                    detail: { section: targetSection },
+                })
+            );
         }
     };
 

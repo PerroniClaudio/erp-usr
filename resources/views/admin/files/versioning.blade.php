@@ -1,15 +1,14 @@
 <x-layouts.app>
 
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-4">
-        <div class="flex flex-col">
-            <h1 class="text-3xl">{{ __('files.files_versioning_title', ['name' => $file->name]) }}</h1>
-            <p class="text-base text-base-content/70">{{ __('files.files_versioning_subtitle') }}</p>
-        </div>
-        <a class="btn btn-ghost" href="{{ url()->previous() }}">
-            <x-lucide-arrow-left class="w-4 h-4" />
-            {{ __('files.files_back_button') }}
-        </a>
-    </div>
+    <x-layouts.header :title="__('files.files_versioning_title', ['name' => $file->name])">
+        <x-slot:actions>
+            <a class="btn btn-ghost" href="{{ url()->previous() }}">
+                <x-lucide-arrow-left class="w-4 h-4" />
+                {{ __('files.files_back_button') }}
+            </a>
+        </x-slot>
+    </x-layouts.header>
+    <p class="text-base text-base-content/70 mb-4">{{ __('files.files_versioning_subtitle') }}</p>
 
     <div class="card bg-base-300 mb-6">
         <div class="card-body space-y-4">

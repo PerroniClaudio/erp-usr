@@ -56,20 +56,17 @@
                     {{ __('personnel.users_all_user_functions') }}
                 </label>
             </div>
-            <main class="container mx-auto flex flex-col gap-4">
+            <main class="container mx-auto flex flex-col gap-6" data-userpage>
 
 
                 <input type="hidden" name="user_id" id="user_id" value="{{ $user->id }}">
 
-                <div class="flex justify-between items-center">
-                    <h1 class="text-4xl">{{ __('personnel.users_edit_user') }}</h1>
-                </div>
-
-                <hr>
+                <x-layouts.header :title="__('personnel.users_edit_user')" />
 
                 <div id="user-functions" class="flex flex-col gap-4">
-                    <section class="function-section flex flex-col gap-4" data-function-section="personal-data">
-                        <div class="card bg-base-300 ">
+                    <section class="function-section flex flex-col gap-4" data-function-section="personal-data"
+                        data-user-section>
+                        <div class="card bg-base-300/80 border border-base-200/60 shadow-sm">
                             <form class="card-body" method="POST" action="{{ route('users.update', $user) }}">
                                 @csrf
                                 @method('PUT')
@@ -272,8 +269,9 @@
                                 'standard' => 'badge-success',
                             ];
                         @endphp
-                        <section class="function-section flex flex-col gap-4" data-function-section="roles">
-                            <div class="card bg-base-300">
+                        <section class="function-section flex flex-col gap-4" data-function-section="roles"
+                            data-user-section>
+                            <div class="card bg-base-300/80 border border-base-200/60 shadow-sm">
                                 <div class="card-body flex flex-col gap-3">
                                     <div class="flex items-center justify-between">
                                         <h2 class="text-lg">{{ __('personnel.users_roles_label') }}</h2>
@@ -322,8 +320,9 @@
                         );
                     @endphp
 
-                    <section class="function-section flex flex-col gap-4" data-function-section="default-schedule">
-                        <div class="card bg-base-300">
+                    <section class="function-section flex flex-col gap-4" data-function-section="default-schedule"
+                        data-user-section>
+                        <div class="card bg-base-300/80 border border-base-200/60 shadow-sm">
                             <div class="card-body flex flex-col gap-4">
                                 <div class="flex items-center justify-between">
                                     <h2 class="text-lg">{{ __('personnel.users_default_schedule_title') }}</h2>
@@ -340,8 +339,9 @@
                         </div>
                     </section>
 
-                    <section class="function-section flex flex-col gap-4" data-function-section="scheduled-time-off">
-                        <div class="card bg-base-300">
+                    <section class="function-section flex flex-col gap-4" data-function-section="scheduled-time-off"
+                        data-user-section>
+                        <div class="card bg-base-300/80 border border-base-200/60 shadow-sm">
                             <div class="card-body flex flex-col gap-4">
                                 <div class="flex items-center justify-between">
                                     <h2 class="text-lg">{{ __('personnel.users_scheduled_time_off_title') }}</h2>
@@ -358,12 +358,14 @@
                         </div>
                     </section>
 
-                    <section class="function-section flex flex-col gap-4" data-function-section="time-off">
+                    <section class="function-section flex flex-col gap-4" data-function-section="time-off"
+                        data-user-section>
                         <x-users.time-off :user="$user" />
                     </section>
 
-                    <section class="function-section flex flex-col gap-4" data-function-section="residence-location">
-                        <div class="card bg-base-300 ">
+                    <section class="function-section flex flex-col gap-4" data-function-section="residence-location"
+                        data-user-section>
+                        <div class="card bg-base-300/80 border border-base-200/60 shadow-sm">
                             <div class="card-body">
                                 <div class="card-title flex items-center justify-between gap-2">
                                     <span>{{ __('personnel.users_residence') }}</span>
@@ -449,7 +451,7 @@
                             </div>
                         </div>
 
-                        <div class="card bg-base-300 ">
+                        <div class="card bg-base-300/80 border border-base-200/60 shadow-sm">
                             <div class="card-body">
 
                                 <div class="card-title flex items-center justify-between gap-2">
@@ -537,15 +539,18 @@
                         </div>
                     </section>
 
-                    <section class="function-section flex flex-col gap-4" data-function-section="vehicles">
+                    <section class="function-section flex flex-col gap-4" data-function-section="vehicles"
+                        data-user-section>
                         <x-users.vehicles :user="$user" />
                     </section>
 
-                    <section class="function-section flex flex-col gap-4" data-function-section="companies">
+                    <section class="function-section flex flex-col gap-4" data-function-section="companies"
+                        data-user-section>
                         <x-users.companies :user="$user" />
                     </section>
 
-                    <section class="function-section flex flex-col gap-4" data-function-section="groups">
+                    <section class="function-section flex flex-col gap-4" data-function-section="groups"
+                        data-user-section>
                         <x-users.groups :user="$user" />
                     </section>
                 </div>
@@ -603,7 +608,8 @@
         </div>
         <div class="drawer-side z-50">
             <label for="user-drawer" class="drawer-overlay" aria-label="Chiudi il menu"></label>
-            <ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4 gap-2">
+            <ul class="menu bg-base-200/90 text-base-content min-h-full w-80 px-4 pt-0 pb-4 gap-2 border-r border-base-200/70 backdrop-blur"
+                data-user-sidebar>
                 @foreach ($functionSectionsMenu as $section)
                     <li>
                         @if (isset($section['href']))

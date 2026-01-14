@@ -41,16 +41,13 @@
 
 
             <main class="container mx-auto flex flex-col gap-4">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <div class="space-y-1">
-                        <h1 class="text-3xl sm:text-4xl">{{ __('personnel.users_weekly_schedule_title') }}</h1>
-                    </div>
-                    <div class="badge badge-outline">
-                        {{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}
-                    </div>
-                </div>
-
-                <hr>
+                <x-layouts.header :title="__('personnel.users_weekly_schedule_title')">
+                    <x-slot:actions>
+                        <div class="badge badge-outline">
+                            {{ $weekStart->format('d/m/Y') }} - {{ $weekEnd->format('d/m/Y') }}
+                        </div>
+                    </x-slot>
+                </x-layouts.header>
 
                 <div class="flex-1 space-y-4" id="user-schedule-detail"
                     data-week-start="{{ $weekStart->toDateString() }}" data-active-user="{{ $activeUser->id ?? '' }}">

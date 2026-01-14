@@ -1,12 +1,11 @@
 <x-layouts.app>
-    <div class="flex justify-between items-center">
-        <h1 class="text-4xl">{{ __('personnel.users_vehicles_edit') }}</h1>
-        <div class="btn btn-primary hidden lg:inline-flex" onclick="document.getElementById('submit-button').click()">
-            {{ __('personnel.users_vehicles_save') }}
-        </div>
-    </div>
-
-    <hr>
+    <x-layouts.header :title="__('personnel.users_vehicles_edit')">
+        <x-slot:actions>
+            <div class="btn btn-primary hidden lg:inline-flex" onclick="document.getElementById('submit-button').click()">
+                {{ __('personnel.users_vehicles_save') }}
+            </div>
+        </x-slot>
+    </x-layouts.header>
 
     <div class="card bg-base-300 ">
         <div class="card-body">

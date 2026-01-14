@@ -46,8 +46,8 @@
         </div>
         <div class="drawer-side z-50">
             <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
-            <ul class="menu bg-base-300 text-base-content min-h-full w-80">
-                <x-sidebar.user-label :user="auth()->user()" />
+            <ul class="menu bg-base-300/90 text-base-content min-h-full w-80 border-r border-base-300/80 px-3 pt-4 pb-4 gap-1 backdrop-blur flex flex-col"
+                data-sidebar>
                 <!-- Sidebar content here -->
                 @php
                     $loggedUser = auth()->user();
@@ -452,6 +452,7 @@
                         </a>
                     </li>
                 @endif
+                <x-sidebar.user-label :user="auth()->user()" />
             </ul>
         </div>
     </div>
