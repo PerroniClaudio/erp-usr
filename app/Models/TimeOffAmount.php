@@ -16,6 +16,11 @@ class TimeOffAmount extends Model
         'rol_amount',
     ];
 
+    protected $casts = [
+        'time_off_amount' => 'decimal:5',
+        'rol_amount' => 'decimal:5',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

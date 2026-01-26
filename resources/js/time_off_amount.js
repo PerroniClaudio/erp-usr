@@ -36,17 +36,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const rolUsedInput = document.getElementById("rol-used-input");
 
     const timeOffRemainingLabel = document.getElementById(
-        "time-off-remaining-label"
+        "time-off-remaining-label",
     );
     const rolRemainingLabel = document.getElementById("rol-remaining-label");
     const timeOffRemainingModalLabel = document.getElementById(
-        "time-off-remaining-label-modal"
+        "time-off-remaining-label-modal",
     );
     const rolRemainingModalLabel = document.getElementById(
-        "rol-remaining-label-modal"
+        "rol-remaining-label-modal",
     );
     const saveButton = document.getElementById("save-time-off-amount");
     const monthFilter = document.getElementById("month-filter");
+    const yearFilter = document.getElementById("year-filter");
+    const timeOffContent = document.getElementById("time-off-content");
+    const timeOffLoader = document.getElementById("time-off-loading");
+    const searchButton = document.getElementById("time-off-search");
     const monthEndpoint =
         document.getElementById("time-off-overview")?.dataset.monthUrl;
     const usageEndpoint =
@@ -68,6 +72,14 @@ document.addEventListener("DOMContentLoaded", () => {
             element.classList.add("text-error");
         } else {
             element.classList.remove("text-error");
+        }
+    };
+
+    const setFiltersLoading = (isLoading) => {
+        if (timeOffContent) {
+            timeOffContent.classList.toggle("hidden", isLoading);
+            timeOffLoader.classList.toggle("hidden", !isLoading);
+            timeOffLoader.classList.toggle("flex", isLoading);
         }
     };
 
@@ -108,10 +120,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 data.time_off_remaining_hours !== undefined &&
                 timeOffRemainingLabel
             ) {
-                updateLabel(timeOffRemainingLabel, data.time_off_remaining_hours);
+                updateLabel(
+                    timeOffRemainingLabel,
+                    data.time_off_remaining_hours,
+                );
                 updateLabel(
                     timeOffRemainingModalLabel,
-                    data.time_off_remaining_hours
+                    data.time_off_remaining_hours,
                 );
             }
 
@@ -210,18 +225,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const updateReferenceDateForMonth = (month) => {
+    const updateReferenceDateForMonth = (month, yearOverride = null) => {
         const baseDate = referenceDateInput?.value
             ? new Date(referenceDateInput.value)
             : new Date();
-        const year = baseDate.getFullYear();
+        const year = yearOverride ?? baseDate.getFullYear();
         const lastDay = new Date(year, month, 0);
         if (referenceDateInput) {
             referenceDateInput.value = lastDay.toISOString().slice(0, 10);
         }
     };
 
-    const fetchMonthAmounts = async (month) => {
+    const fetchMonthAmounts = async (month, { skipResiduals = false } = {}) => {
         if (!monthEndpoint || !month || !userId) return;
 
         const baseDate = referenceDateInput?.value
@@ -242,7 +257,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 rolAmountInput.value = data.rol_amount;
             }
             syncTotals();
-            await requestResiduals();
+            if (!skipResiduals) {
+                await requestResiduals();
+            }
         } catch (error) {
             console.error("Errore nel recupero del monte mensile", error);
         }
@@ -255,15 +272,23 @@ document.addEventListener("DOMContentLoaded", () => {
             input.addEventListener("change", fetchResiduals);
         });
 
-    if (monthFilter) {
-        monthFilter.addEventListener("change", async (e) => {
-            const selectedMonth = Number(e.target.value);
-            if (!selectedMonth) return;
-            updateReferenceDateForMonth(selectedMonth);
-            await fetchMonthAmounts(selectedMonth);
+    const handleFilterChange = async () => {
+        const selectedMonth = Number(monthFilter?.value);
+        const selectedYear = Number(yearFilter?.value);
+        if (!selectedMonth || !selectedYear) return;
+        setFiltersLoading(true);
+        try {
+            updateReferenceDateForMonth(selectedMonth, selectedYear);
+            await fetchMonthAmounts(selectedMonth, { skipResiduals: true });
             await requestResiduals();
             await fetchUsage();
-        });
+        } finally {
+            setFiltersLoading(false);
+        }
+    };
+
+    if (searchButton) {
+        searchButton.addEventListener("click", handleFilterChange);
     }
 
     if (saveButton && storeEndpoint) {
@@ -299,12 +324,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Prima valorizzazione alla apertura pagina
     const initialMonth = monthFilter ? Number(monthFilter.value) : null;
-    if (initialMonth) {
-        updateReferenceDateForMonth(initialMonth);
-        fetchMonthAmounts(initialMonth).then(() => {
-            requestResiduals();
-            fetchUsage();
-        });
+    const initialYear = yearFilter ? Number(yearFilter.value) : null;
+    if (initialMonth && initialYear) {
+        setFiltersLoading(true);
+        updateReferenceDateForMonth(initialMonth, initialYear);
+        fetchMonthAmounts(initialMonth, { skipResiduals: true })
+            .then(async () => {
+                await requestResiduals();
+                await fetchUsage();
+            })
+            .finally(() => {
+                setFiltersLoading(false);
+            });
     } else {
         fetchResiduals();
         fetchUsage();

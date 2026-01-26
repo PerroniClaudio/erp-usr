@@ -223,20 +223,10 @@ class TimeOffAmountController extends Controller
 
     private function calculateRequestHours(TimeOffRequest $request, Carbon $start, Carbon $end): float
     {
-        if ($start->isSameDay($end)) {
-            if ($request->date_from && $request->date_to) {
-                return $start->diffInMinutes($end) / 60;
-            }
-
-            return (float) ($request->hours ?? $request->hours_per_day ?? 8);
+        if ($end->lte($start)) {
+            return 0.0;
         }
 
-        $startDay = $start->copy()->startOfDay();
-        $endDay = $end->copy()->startOfDay();
-
-        $days = $startDay->diffInDays($endDay) + 1;
-        $hoursPerDay = $request->hours_per_day ?? 8;
-
-        return $hoursPerDay * $days;
+        return $start->diffInMinutes($end) / 60;
     }
 }

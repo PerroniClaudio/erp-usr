@@ -277,6 +277,7 @@ return [
 
     "users_time_off_and_rol_management" => "Gestione ferie e Rol",
     "users_time_off_and_rol_select_month" => "Seleziona mese",
+    "users_time_off_search" => "Cerca",
     "users_time_off_total_label" => "Monte Ferie",
     "users_time_off_used_label" => "Ferie Usufruite",
     "users_time_off_remaining_label" => "Ferie Residue",
