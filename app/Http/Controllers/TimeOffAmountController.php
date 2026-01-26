@@ -23,6 +23,14 @@ class TimeOffAmountController extends Controller
         $periodStart = $referenceDate->copy()->startOfYear();
         $periodEnd = $referenceDate->copy()->endOfMonth();
 
+        $yearTotalRecord = $this->getYearTotalRecord($validated['user_id'], $referenceDate->year);
+        $timeOffTotal = $yearTotalRecord
+            ? (float) $yearTotalRecord->time_off_amount
+            : (float) $validated['time_off_amount'];
+        $rolTotal = $yearTotalRecord
+            ? (float) $yearTotalRecord->rol_amount
+            : (float) $validated['rol_amount'];
+
         $typeIds = TimeOffType::whereIn('name', ['Ferie', 'Rol'])->pluck('id', 'name');
 
         $timeOffUsed = $this->calculateUsedHours(
@@ -42,8 +50,8 @@ class TimeOffAmountController extends Controller
         return response()->json([
             'time_off_used_hours' => round($timeOffUsed, 1),
             'rol_used_hours' => round($rolUsed, 1),
-            'time_off_remaining_hours' => round($validated['time_off_amount'] - $timeOffUsed, 1),
-            'rol_remaining_hours' => round($validated['rol_amount'] - $rolUsed, 1),
+            'time_off_remaining_hours' => round($timeOffTotal - $timeOffUsed, 1),
+            'rol_remaining_hours' => round($rolTotal - $rolUsed, 1),
         ]);
     }
 
@@ -55,11 +63,7 @@ class TimeOffAmountController extends Controller
             'year' => ['required', 'integer', 'min:1970'],
         ]);
 
-        $record = TimeOffAmount::where('user_id', $validated['user_id'])
-            ->whereYear('reference_date', $validated['year'])
-            ->whereMonth('reference_date', $validated['month'])
-            ->latest('reference_date')
-            ->first();
+        $record = $this->getYearTotalRecord($validated['user_id'], $validated['year']);
 
         return response()->json([
             'time_off_amount' => $record?->time_off_amount ?? 0,
@@ -96,12 +100,9 @@ class TimeOffAmountController extends Controller
             ->whereIn('time_off_type_id', $typeIds)
             ->get();
 
-        $amountsByMonth = TimeOffAmount::where('user_id', $validated['user_id'])
-            ->whereYear('reference_date', $year)
-            ->get()
-            ->groupBy(function ($item) {
-                return Carbon::parse($item->reference_date)->month;
-            });
+        $yearTotalRecord = $this->getYearTotalRecord($validated['user_id'], $year);
+        $yearTimeOffTotal = $yearTotalRecord ? (float) $yearTotalRecord->time_off_amount : 0.0;
+        $yearRolTotal = $yearTotalRecord ? (float) $yearTotalRecord->rol_amount : 0.0;
 
         $labels = [];
         $ferieData = [];
@@ -136,13 +137,11 @@ class TimeOffAmountController extends Controller
                 }
             }
 
-            $amountRecord = $amountsByMonth->get($month)?->sortByDesc('reference_date')->first();
-
             $labels[] = $monthStart->locale('it')->shortMonthName;
             $ferieData[] = round($ferieTotal, 1);
             $rolData[] = round($rolTotal, 1);
-            $ferieAmounts[] = $amountRecord?->time_off_amount ? round((float) $amountRecord->time_off_amount, 1) : 0.0;
-            $rolAmounts[] = $amountRecord?->rol_amount ? round((float) $amountRecord->rol_amount, 1) : 0.0;
+            $ferieAmounts[] = round($yearTimeOffTotal, 1);
+            $rolAmounts[] = round($yearRolTotal, 1);
         }
 
         return response()->json([
@@ -165,11 +164,27 @@ class TimeOffAmountController extends Controller
         ]);
 
         $referenceDate = Carbon::parse($validated['reference_date']);
+        $isYearStart = $referenceDate->isSameDay($referenceDate->copy()->startOfYear());
 
         $timeOffAmount = TimeOffAmount::where('user_id', $validated['user_id'])
-            ->whereYear('reference_date', $referenceDate->year)
-            ->whereMonth('reference_date', $referenceDate->month)
+            ->whereDate('reference_date', $referenceDate->toDateString())
             ->first();
+
+        if ($isYearStart) {
+            $previousResidual = TimeOffAmount::where('user_id', $validated['user_id'])
+                ->whereDate(
+                    'reference_date',
+                    Carbon::create($referenceDate->year - 1, 12, 31)->toDateString()
+                )
+                ->first();
+
+            if ($previousResidual) {
+                $validated['time_off_amount'] =
+                    (float) $validated['time_off_amount'] + (float) $previousResidual->time_off_amount;
+                $validated['rol_amount'] =
+                    (float) $validated['rol_amount'] + (float) $previousResidual->rol_amount;
+            }
+        }
 
         if ($timeOffAmount) {
             $timeOffAmount->update($validated);
@@ -219,6 +234,13 @@ class TimeOffAmountController extends Controller
         }
 
         return round($totalHours, 1);
+    }
+
+    private function getYearTotalRecord(int $userId, int $year): ?TimeOffAmount
+    {
+        return TimeOffAmount::where('user_id', $userId)
+            ->whereDate('reference_date', Carbon::create($year, 1, 1)->toDateString())
+            ->first();
     }
 
     private function calculateRequestHours(TimeOffRequest $request, Carbon $start, Carbon $end): float

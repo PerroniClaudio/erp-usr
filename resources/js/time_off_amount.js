@@ -2,6 +2,7 @@ import axios from "axios";
 
 let chartInstance = null;
 let chartModulePromise = null;
+let overviewReferenceDate = null;
 
 function debounce(fn, delay = 400) {
     let timeout;
@@ -26,6 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const referenceDateInput = modal.querySelector("#reference-date-input");
+    const entryTypeSelect = modal.querySelector("#time-off-entry-type");
+    const entryYearSelect = modal.querySelector("#time-off-entry-year");
     const timeOffAmountInput = modal.querySelector("#time-off-amount-input");
     const rolAmountInput = modal.querySelector("#rol-amount-input");
     const insertDateInput = modal.querySelector('input[name="insert_date"]');
@@ -92,14 +95,58 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const normalizeReferenceDateByType = () => {
+        if (!referenceDateInput || !entryTypeSelect || !entryYearSelect) return;
+        const year = Number(entryYearSelect.value);
+        if (!year) return;
+        if (entryTypeSelect.value === "residual") {
+            referenceDateInput.value = `${year}-12-31`;
+        } else {
+            referenceDateInput.value = `${year}-01-01`;
+        }
+    };
+
+    const resetEntryForm = () => {
+        if (timeOffAmountInput) {
+            timeOffAmountInput.value = "";
+        }
+        if (rolAmountInput) {
+            rolAmountInput.value = "";
+        }
+        if (insertDateInput) {
+            insertDateInput.value = new Date().toISOString().slice(0, 10);
+        }
+        if (entryTypeSelect) {
+            entryTypeSelect.value = "total";
+        }
+        if (entryYearSelect) {
+            const fallbackYear = yearFilter?.value
+                ? Number(yearFilter.value)
+                : new Date().getFullYear();
+            entryYearSelect.value = String(fallbackYear);
+        }
+        normalizeReferenceDateByType();
+    };
+
+    const getOverviewReferenceDate = () => {
+        if (overviewReferenceDate) {
+            return overviewReferenceDate;
+        }
+        if (referenceDateInput?.value) {
+            return referenceDateInput.value;
+        }
+        return new Date().toISOString().slice(0, 10);
+    };
+
     const requestResiduals = async () => {
-        if (!referenceDateInput?.value) return;
+        const overviewDate = getOverviewReferenceDate();
+        if (!overviewDate) return;
 
         syncTotals();
 
         const payload = {
             user_id: userId,
-            reference_date: referenceDateInput.value,
+            reference_date: overviewDate,
             time_off_amount: parseFloat(timeOffAmountInput?.value || 0),
             rol_amount: parseFloat(rolAmountInput?.value || 0),
         };
@@ -210,11 +257,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const fetchUsage = async () => {
-        if (!usageEndpoint || !referenceDateInput?.value) return;
+        const overviewDate = getOverviewReferenceDate();
+        if (!usageEndpoint || !overviewDate) return;
 
         const payload = {
             user_id: userId,
-            reference_date: referenceDateInput.value,
+            reference_date: overviewDate,
         };
 
         try {
@@ -226,26 +274,21 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const updateReferenceDateForMonth = (month, yearOverride = null) => {
-        const baseDate = referenceDateInput?.value
-            ? new Date(referenceDateInput.value)
-            : new Date();
-        const year = yearOverride ?? baseDate.getFullYear();
+        const year = yearOverride ?? new Date().getFullYear();
         const lastDay = new Date(year, month, 0);
-        if (referenceDateInput) {
-            referenceDateInput.value = lastDay.toISOString().slice(0, 10);
-        }
+        overviewReferenceDate = lastDay.toISOString().slice(0, 10);
     };
 
-    const fetchMonthAmounts = async (month, { skipResiduals = false } = {}) => {
-        if (!monthEndpoint || !month || !userId) return;
-
-        const baseDate = referenceDateInput?.value
-            ? new Date(referenceDateInput.value)
-            : new Date();
+    const fetchMonthAmounts = async (
+        month,
+        year,
+        { skipResiduals = false } = {},
+    ) => {
+        if (!monthEndpoint || !month || !year || !userId) return;
         const payload = {
             user_id: userId,
             month: Number(month),
-            year: baseDate.getFullYear(),
+            year: Number(year),
         };
 
         try {
@@ -272,6 +315,15 @@ document.addEventListener("DOMContentLoaded", () => {
             input.addEventListener("change", fetchResiduals);
         });
 
+    if (entryTypeSelect && entryYearSelect && referenceDateInput) {
+        const handleEntryChange = () => {
+            normalizeReferenceDateByType();
+        };
+        entryTypeSelect.addEventListener("change", handleEntryChange);
+        entryYearSelect.addEventListener("change", handleEntryChange);
+        normalizeReferenceDateByType();
+    }
+
     const handleFilterChange = async () => {
         const selectedMonth = Number(monthFilter?.value);
         const selectedYear = Number(yearFilter?.value);
@@ -279,7 +331,13 @@ document.addEventListener("DOMContentLoaded", () => {
         setFiltersLoading(true);
         try {
             updateReferenceDateForMonth(selectedMonth, selectedYear);
-            await fetchMonthAmounts(selectedMonth, { skipResiduals: true });
+            if (entryYearSelect) {
+                entryYearSelect.value = String(selectedYear);
+                normalizeReferenceDateByType();
+            }
+            await fetchMonthAmounts(selectedMonth, selectedYear, {
+                skipResiduals: true,
+            });
             await requestResiduals();
             await fetchUsage();
         } finally {
@@ -313,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 await axios.post(storeEndpoint, payload);
+                resetEntryForm();
                 await requestResiduals();
                 await fetchUsage();
                 modal.close();
@@ -328,7 +387,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (initialMonth && initialYear) {
         setFiltersLoading(true);
         updateReferenceDateForMonth(initialMonth, initialYear);
-        fetchMonthAmounts(initialMonth, { skipResiduals: true })
+        if (entryYearSelect) {
+            entryYearSelect.value = String(initialYear);
+            normalizeReferenceDateByType();
+        }
+        fetchMonthAmounts(initialMonth, initialYear, { skipResiduals: true })
             .then(async () => {
                 await requestResiduals();
                 await fetchUsage();

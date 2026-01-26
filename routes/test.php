@@ -427,3 +427,88 @@ Route::get('/test-email', function () {
 
     // echo "Email inviata a " . $user->email;
 });
+
+Route::get('/test-ferie', function() {
+
+    $user = User::find(2);
+    $mesi = [];
+    $totalFerie = 0;
+    $totalRol = 0;
+
+    for($i = 0; $i <= 11; $i++) {
+
+        $totalHoursForMonth = 0;
+        $totalHoursForMonthRol = 0;
+
+        $start_date = Carbon::create(2025, 1, 1)->addMonths($i);
+        $end_date = (clone $start_date)->endOfMonth();
+
+        $time_off_requests = TimeOffRequest::where('user_id', $user->id)
+            ->where('status', 2)
+            ->where('time_off_type_id', 1)
+            ->where(function($query) use ($start_date, $end_date) {
+                $query->whereBetween('date_from', [$start_date, $end_date])
+                      ->orWhereBetween('date_to', [$start_date, $end_date])
+                      ->orWhere(function($q) use ($start_date, $end_date) {
+                          $q->where('date_from', '<', $start_date)
+                            ->where('date_to', '>', $end_date);
+                      });
+            })
+            ->get();
+
+        foreach($time_off_requests as $request) {
+            $request_start = Carbon::parse($request->date_from);
+            $request_end = Carbon::parse($request->date_to);
+
+            $period_start = $request_start->greaterThan($start_date) ? $request_start : $start_date;
+            $period_end = $request_end->lessThan($end_date) ? $request_end : $end_date;
+
+            $hours = $period_start->diffInHours($period_end);
+            $totalHoursForMonth += $hours;
+
+            $totalFerie += $hours;
+        }
+
+        $rol = TimeOffRequest::where('user_id', $user->id)
+            ->where('status', 2)
+            ->where('time_off_type_id', 2)
+            ->where(function($query) use ($start_date, $end_date) {
+                $query->whereBetween('date_from', [$start_date, $end_date])
+                      ->orWhereBetween('date_to', [$start_date, $end_date])
+                      ->orWhere(function($q) use ($start_date, $end_date) {
+                          $q->where('date_from', '<', $start_date)
+                            ->where('date_to', '>', $end_date);
+                      });
+            })
+            ->get();
+
+        foreach($rol as $request) {
+            $request_start = Carbon::parse($request->date_from);
+            $request_end = Carbon::parse($request->date_to);
+
+            $period_start = $request_start->greaterThan($start_date) ? $request_start : $start_date;
+            $period_end = $request_end->lessThan($end_date) ? $request_end : $end_date;
+
+            $hours = $period_start->diffInHours($period_end);
+            $totalHoursForMonthRol += $hours;
+            $totalRol += $hours;
+
+        }
+
+
+        $mesi[$i] = [
+            'month' => strtolower($start_date->translatedFormat('F')),
+            'year' => $start_date->year,
+            'hours_off' => $totalHoursForMonth,
+            'hours_rol' => $totalHoursForMonthRol,
+        ];
+    }
+
+    return view('test-ferie', [
+        'user' => $user,
+        'mesi' => $mesi,
+        'totalFerie' => $totalFerie,
+        'totalRol' => $totalRol,
+    ]);
+
+});

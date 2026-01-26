@@ -128,11 +128,24 @@
                         placeholder="{{ __('personnel.users_time_off_add_insert_date') }}" />
                 </fieldset>
                 <fieldset class="fieldset">
-                    <legend class="fieldset-legend">{{ __('personnel.users_time_off_add_reference_date') }}</legend>
-                    <input type="date" name="reference_date" id="reference-date-input"
-                        class="input w-full form-input-activable" value="{{ now()->format('Y-m-d') }}"
-                        placeholder="{{ __('personnel.users_time_off_add_reference_date') }}" />
+                    <legend class="fieldset-legend">Tipo inserimento</legend>
+                    <select id="time-off-entry-type" class="select w-full form-input-activable">
+                        <option value="total">Monte ore (01/01)</option>
+                        <option value="residual">Residuo (31/12)</option>
+                    </select>
                 </fieldset>
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Anno</legend>
+                    <select id="time-off-entry-year" class="select w-full form-input-activable">
+                        @for ($year = now()->year + 1; $year >= now()->year - 4; $year--)
+                            <option value="{{ $year }}" @if ($year == now()->year) selected @endif>
+                                {{ $year }}
+                            </option>
+                        @endfor
+                    </select>
+                </fieldset>
+                <input type="hidden" name="reference_date" id="reference-date-input"
+                    value="{{ now()->format('Y-m-d') }}" />
                 <fieldset class="fieldset">
                     <legend class="fieldset-legend">{{ __('personnel.users_time_off_add_time_off_amount') }}</legend>
                     <input type="number" name="time_off_amount" id="time-off-amount-input"
