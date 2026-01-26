@@ -24,6 +24,7 @@ class TimeOffAmountController extends Controller
         $periodEnd = $referenceDate->copy()->endOfMonth();
 
         $yearTotalRecord = $this->getYearTotalRecord($validated['user_id'], $referenceDate->year);
+        $isResidualFallback = false;
         if (! $yearTotalRecord) {
             $yearTotalRecord = TimeOffAmount::where('user_id', $validated['user_id'])
                 ->whereDate(
@@ -31,6 +32,7 @@ class TimeOffAmountController extends Controller
                     Carbon::create($referenceDate->year, 12, 31)->toDateString()
                 )
                 ->first();
+            $isResidualFallback = (bool) $yearTotalRecord;
         }
 
         $timeOffTotal = $yearTotalRecord
@@ -56,11 +58,14 @@ class TimeOffAmountController extends Controller
             $periodEnd
         );
 
+        $timeOffRemaining = $isResidualFallback ? $timeOffTotal : $timeOffTotal - $timeOffUsed;
+        $rolRemaining = $isResidualFallback ? $rolTotal : $rolTotal - $rolUsed;
+
         return response()->json([
             'time_off_used_hours' => round($timeOffUsed, 1),
             'rol_used_hours' => round($rolUsed, 1),
-            'time_off_remaining_hours' => round($timeOffTotal - $timeOffUsed, 1),
-            'rol_remaining_hours' => round($rolTotal - $rolUsed, 1),
+            'time_off_remaining_hours' => round($timeOffRemaining, 1),
+            'rol_remaining_hours' => round($rolRemaining, 1),
         ]);
     }
 
