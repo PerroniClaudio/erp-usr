@@ -96,6 +96,12 @@
                         <canvas id="time-off-usage-chart" height="120"></canvas>
                     </div>
                 </div>
+                <div id="time-off-usage-warning" class="alert alert-warning mt-3 hidden">
+                    <span>
+                        Dati del monte ore non disponibili per l'anno selezionato. Il grafico usa il residuo di
+                        fine anno e potrebbe non essere accurato.
+                    </span>
+                </div>
             </div>
         </div>
 

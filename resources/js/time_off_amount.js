@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const usageEndpoint =
         document.getElementById("time-off-overview")?.dataset.usageUrl;
     const usageCanvas = document.getElementById("time-off-usage-chart");
+    const usageWarning = document.getElementById("time-off-usage-warning");
     const loadChartJs = async () => {
         if (!chartModulePromise) {
             chartModulePromise = import("chart.js/auto");
@@ -268,6 +269,12 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const { data } = await axios.post(usageEndpoint, payload);
             await renderUsageChart(data);
+            if (usageWarning) {
+                usageWarning.classList.toggle(
+                    "hidden",
+                    !data?.is_residual_fallback,
+                );
+            }
         } catch (error) {
             console.error("Errore nel recupero del trend mensile", error);
         }

@@ -24,6 +24,15 @@ class TimeOffAmountController extends Controller
         $periodEnd = $referenceDate->copy()->endOfMonth();
 
         $yearTotalRecord = $this->getYearTotalRecord($validated['user_id'], $referenceDate->year);
+        if (! $yearTotalRecord) {
+            $yearTotalRecord = TimeOffAmount::where('user_id', $validated['user_id'])
+                ->whereDate(
+                    'reference_date',
+                    Carbon::create($referenceDate->year, 12, 31)->toDateString()
+                )
+                ->first();
+        }
+
         $timeOffTotal = $yearTotalRecord
             ? (float) $yearTotalRecord->time_off_amount
             : (float) $validated['time_off_amount'];
@@ -64,6 +73,11 @@ class TimeOffAmountController extends Controller
         ]);
 
         $record = $this->getYearTotalRecord($validated['user_id'], $validated['year']);
+        if (! $record) {
+            $record = TimeOffAmount::where('user_id', $validated['user_id'])
+                ->whereDate('reference_date', Carbon::create($validated['year'], 12, 31)->toDateString())
+                ->first();
+        }
 
         return response()->json([
             'time_off_amount' => $record?->time_off_amount ?? 0,
@@ -101,6 +115,14 @@ class TimeOffAmountController extends Controller
             ->get();
 
         $yearTotalRecord = $this->getYearTotalRecord($validated['user_id'], $year);
+        $isResidualFallback = false;
+        if (! $yearTotalRecord) {
+            $yearTotalRecord = TimeOffAmount::where('user_id', $validated['user_id'])
+                ->whereDate('reference_date', Carbon::create($year, 12, 31)->toDateString())
+                ->first();
+            $isResidualFallback = (bool) $yearTotalRecord;
+        }
+
         $yearTimeOffTotal = $yearTotalRecord ? (float) $yearTotalRecord->time_off_amount : 0.0;
         $yearRolTotal = $yearTotalRecord ? (float) $yearTotalRecord->rol_amount : 0.0;
 
@@ -145,8 +167,13 @@ class TimeOffAmountController extends Controller
             $labels[] = $monthStart->locale('it')->shortMonthName;
             $ferieData[] = round($ferieTotal, 1);
             $rolData[] = round($rolTotal, 1);
-            $ferieAmounts[] = round($yearTimeOffTotal - $ferieUsedCumulative, 1);
-            $rolAmounts[] = round($yearRolTotal - $rolUsedCumulative, 1);
+            if ($isResidualFallback) {
+                $ferieAmounts[] = round($yearTimeOffTotal, 1);
+                $rolAmounts[] = round($yearRolTotal, 1);
+            } else {
+                $ferieAmounts[] = round($yearTimeOffTotal - $ferieUsedCumulative, 1);
+                $rolAmounts[] = round($yearRolTotal - $rolUsedCumulative, 1);
+            }
         }
 
         return response()->json([
@@ -155,6 +182,7 @@ class TimeOffAmountController extends Controller
             'rol' => $rolData,
             'ferie_amounts' => $ferieAmounts,
             'rol_amounts' => $rolAmounts,
+            'is_residual_fallback' => $isResidualFallback,
         ]);
     }
 
