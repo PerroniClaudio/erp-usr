@@ -109,6 +109,8 @@ class TimeOffAmountController extends Controller
         $rolData = [];
         $ferieAmounts = [];
         $rolAmounts = [];
+        $ferieUsedCumulative = 0.0;
+        $rolUsedCumulative = 0.0;
 
         for ($month = 1; $month <= $limitMonth; $month++) {
             $monthStart = Carbon::create($year, $month, 1)->startOfMonth();
@@ -137,11 +139,14 @@ class TimeOffAmountController extends Controller
                 }
             }
 
+            $ferieUsedCumulative += $ferieTotal;
+            $rolUsedCumulative += $rolTotal;
+
             $labels[] = $monthStart->locale('it')->shortMonthName;
             $ferieData[] = round($ferieTotal, 1);
             $rolData[] = round($rolTotal, 1);
-            $ferieAmounts[] = round($yearTimeOffTotal, 1);
-            $rolAmounts[] = round($yearRolTotal, 1);
+            $ferieAmounts[] = round($yearTimeOffTotal - $ferieUsedCumulative, 1);
+            $rolAmounts[] = round($yearRolTotal - $rolUsedCumulative, 1);
         }
 
         return response()->json([
