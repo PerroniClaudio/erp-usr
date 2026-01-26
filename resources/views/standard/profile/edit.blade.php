@@ -5,7 +5,7 @@
 
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 my-4">
-            <div class="card bg-base-300 xl:col-span-2">
+            <div class="card bg-base-300 xl:col-span-3">
                 <form class="card-body flex flex-col gap-4" method="POST" action="{{ route('standard.profile.update') }}">
                     @csrf
                     @method('PUT')
@@ -87,6 +87,34 @@
                 </form>
             </div>
 
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="card bg-base-300" data-time-off-balance data-balance-url="{{ route('time-off-balance') }}">
+                <div class="card-body">
+                    <h2 class="text-lg">Saldo ferie e ROL</h2>
+                    <p class="text-sm text-base-content/70">Aggiornato al saldo disponibile dell'anno in corso.</p>
+                    <hr>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="badge badge-primary">Ferie residue</div>
+                            <p class="text-2xl font-bold" data-balance="ferie" data-template=":hours ore">—</p>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="badge badge-secondary">ROL residui</div>
+                            <p class="text-2xl font-bold" data-balance="rol" data-template=":hours ore">—</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning mt-3 hidden" data-balance-warning>
+                        <span>
+                            Dati del monte ore non disponibili per l'anno selezionato. Il saldo usa il residuo di
+                            fine anno e potrebbe non essere accurato.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
             <div class="card bg-base-300">
                 <div class="card-body gap-3">
                     <h2 class="text-lg">Dati non modificabili</h2>
@@ -113,9 +141,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div class="card bg-base-300">
                 <form class="card-body flex flex-col gap-4" method="POST"
                     action="{{ route('standard.profile.residence') }}">
@@ -285,5 +310,6 @@
 
     @push('scripts')
         @vite('resources/js/profile.js')
+        @vite('resources/js/time_off_balance.js')
     @endpush
 </x-layouts.app>

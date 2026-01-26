@@ -5,6 +5,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BusinessTripController;
 use App\Http\Controllers\DailyTravelController;
 use App\Http\Controllers\FailedAttendanceController;
+use App\Http\Controllers\TimeOffAmountController;
 use App\Http\Controllers\TimeOffRequestController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\UserScheduleController;
@@ -90,6 +91,7 @@ Route::group([
     'middleware' => ['auth', 'role:standard|Responsabile HR|Operatore HR'],
     'prefix' => 'standard',
 ], function () {
+    Route::get('/time-off-balance', [TimeOffAmountController::class, 'getUserBalance'])->name('time-off-balance');
     Route::get('/{failed_attendance}/justify-attendance', [FailedAttendanceController::class, 'justify'])->name('failed-attendances.justify');
     Route::post('/{failed_attendance}/send-justification', [FailedAttendanceController::class, 'sendJustification'])->name('failed-attendances.send-justification');
 });

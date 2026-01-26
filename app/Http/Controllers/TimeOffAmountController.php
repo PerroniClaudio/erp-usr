@@ -191,6 +191,56 @@ class TimeOffAmountController extends Controller
         ]);
     }
 
+    public function getUserBalance(Request $request)
+    {
+        $user = $request->user();
+        $referenceDate = Carbon::parse($request->input('reference_date', now()->toDateString()));
+        $periodStart = $referenceDate->copy()->startOfYear();
+        $periodEnd = $referenceDate->copy()->endOfDay();
+
+        $yearTotalRecord = $this->getYearTotalRecord($user->id, $referenceDate->year);
+        $isResidualFallback = false;
+        if (! $yearTotalRecord) {
+            $yearTotalRecord = TimeOffAmount::where('user_id', $user->id)
+                ->whereDate(
+                    'reference_date',
+                    Carbon::create($referenceDate->year, 12, 31)->toDateString()
+                )
+                ->first();
+            $isResidualFallback = (bool) $yearTotalRecord;
+        }
+
+        $timeOffTotal = $yearTotalRecord ? (float) $yearTotalRecord->time_off_amount : 0.0;
+        $rolTotal = $yearTotalRecord ? (float) $yearTotalRecord->rol_amount : 0.0;
+
+        $typeIds = TimeOffType::whereIn('name', ['Ferie', 'Rol'])->pluck('id', 'name');
+
+        $timeOffUsed = $this->calculateUsedHours(
+            $user->id,
+            $typeIds['Ferie'] ?? null,
+            $periodStart,
+            $periodEnd
+        );
+
+        $rolUsed = $this->calculateUsedHours(
+            $user->id,
+            $typeIds['Rol'] ?? null,
+            $periodStart,
+            $periodEnd
+        );
+
+        $timeOffRemaining = $isResidualFallback ? $timeOffTotal : $timeOffTotal - $timeOffUsed;
+        $rolRemaining = $isResidualFallback ? $rolTotal : $rolTotal - $rolUsed;
+
+        return response()->json([
+            'time_off_used_hours' => round($timeOffUsed, 1),
+            'rol_used_hours' => round($rolUsed, 1),
+            'time_off_remaining_hours' => round($timeOffRemaining, 1),
+            'rol_remaining_hours' => round($rolRemaining, 1),
+            'is_residual_fallback' => $isResidualFallback,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
