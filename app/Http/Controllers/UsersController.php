@@ -323,9 +323,8 @@ class UsersController extends Controller
         $meseNumero = $mesiMap[$mese];
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
-        $festiveDays = $this->getFestiveDays();
-        $workingDays = $this->calculateWorkingDays($primoGiorno, $ultimoGiorno, $festiveDays);
-        $expectedHours = $this->calculateExpectedWorkingHours($primoGiorno, $ultimoGiorno, $festiveDays);
+        $workingDays = $this->calculateWorkingDays($primoGiorno, $ultimoGiorno);
+        $expectedHours = $this->calculateExpectedWorkingHours($user, $primoGiorno, $ultimoGiorno);
 
         $anomaliesData = $this->getAnomaliesData($user, $primoGiorno, $ultimoGiorno);
 
@@ -356,7 +355,7 @@ class UsersController extends Controller
                 'meseNumero' => $meseNumero,
                 'primoGiorno' => $primoGiorno,
                 'ultimoGiorno' => $ultimoGiorno,
-                'festive' => $this->getFestiveDays(),
+                'festive' => $this->getFestiveDays($anno),
             ]);
 
             // Impostiamo le opzioni del PDF
@@ -401,9 +400,8 @@ class UsersController extends Controller
         $meseNumero = $mesiMap[$mese];
         $primoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->startOfDay();
         $ultimoGiorno = Carbon::createFromDate($anno, $meseNumero, 1)->endOfMonth()->endOfDay();
-        $festiveDays = $this->getFestiveDays();
-        $workingDays = $this->calculateWorkingDays($primoGiorno, $ultimoGiorno, $festiveDays);
-        $expectedHours = $this->calculateExpectedWorkingHours($primoGiorno, $ultimoGiorno, $festiveDays);
+        $workingDays = $this->calculateWorkingDays($primoGiorno, $ultimoGiorno);
+        $expectedHours = $this->calculateExpectedWorkingHours($user, $primoGiorno, $ultimoGiorno);
 
         // Otteniamo le presenze dell'utente per il mese specificato
         $attendances = Attendance::where('user_id', $user->id)
@@ -631,7 +629,7 @@ class UsersController extends Controller
             'meseNumero' => $meseNumero,
             'primoGiorno' => $primoGiorno,
             'ultimoGiorno' => $ultimoGiorno,
-            'festive' => $this->getFestiveDays(),
+            'festive' => $this->getFestiveDays($anno),
         ]);
 
         $pdf->setPaper('a4', 'landscape');
@@ -905,11 +903,8 @@ class UsersController extends Controller
             ->with('type')
             ->get();
 
-        // Giorni festivi
-        $festiveDays = $this->getFestiveDays();
-
         // Calcolo monte ore teorico per il periodo
-        $totalExpectedHours = $this->calculateExpectedWorkingHours($dateFrom, $dateTo, $festiveDays);
+        $totalExpectedHours = $this->calculateExpectedWorkingHours($user, $dateFrom, $dateTo);
 
         // Gruppo per settimane
         $weeklyData = [];
@@ -930,7 +925,6 @@ class UsersController extends Controller
                 $attendances,
                 $timeOffRequests,
                 $overtimeRequests,
-                $festiveDays,
                 includeOvertime: true
             );
             $weeklyHoursBase = $this->calculateWeeklyHours(
@@ -940,11 +934,10 @@ class UsersController extends Controller
                 $attendances,
                 $timeOffRequests,
                 $overtimeRequests,
-                $festiveDays,
                 includeOvertime: false
             );
 
-            $weeklyExpectedHours = $this->calculateExpectedWorkingHours($actualWeekStart, $actualWeekEnd, $festiveDays);
+            $weeklyExpectedHours = $this->calculateExpectedWorkingHours($user, $actualWeekStart, $actualWeekEnd);
             $weeklyDifference = $weeklyHours - $weeklyExpectedHours;
             $weeklyDifferenceBase = $weeklyHoursBase - $weeklyExpectedHours;
 
@@ -975,7 +968,7 @@ class UsersController extends Controller
         $hasMonthlyAnomalies = abs($totalDifferenceBase) > 8; // Tolleranza di una giornata
 
         // Calcola i giorni lavorativi del periodo
-        $workingDaysInPeriod = $this->calculateWorkingDays($dateFrom, $dateTo, $festiveDays);
+        $workingDaysInPeriod = $this->calculateWorkingDays($dateFrom, $dateTo);
 
         return [
             'hasAnomalies' => $hasWeeklyAnomalies || $hasMonthlyAnomalies,
@@ -993,9 +986,9 @@ class UsersController extends Controller
     }
 
     /**
-     * Calcola i giorni lavorativi in un periodo
+     * Calcola i giorni lavorativi in un periodo (lun-ven), escludendo i festivi
      */
-    private function calculateWorkingDays($dateFrom, $dateTo, $festiveDays): int
+    private function calculateWorkingDays($dateFrom, $dateTo): int
     {
         $start = Carbon::parse($dateFrom);
         $end = Carbon::parse($dateTo);
@@ -1003,11 +996,10 @@ class UsersController extends Controller
 
         $current = $start->copy();
         while ($current->lte($end)) {
-            // Salta solo la domenica
-            if (! $current->isSunday()) {
+            // Salta sabato e domenica
+            if (! $current->isWeekend()) {
                 // Controlla se è un giorno festivo
-                $dayMonth = $current->format('m-d');
-                if (! in_array($dayMonth, $festiveDays)) {
+                if (! $this->isFestiveDay($current)) {
                     $workingDays++;
                 }
             }
@@ -1018,23 +1010,22 @@ class UsersController extends Controller
     }
 
     /**
-     * Calcola le ore lavorative previste per un periodo escludendo la sola domenica e i festivi
+     * Calcola le ore lavorative previste per un periodo (lun-ven), escludendo i festivi
      */
-    private function calculateExpectedWorkingHours($dateFrom, $dateTo, $festiveDays): float
+    private function calculateExpectedWorkingHours($user, $dateFrom, $dateTo): float
     {
         $start = Carbon::parse($dateFrom);
         $end = Carbon::parse($dateTo);
         $workingDays = 0;
-        $weeklyBaseHours = 40; // Monte ore settimanale standard
-        $dailyExpectedHours = $weeklyBaseHours / 6; // 40h distribuite su 6 giorni (lun-sab)
+        $weeklyBaseHours = $user->weekly_hours ?? 40;
+        $dailyExpectedHours = $weeklyBaseHours / 5; // 40h distribuite su 5 giorni (lun-ven)
 
         $current = $start->copy();
         while ($current->lte($end)) {
-            // Salta solo la domenica
-            if (! $current->isSunday()) {
+            // Salta sabato e domenica
+            if (! $current->isWeekend()) {
                 // Controlla se è un giorno festivo
-                $dayMonth = $current->format('m-d');
-                if (! in_array($dayMonth, $festiveDays)) {
+                if (! $this->isFestiveDay($current)) {
                     $workingDays++;
                 }
             }
@@ -1047,7 +1038,7 @@ class UsersController extends Controller
     /**
      * Calcola le ore lavorate in una settimana specifica
      */
-    private function calculateWeeklyHours($user, $weekStart, $weekEnd, $attendances, $timeOffRequests, $overtimeRequests, $festiveDays, bool $includeOvertime = true): float
+    private function calculateWeeklyHours($user, $weekStart, $weekEnd, $attendances, $timeOffRequests, $overtimeRequests, bool $includeOvertime = true): float
     {
         $weeklyHours = 0;
 
@@ -1743,14 +1734,20 @@ class UsersController extends Controller
         }
     }
 
-    private function getFestiveDays()
+    private function isFestiveDay(Carbon $date): bool
     {
+        $festiveDays = $this->getFestiveDays($date->year);
 
-        $currentDate = \Carbon\Carbon::today();
+        return in_array($date->format('m-d'), $festiveDays, true);
+    }
 
-        $easterDay = $this->calculateEasterDay($currentDate->year);
+    private function getFestiveDays(?int $year = null): array
+    {
+        $currentYear = $year ?? \Carbon\Carbon::today()->year;
+
+        $easterDay = $this->calculateEasterDay($currentYear);
         $easterDay = $easterDay ? $easterDay->format('m-d') : null;
-        $easterMonday = $this->calculateEasterMonday($currentDate->year)->format('m-d');
+        $easterMonday = $this->calculateEasterMonday($currentYear)->format('m-d');
 
         // List of known vacation days
         $knownHolidays = [
