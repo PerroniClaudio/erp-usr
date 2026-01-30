@@ -106,6 +106,7 @@
                     'LS' => 'LAVORO IN SEDE',
                     'LC' => 'Lavoro c/o cliente',
                     'SW' => 'SMART WORKING',
+                    'CO' => 'CO',
                     'FE' => 'FERIE',
                     'MA' => 'MALATTIA',
                     'ROL' => 'ROL',
@@ -252,6 +253,7 @@
                         <li><strong>LS</strong> - LAVORO IN SEDE</li>
                         <li><strong>LC</strong> - LAVORO C/O CLIENTE</li>
                         <li><strong>SW</strong> - SMART WORKING</li>
+                        <li><strong>CO</strong> - CO</li>
                     </ul>
                 </td>
                 <td style="width: 20%">
