@@ -458,9 +458,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Google Maps route rendering
+    // Mapbox route rendering
     const mapContainer = document.getElementById("daily-travel-map");
-    const googleMapsApiKey = mapContainer?.dataset.apiKey;
+    const mapboxToken = mapContainer?.dataset.mapboxToken;
     const mapSteps = mapContainer?.dataset.steps
         ? JSON.parse(mapContainer.dataset.steps)
         : [];
@@ -470,60 +470,45 @@ document.addEventListener("DOMContentLoaded", () => {
         mapContainer.innerHTML = `<div class="p-4 text-sm text-gray-500">${message}</div>`;
     };
 
-    const loadGoogleMapsScript = (apiKey) =>
+    const loadMapboxAssets = (accessToken) =>
         new Promise((resolve, reject) => {
-            if (window.google?.maps) {
+            if (window.mapboxgl) {
+                window.mapboxgl.accessToken = accessToken;
                 resolve();
                 return;
             }
 
-            const existing = document.querySelector("script[data-google-maps]");
+            const existing = document.querySelector("script[data-mapbox-gl]");
             if (existing) {
                 existing.addEventListener("load", resolve, { once: true });
                 existing.addEventListener("error", reject, { once: true });
                 return;
             }
 
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href =
+                "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css";
+            link.dataset.mapboxGl = "style";
+            document.head.appendChild(link);
+
             const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+            script.src =
+                "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js";
             script.async = true;
             script.defer = true;
-            script.dataset.googleMaps = "loader";
-            script.addEventListener("load", resolve, { once: true });
+            script.dataset.mapboxGl = "loader";
+            script.addEventListener(
+                "load",
+                () => {
+                    window.mapboxgl.accessToken = accessToken;
+                    resolve();
+                },
+                { once: true }
+            );
             script.addEventListener("error", reject, { once: true });
             document.head.appendChild(script);
         });
-
-    const renderMarkers = (map, steps) => {
-        const bounds = new google.maps.LatLngBounds();
-        steps.forEach((step) => {
-            const position = { lat: step.lat, lng: step.lng };
-            bounds.extend(position);
-            new google.maps.Marker({
-                position,
-                map,
-                label: step.step_number ? String(step.step_number) : undefined,
-                title: step.address ?? "",
-            });
-        });
-
-        map.fitBounds(bounds);
-    };
-
-    const renderPolyline = (map, steps) =>
-        new google.maps.Polyline({
-            path: steps.map((step) => ({ lat: step.lat, lng: step.lng })),
-            geodesic: true,
-            strokeColor: "#2563eb",
-            strokeOpacity: 0.9,
-            strokeWeight: 4,
-            map,
-        });
-
-    const renderMarkersAndPolyline = (map, steps) => {
-        renderMarkers(map, steps);
-        renderPolyline(map, steps);
-    };
 
     const initRouteMap = async () => {
         if (!mapContainer) return;
@@ -533,8 +518,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (!googleMapsApiKey) {
-            showMapMessage("Chiave di Google Maps mancante.");
+        if (!mapboxToken) {
+            showMapMessage("Token Mapbox mancante.");
             return;
         }
 
@@ -548,62 +533,102 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            await loadGoogleMapsScript(googleMapsApiKey);
+            await loadMapboxAssets(mapboxToken);
         } catch (error) {
-            showMapMessage("Impossibile caricare Google Maps.");
+            showMapMessage("Impossibile caricare Mapbox.");
             return;
         }
 
-        const map = new google.maps.Map(mapContainer, {
-            center: { lat: validSteps[0].lat, lng: validSteps[0].lng },
+        mapContainer.innerHTML = "";
+
+        const map = new window.mapboxgl.Map({
+            container: mapContainer,
+            style: "mapbox://styles/mapbox/streets-v12",
+            center: [validSteps[0].lng, validSteps[0].lat],
             zoom: 10,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
+            attributionControl: false,
         });
 
-        const directionsService = new google.maps.DirectionsService();
-        const directionsRenderer = new google.maps.DirectionsRenderer({
-            map,
-            suppressMarkers: true,
-            polylineOptions: {
-                strokeColor: "#2563eb",
-                strokeOpacity: 0.9,
-                strokeWeight: 5,
-            },
-        });
-
-        const waypoints = validSteps.slice(1, -1).map((step) => ({
-            location: { lat: step.lat, lng: step.lng },
-            stopover: true,
-        }));
-
-        directionsService.route(
-            {
-                origin: {
-                    lat: validSteps[0].lat,
-                    lng: validSteps[0].lng,
-                },
-                destination: {
-                    lat: validSteps[validSteps.length - 1].lat,
-                    lng: validSteps[validSteps.length - 1].lng,
-                },
-                waypoints,
-                travelMode: google.maps.TravelMode.DRIVING,
-                optimizeWaypoints: false,
-            },
-            (response, status) => {
-                if (
-                    status === "OK" ||
-                    status === google.maps.DirectionsStatus.OK
-                ) {
-                    directionsRenderer.setDirections(response);
-                    renderMarkers(map, validSteps);
-                } else {
-                    renderMarkersAndPolyline(map, validSteps);
-                }
-            }
+        map.addControl(
+            new window.mapboxgl.NavigationControl({ showCompass: false }),
+            "top-right"
         );
+
+        map.on("load", async () => {
+            const bounds = new window.mapboxgl.LngLatBounds();
+            validSteps.forEach((step) => {
+                const markerEl = document.createElement("div");
+                markerEl.textContent = step.step_number
+                    ? String(step.step_number)
+                    : "";
+                markerEl.style.background = "#2563eb";
+                markerEl.style.color = "#fff";
+                markerEl.style.borderRadius = "9999px";
+                markerEl.style.width = "24px";
+                markerEl.style.height = "24px";
+                markerEl.style.display = "flex";
+                markerEl.style.alignItems = "center";
+                markerEl.style.justifyContent = "center";
+                markerEl.style.fontSize = "12px";
+                markerEl.style.fontWeight = "600";
+                markerEl.title = step.address ?? "";
+
+                new window.mapboxgl.Marker({ element: markerEl })
+                    .setLngLat([step.lng, step.lat])
+                    .addTo(map);
+
+                bounds.extend([step.lng, step.lat]);
+            });
+
+            map.fitBounds(bounds, { padding: 40, duration: 0 });
+
+            const route = await fetchRoute(validSteps);
+            const geometry = route?.geometry ?? {
+                type: "LineString",
+                coordinates: validSteps.map((step) => [step.lng, step.lat]),
+            };
+
+            map.addSource("route", {
+                type: "geojson",
+                data: {
+                    type: "Feature",
+                    geometry,
+                },
+            });
+
+            map.addLayer({
+                id: "route-line",
+                type: "line",
+                source: "route",
+                layout: {
+                    "line-join": "round",
+                    "line-cap": "round",
+                },
+                paint: {
+                    "line-color": "#2563eb",
+                    "line-width": 4,
+                    "line-opacity": 0.9,
+                },
+            });
+        });
+    };
+
+    const fetchRoute = async (steps) => {
+        const coordinates = steps
+            .map((step) => `${step.lng},${step.lat}`)
+            .join(";");
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&overview=full&access_token=${encodeURIComponent(
+            mapboxToken
+        )}`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) return null;
+            const data = await response.json();
+            return data?.routes?.[0] ?? null;
+        } catch (_) {
+            return null;
+        }
     };
 
     initRouteMap();

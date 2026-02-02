@@ -20,7 +20,7 @@ return [
     'search_placeholder' => 'Cerca indirizzo',
     'validate_address' => 'Convalida',
     'created_success' => 'Sede creata correttamente.',
-    'missing_api_key' => 'Chiave API Google Maps mancante: aggiungi GOOGLE_MAPS_API_KEY per abilitare la convalida.',
+    'missing_api_key' => 'Token Mapbox mancante: aggiungi MAPBOX_ACCESS_TOKEN per abilitare la convalida.',
     'updated_success' => 'Sede aggiornata correttamente.',
     'back_to_company' => 'Indietro',
 ];

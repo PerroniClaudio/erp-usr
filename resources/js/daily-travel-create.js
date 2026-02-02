@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const metaContainer = preview.querySelector("[data-preview-meta]");
     const stepsTable = document.querySelector("[data-steps-table]");
     const mapContainer = document.getElementById("daily-travel-map");
-    const googleApiKey = preview.dataset.googleApiKey;
+    const mapboxToken = preview.dataset.mapboxToken;
     const distanceSummary = document.querySelector("[data-distance-summary]");
     const startLocationValue = preview.dataset.startLocationValue || "office";
     const headquartersMap = JSON.parse(preview.dataset.headquarters || "{}");
@@ -375,8 +375,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return R * c;
     }
 
+    let mapInstance = null;
+
     function renderMap(steps) {
-        if (!mapContainer || !googleApiKey) return;
+        if (!mapContainer) return;
+        if (!mapboxToken) {
+            mapContainer.innerHTML = `<p class="text-sm text-base-content/70">${labels.missing}</p>`;
+            return;
+        }
 
         const validSteps = (steps || []).filter(
             (step) =>
@@ -389,45 +395,56 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        loadGoogleMapsScript(googleApiKey)
+        loadMapboxAssets(mapboxToken)
             .then(() => drawRoute(mapContainer, validSteps))
             .catch(() => {
                 mapContainer.innerHTML = `<p class="text-sm text-base-content/70">${labels.missing}</p>`;
             });
     }
 
-    function loadGoogleMapsScript(apiKey) {
+    function loadMapboxAssets(accessToken) {
         return new Promise((resolve, reject) => {
-            if (window.google?.maps) {
+            if (window.mapboxgl) {
+                window.mapboxgl.accessToken = accessToken;
                 resolve();
                 return;
             }
-            const existing = document.querySelector("script[data-google-maps]");
+            const existing = document.querySelector("script[data-mapbox-gl]");
             if (existing) {
                 existing.addEventListener("load", resolve, { once: true });
                 existing.addEventListener("error", reject, { once: true });
                 return;
             }
+
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href =
+                "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css";
+            link.dataset.mapboxGl = "style";
+            document.head.appendChild(link);
+
             const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+            script.src =
+                "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js";
             script.async = true;
             script.defer = true;
-            script.dataset.googleMaps = "loader";
-            script.addEventListener("load", resolve, { once: true });
+            script.dataset.mapboxGl = "loader";
+            script.addEventListener("load", () => {
+                window.mapboxgl.accessToken = accessToken;
+                resolve();
+            }, { once: true });
             script.addEventListener("error", reject, { once: true });
             document.head.appendChild(script);
         });
     }
 
-    function drawRoute(container, steps) {
+    async function drawRoute(container, steps) {
+        if (mapInstance) {
+            mapInstance.remove();
+            mapInstance = null;
+        }
+
         container.innerHTML = "";
-        const map = new google.maps.Map(container, {
-            center: { lat: steps[0].latitude, lng: steps[0].longitude },
-            zoom: 10,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
-        });
 
         const validSteps = steps.map((step, index) => ({
             lat: step.latitude,
@@ -436,81 +453,94 @@ document.addEventListener("DOMContentLoaded", () => {
             step_number: step.step_number ?? index + 1,
         }));
 
-        const directionsService = new google.maps.DirectionsService();
-        const directionsRenderer = new google.maps.DirectionsRenderer({
-            map,
-            suppressMarkers: true,
-            polylineOptions: {
-                strokeColor: "#2563eb",
-                strokeOpacity: 0.9,
-                strokeWeight: 5,
-            },
+        mapInstance = new window.mapboxgl.Map({
+            container,
+            style: "mapbox://styles/mapbox/streets-v12",
+            center: [validSteps[0].lng, validSteps[0].lat],
+            zoom: 10,
+            attributionControl: false,
         });
 
-        const waypoints = validSteps.slice(1, -1).map((step) => ({
-            location: { lat: step.lat, lng: step.lng },
-            stopover: true,
-        }));
-
-        directionsService.route(
-            {
-                origin: {
-                    lat: validSteps[0].lat,
-                    lng: validSteps[0].lng,
-                },
-                destination: {
-                    lat: validSteps[validSteps.length - 1].lat,
-                    lng: validSteps[validSteps.length - 1].lng,
-                },
-                waypoints,
-                travelMode: google.maps.TravelMode.DRIVING,
-                optimizeWaypoints: false,
-            },
-            (response, status) => {
-                if (
-                    status === "OK" ||
-                    status === google.maps.DirectionsStatus.OK
-                ) {
-                    directionsRenderer.setDirections(response);
-                    renderMarkers(map, validSteps);
-                } else {
-                    renderMarkersAndPolyline(map, validSteps);
-                }
-            }
+        mapInstance.addControl(
+            new window.mapboxgl.NavigationControl({ showCompass: false }),
+            "top-right"
         );
-    }
 
-    function renderMarkers(map, steps) {
-        const bounds = new google.maps.LatLngBounds();
-        steps.forEach((step, index) => {
-            const position = { lat: step.lat, lng: step.lng };
-            bounds.extend(position);
-            new google.maps.Marker({
-                position,
-                map,
-                label: step.step_number
+        mapInstance.on("load", async () => {
+            const bounds = new window.mapboxgl.LngLatBounds();
+            validSteps.forEach((step, index) => {
+                const markerEl = document.createElement("div");
+                markerEl.textContent = step.step_number
                     ? String(step.step_number)
-                    : String(index + 1),
-                title: step.address ?? "",
+                    : String(index + 1);
+                markerEl.style.background = "#2563eb";
+                markerEl.style.color = "#fff";
+                markerEl.style.borderRadius = "9999px";
+                markerEl.style.width = "24px";
+                markerEl.style.height = "24px";
+                markerEl.style.display = "flex";
+                markerEl.style.alignItems = "center";
+                markerEl.style.justifyContent = "center";
+                markerEl.style.fontSize = "12px";
+                markerEl.style.fontWeight = "600";
+                markerEl.title = step.address ?? "";
+
+                new window.mapboxgl.Marker({ element: markerEl })
+                    .setLngLat([step.lng, step.lat])
+                    .addTo(mapInstance);
+
+                bounds.extend([step.lng, step.lat]);
+            });
+
+            mapInstance.fitBounds(bounds, { padding: 40, duration: 0 });
+
+            const route = await fetchRoute(validSteps);
+            const geometry = route?.geometry ?? {
+                type: "LineString",
+                coordinates: validSteps.map((step) => [step.lng, step.lat]),
+            };
+
+            mapInstance.addSource("route", {
+                type: "geojson",
+                data: {
+                    type: "Feature",
+                    geometry,
+                },
+            });
+
+            mapInstance.addLayer({
+                id: "route-line",
+                type: "line",
+                source: "route",
+                layout: {
+                    "line-join": "round",
+                    "line-cap": "round",
+                },
+                paint: {
+                    "line-color": "#2563eb",
+                    "line-width": 4,
+                    "line-opacity": 0.9,
+                },
             });
         });
-        map.fitBounds(bounds);
     }
 
-    function renderPolyline(map, steps) {
-        return new google.maps.Polyline({
-            path: steps.map((step) => ({ lat: step.lat, lng: step.lng })),
-            geodesic: true,
-            strokeColor: "#2563eb",
-            strokeOpacity: 0.9,
-            strokeWeight: 4,
-            map,
-        });
-    }
+    async function fetchRoute(steps) {
+        const coordinates = steps
+            .map((step) => `${step.lng},${step.lat}`)
+            .join(";");
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&overview=full&access_token=${encodeURIComponent(
+            mapboxToken
+        )}`;
 
-    function renderMarkersAndPolyline(map, steps) {
-        renderMarkers(map, steps);
-        renderPolyline(map, steps);
+        try {
+            const response = await fetch(url);
+            if (!response.ok) return null;
+            const data = await response.json();
+            return data?.routes?.[0] ?? null;
+        } catch (_) {
+            return null;
+        }
     }
 
     function safeJsonParse(value) {

@@ -60,7 +60,7 @@ class NotaSpeseController extends Controller
 
             $transferPairs = [];
             foreach ($pairs as $pair) {
-                $distance = $this->routeDistanceGoogle(
+                $distance = $this->routeDistanceMapbox(
                     $pair['from']->latitude,
                     $pair['from']->longitude,
                     $pair['to']->latitude,
@@ -97,60 +97,38 @@ class NotaSpeseController extends Controller
         return $pdf->download('nota_spese_'.$fields['year'].'_'.str_pad($fields['month'], 2, '0', STR_PAD_LEFT).'.pdf');
     }
 
-    // Copia del metodo routeDistanceGoogle da BusinessTripController
-    private function routeDistanceGoogle($lat1, $lon1, $lat2, $lon2)
+    // Copia del metodo routeDistanceMapbox da BusinessTripController
+    private function routeDistanceMapbox($lat1, $lon1, $lat2, $lon2)
     {
-        $apiKey = config('services.google_maps.api_key');
+        $apiKey = config('services.mapbox.access_token');
         if (! $apiKey) {
-            Log::error('Google Maps API key mancante.');
+            Log::error('Mapbox access token mancante.');
 
             return null;
         }
 
-        $url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-        $body = [
-            'origin' => [
-                'location' => [
-                    'latLng' => [
-                        'latitude' => (float) $lat1,
-                        'longitude' => (float) $lon1,
-                    ],
-                ],
-            ],
-            'destination' => [
-                'location' => [
-                    'latLng' => [
-                        'latitude' => (float) $lat2,
-                        'longitude' => (float) $lon2,
-                    ],
-                ],
-            ],
-            'travelMode' => 'DRIVE',
-            'routingPreference' => 'TRAFFIC_UNAWARE',
-            'units' => 'METRIC',
-        ];
+        $coordinates = sprintf('%s,%s;%s,%s', $lon1, $lat1, $lon2, $lat2);
 
         try {
-            $response = HttpClient::withHeaders([
-                'Content-Type' => 'application/json',
-                'X-Goog-Api-Key' => $apiKey,
-                'X-Goog-FieldMask' => 'routes.distanceMeters',
-            ])->post($url, $body);
+            $response = HttpClient::get("https://api.mapbox.com/directions/v5/mapbox/driving/{$coordinates}", [
+                'access_token' => $apiKey,
+                'overview' => 'false',
+            ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                if (isset($data['routes'][0]['distanceMeters'])) {
-                    $distanceKm = $data['routes'][0]['distanceMeters'] / 1000;
+                if (isset($data['routes'][0]['distance'])) {
+                    $distanceKm = $data['routes'][0]['distance'] / 1000;
 
                     return round($distanceKm, 2);
                 } else {
-                    Log::error('Risposta Routes API senza distanza valida: '.json_encode($data));
+                    Log::error('Risposta Mapbox Directions senza distanza valida: '.json_encode($data));
                 }
             } else {
-                Log::error('Errore Google Routes API: '.$response->body());
+                Log::error('Errore Mapbox Directions API: '.$response->body());
             }
         } catch (\Exception $e) {
-            Log::error('Eccezione Google Routes API: '.$e->getMessage());
+            Log::error('Eccezione Mapbox Directions API: '.$e->getMessage());
         }
 
         return null;

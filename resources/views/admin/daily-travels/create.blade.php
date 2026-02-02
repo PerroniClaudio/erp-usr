@@ -156,7 +156,7 @@
                     data-distance-distance="{{ __('daily_travel.distance_summary_distance') }}"
                     data-distance-empty="{{ __('daily_travel.distance_summary_empty') }}"
                     data-map-placeholder="{{ __('daily_travel.map_placeholder') }}"
-                    data-google-api-key="{{ $googleMapsApiKey }}" data-currency-symbol="€">
+                    data-mapbox-token="{{ $mapboxAccessToken }}" data-currency-symbol="€">
                     <div class="flex items-center justify-between">
                         <h3 class="card-title m-0">{{ __('daily_travel.preview_title') }}</h3>
                         <span class="badge badge-outline">{{ __('daily_travel.preview_read_only') }}</span>

@@ -7,7 +7,7 @@
         </x-slot>
     </x-layouts.header>
 
-    @unless ($googleMapsApiKey)
+    @unless ($mapboxAccessToken)
         <div class="alert alert-warning mb-4">
             {{ __('headquarters.missing_api_key') }}
         </div>

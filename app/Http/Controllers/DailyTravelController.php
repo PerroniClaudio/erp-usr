@@ -51,7 +51,7 @@ class DailyTravelController extends Controller
             'selectedCompanyId' => $selectedCompanyId,
             'structuresMap' => $structuresMap,
             'selectedStructure' => $selectedStructure,
-            'googleMapsApiKey' => config('services.google_maps.api_key'),
+            'mapboxAccessToken' => config('services.mapbox.access_token'),
             'headquartersMap' => $headquartersMap,
             'userHeadquarter' => $userHeadquarter,
         ]);
@@ -150,7 +150,7 @@ class DailyTravelController extends Controller
             'steps' => $routeSteps,
             'mapSteps' => $mapSteps,
             'distancesBetweenSteps' => $distancesBetweenSteps,
-            'googleMapsApiKey' => config('services.google_maps.api_key'),
+            'mapboxAccessToken' => config('services.mapbox.access_token'),
         ]);
     }
 
@@ -218,7 +218,7 @@ class DailyTravelController extends Controller
             'selectedCompanyId' => $selectedCompanyId,
             'structuresMap' => $structuresMap,
             'selectedStructure' => $selectedStructure,
-            'googleMapsApiKey' => config('services.google_maps.api_key'),
+            'mapboxAccessToken' => config('services.mapbox.access_token'),
             'headquartersMap' => $headquartersMap,
             'userHeadquarter' => $userHeadquarter,
         ]);

@@ -134,7 +134,7 @@
                 <h4 class="font-semibold mb-2">{{ __('daily_travel.map_title') }}</h4>
                 <hr>
                 <div id="daily-travel-map" class="h-80 w-full rounded-lg bg-base-300"
-                    data-steps='@json($mapSteps)' data-api-key="{{ $googleMapsApiKey }}">
+                    data-steps='@json($mapSteps)' data-mapbox-token="{{ $mapboxAccessToken }}">
                     <p class="p-4 text-sm text-gray-500">{{ __('daily_travel.map_placeholder') }}</p>
                 </div>
             </div>

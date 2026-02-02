@@ -6,6 +6,7 @@ use App\Models\BusinessTrip;
 use App\Models\BusinessTripExpense;
 use App\Models\BusinessTripTransfer;
 use App\Models\User;
+use App\Support\MapboxAddressParser;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -138,28 +139,10 @@ class BusinessTripController extends Controller
 
     private function resolveAddressFromCoordinates($latitude, $longitude)
     {
-        // Utilizza l'API di Nominatim per risolvere l'indirizzo
-        $response = Http::withHeaders([
-            'User-Agent' => 'IFT/1.0', // Sostituisci con un nome significativo e la tua email
-        ])->get('https://nominatim.openstreetmap.org/reverse', [
-            'lat' => $latitude,
-            'lon' => $longitude,
-            'format' => 'json',
-            'addressdetails' => 1,
-        ]);
+        $apiKey = config('services.mapbox.access_token');
+        if (!$apiKey) {
+            Log::error('Mapbox access token mancante.');
 
-        if ($response->successful()) {
-            $data = $response->json();
-
-            return [
-                'address' => $data['address']['road'] ?? 'N/A',
-                'city' => $data['address']['city'] ?? $data['address']['town'] ?? $data['address']['village'] ?? 'N/A',
-                'province' => $data['address']['county'] ?? 'N/A',
-                'zip_code' => $data['address']['postcode'] ?? 'N/A',
-                'latitude' => $latitude,
-                'longitude' => $longitude,
-            ];
-        } else {
             return [
                 'address' => null,
                 'city' => null,
@@ -167,6 +150,49 @@ class BusinessTripController extends Controller
                 'zip_code' => null,
             ];
         }
+
+        $response = Http::get("https://api.mapbox.com/geocoding/v5/mapbox.places/{$longitude},{$latitude}.json", [
+            'access_token' => $apiKey,
+            'limit' => 1,
+            'types' => 'address',
+            'language' => 'it',
+            'country' => 'it',
+        ]);
+
+        if (!$response->successful()) {
+            return [
+                'address' => null,
+                'city' => null,
+                'province' => null,
+                'zip_code' => null,
+            ];
+        }
+
+        $data = $response->json();
+        $feature = $data['features'][0] ?? null;
+        if (!$feature) {
+            return [
+                'address' => null,
+                'city' => null,
+                'province' => null,
+                'zip_code' => null,
+            ];
+        }
+
+        $details = MapboxAddressParser::addressDetails($feature);
+        $addressParts = array_filter([
+            $details['road'] ?? null,
+            $details['house_number'] ?? null,
+        ]);
+
+        return [
+            'address' => $addressParts ? implode(' ', $addressParts) : 'N/A',
+            'city' => $details['city'] ?? 'N/A',
+            'province' => $details['county'] ?? 'N/A',
+            'zip_code' => $details['postcode'] ?? 'N/A',
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+        ];
     }
 
     /**
@@ -540,14 +566,14 @@ class BusinessTripController extends Controller
                 'to' => $pair['to'],
                 'azienda' => $pair['to']->company->name,
                 'ekm' => round($pair['from']->vehicle->price_per_km, 2),
-                'distance' => round($this->routeDistanceGoogle(
+                'distance' => round($this->routeDistanceMapbox(
                     $pair['from']->latitude,
                     $pair['from']->longitude,
                     $pair['to']->latitude,
                     $pair['to']->longitude
                 ), 2),
                 'total' => round(
-                    $this->routeDistanceGoogle(
+                    $this->routeDistanceMapbox(
                         $pair['from']->latitude,
                         $pair['from']->longitude,
                         $pair['to']->latitude,
@@ -645,7 +671,7 @@ class BusinessTripController extends Controller
     }
 
     /**
-     * Valida un indirizzo utilizzando l'API di Nominatim.
+     * Valida un indirizzo utilizzando Mapbox Geocoding API.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -659,56 +685,47 @@ class BusinessTripController extends Controller
             'zip_code' => 'required|string',
         ]);
 
-        // 2. Costruzione della query per Nominatim (utilizzando il parametro 'q')
-        // Combiniamo i campi in una singola stringa indirizzo
-        $fullAddress = $fields['address'].', '.$fields['city'].', '.$fields['province'].', '.$fields['zip_code'];
+        $apiKey = config('services.mapbox.access_token');
+        if (!$apiKey) {
+            Log::error('Mapbox access token mancante.');
 
-        // Parametri per la richiesta a Nominatim
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token Mapbox mancante.',
+            ], 500);
+        }
+
+        $fullAddress = $fields['address'].', '.$fields['city'].', '.$fields['province'].', '.$fields['zip_code'];
+        $encodedAddress = rawurlencode($fullAddress);
         $queryParams = [
-            'q' => $fullAddress,
-            'format' => 'jsonv2', // Usiamo jsonv2 per un formato più moderno
-            'addressdetails' => 1, // Chiediamo i dettagli dell'indirizzo nella risposta
-            'limit' => 1, // Chiediamo solo il risultato migliore
+            'access_token' => $apiKey,
+            'limit' => 1,
+            'types' => 'address',
+            'language' => 'it',
+            'country' => 'it',
         ];
 
-        // 3. Invio della richiesta a Nominatim usando il client HTTP di Laravel
         try {
-            $response = Http::withHeaders([
-                'User-Agent' => 'IFT/2.0', // Sostituisci con un nome significativo e la tua email
-            ])->get('https://nominatim.openstreetmap.org/search', $queryParams);
-
-            // Verifica se la richiesta ha avuto successo
+            $response = Http::get("https://api.mapbox.com/geocoding/v5/mapbox.places/{$encodedAddress}.json", $queryParams);
             if ($response->successful()) {
                 $data = $response->json();
-
-                // 4. Analisi della risposta
-                if (! empty($data)) {
-                    // Nominatim ha trovato almeno un risultato
-                    $firstResult = $data[0];
-
-                    // Esempi di come accedere ai dati:
-                    $latitude = $firstResult['lat'];
-                    $longitude = $firstResult['lon'];
-                    $displayName = $firstResult['display_name'];
-                    $addressDetails = $firstResult['address']; // Array con i dettagli dell'indirizzo
-
-                    // Puoi fare ulteriori controlli qui per "validare" l'indirizzo
-                    // ad esempio, confrontare i dettagli restituiti con quelli inseriti dall'utente.
-                    // Ricorda che questa è una validazione basata su OSM, non postale ufficiale.
+                $firstResult = $data['features'][0] ?? null;
+                if ($firstResult) {
+                    $coordinates = MapboxAddressParser::coordinates($firstResult);
+                    $displayName = MapboxAddressParser::displayName($firstResult);
+                    $addressDetails = MapboxAddressParser::addressDetails($firstResult);
 
                     return response()->json([
                         'status' => 'success',
                         'message' => 'Indirizzo trovato.',
                         'content' => [
-                            'latitude' => $latitude,
-                            'longitude' => $longitude,
+                            'latitude' => $coordinates['latitude'] ?? null,
+                            'longitude' => $coordinates['longitude'] ?? null,
                             'display_name' => $displayName,
                             'address_details' => $addressDetails,
-                            // Puoi aggiungere altri dati dal risultato di Nominatim se necessario
                         ],
                     ]);
                 } else {
-                    // Nessun risultato trovato per l'indirizzo
                     return response()->json([
                         'status' => 'not_found',
                         'message' => 'Indirizzo non trovato.',
@@ -716,20 +733,17 @@ class BusinessTripController extends Controller
                     ], 404); // Codice di stato 404 Not Found
                 }
             } else {
-                // La richiesta HTTP a Nominatim non è andata a buon fine
-                // Puoi loggare l'errore o restituire un messaggio generico
-                Log::error('Nominatim API request failed: '.$response->status());
+                Log::error('Mapbox Geocoding API request failed: '.$response->status());
 
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Errore durante la comunicazione con il servizio di validazione indirizzi.',
-                    'details' => $response->body(), // Potrebbe contenere informazioni sull'errore da Nominatim
-                ], $response->status()); // Usa il codice di stato della risposta di Nominatim
+                    'details' => $response->body(),
+                ], $response->status());
 
             }
         } catch (\Exception $e) {
-            // Gestione di eventuali eccezioni durante la richiesta
-            Log::error('Exception during Nominatim API call: '.$e->getMessage());
+            Log::error('Exception during Mapbox Geocoding API call: '.$e->getMessage());
 
             return response()->json([
                 'status' => 'error',
@@ -739,61 +753,39 @@ class BusinessTripController extends Controller
         }
     }
 
-    // Calcola la distanza stradale in auto tra due coordinate usando Google Routes API (nuova)
+    // Calcola la distanza stradale in auto tra due coordinate usando Mapbox Directions API
     // Restituisce la distanza in km (float) oppure null in caso di errore
-    public function routeDistanceGoogle($lat1, $lon1, $lat2, $lon2)
+    public function routeDistanceMapbox($lat1, $lon1, $lat2, $lon2)
     {
-        $apiKey = config('services.google_maps.api_key'); // Usa la configurazione invece di env()
+        $apiKey = config('services.mapbox.access_token');
         if (! $apiKey) {
-            Log::error('Google Maps API key mancante.');
+            Log::error('Mapbox access token mancante.');
 
             return null;
         }
 
-        $url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-        $body = [
-            'origin' => [
-                'location' => [
-                    'latLng' => [
-                        'latitude' => (float) $lat1,
-                        'longitude' => (float) $lon1,
-                    ],
-                ],
-            ],
-            'destination' => [
-                'location' => [
-                    'latLng' => [
-                        'latitude' => (float) $lat2,
-                        'longitude' => (float) $lon2,
-                    ],
-                ],
-            ],
-            'travelMode' => 'DRIVE',
-            'routingPreference' => 'TRAFFIC_UNAWARE',
-            'units' => 'METRIC',
-        ];
+        $coordinates = sprintf('%s,%s;%s,%s', $lon1, $lat1, $lon2, $lat2);
 
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'X-Goog-Api-Key' => $apiKey,
-                'X-Goog-FieldMask' => 'routes.distanceMeters',
-            ])->post($url, $body);
+            $response = Http::get("https://api.mapbox.com/directions/v5/mapbox/driving/{$coordinates}", [
+                'access_token' => $apiKey,
+                'overview' => 'false',
+            ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                if (isset($data['routes'][0]['distanceMeters'])) {
-                    $distanceKm = $data['routes'][0]['distanceMeters'] / 1000;
+                if (isset($data['routes'][0]['distance'])) {
+                    $distanceKm = $data['routes'][0]['distance'] / 1000;
 
                     return round($distanceKm, 2);
                 } else {
-                    Log::error('Risposta Routes API senza distanza valida: '.json_encode($data));
+                    Log::error('Risposta Mapbox Directions senza distanza valida: '.json_encode($data));
                 }
             } else {
-                Log::error('Errore Google Routes API: '.$response->body());
+                Log::error('Errore Mapbox Directions API: '.$response->body());
             }
         } catch (\Exception $e) {
-            Log::error('Eccezione Google Routes API: '.$e->getMessage());
+            Log::error('Eccezione Mapbox Directions API: '.$e->getMessage());
         }
 
         return null;

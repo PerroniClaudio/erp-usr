@@ -16,6 +16,7 @@ use App\Models\TimeOffType;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\UserDefaultSchedule;
+use App\Support\MapboxAddressParser;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1646,64 +1647,53 @@ class UsersController extends Controller
     }
 
     /**
-     * Valida un indirizzo utilizzando l'API di Nominatim.
+     * Valida un indirizzo utilizzando Mapbox Geocoding API.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function searchAddress(Request $request)
     {
-        
+        $apiKey = config('services.mapbox.access_token');
+        if (!$apiKey) {
+            Log::error('Mapbox access token mancante.');
 
-        // 2. Costruzione della query per Nominatim (utilizzando il parametro 'q')
-        // Combiniamo i campi in una singola stringa indirizzo
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token Mapbox mancante.',
+            ], 500);
+        }
+
         $fullAddress = $request['address'];
-
-        // Parametri per la richiesta a Nominatim
+        $encodedAddress = rawurlencode($fullAddress);
         $queryParams = [
-            'q' => $fullAddress,
-            'format' => 'jsonv2', // Usiamo jsonv2 per un formato più moderno
-            'addressdetails' => 1, // Chiediamo i dettagli dell'indirizzo nella risposta
-            'limit' => 1, // Chiediamo solo il risultato migliore
+            'access_token' => $apiKey,
+            'limit' => 1,
+            'types' => 'address',
+            'language' => 'it',
+            'country' => 'it',
         ];
 
-        // 3. Invio della richiesta a Nominatim usando il client HTTP di Laravel
         try {
-            $response = Http::withHeaders([
-                'User-Agent' => 'IFT/1.0', // Sostituisci con un nome significativo e la tua email
-            ])->get('https://nominatim.openstreetmap.org/search', $queryParams);
-
-            // Verifica se la richiesta ha avuto successo
+            $response = Http::get("https://api.mapbox.com/geocoding/v5/mapbox.places/{$encodedAddress}.json", $queryParams);
             if ($response->successful()) {
                 $data = $response->json();
-
-                // 4. Analisi della risposta
-                if (! empty($data)) {
-                    // Nominatim ha trovato almeno un risultato
-                    $firstResult = $data[0];
-
-                    // Esempi di come accedere ai dati:
-                    $latitude = $firstResult['lat'];
-                    $longitude = $firstResult['lon'];
-                    $displayName = $firstResult['display_name'];
-                    $addressDetails = $firstResult['address']; // Array con i dettagli dell'indirizzo
-
-                    // Puoi fare ulteriori controlli qui per "validare" l'indirizzo
-                    // ad esempio, confrontare i dettagli restituiti con quelli inseriti dall'utente.
-                    // Ricorda che questa è una validazione basata su OSM, non postale ufficiale.
+                $firstResult = $data['features'][0] ?? null;
+                if ($firstResult) {
+                    $coordinates = MapboxAddressParser::coordinates($firstResult);
+                    $displayName = MapboxAddressParser::displayName($firstResult);
+                    $addressDetails = MapboxAddressParser::addressDetails($firstResult);
 
                     return response()->json([
                         'status' => 'success',
                         'message' => 'Indirizzo trovato.',
                         'content' => [
-                            'latitude' => $latitude,
-                            'longitude' => $longitude,
+                            'latitude' => $coordinates['latitude'] ?? null,
+                            'longitude' => $coordinates['longitude'] ?? null,
                             'display_name' => $displayName,
                             'address_details' => $addressDetails,
-                            // Puoi aggiungere altri dati dal risultato di Nominatim se necessario
                         ],
                     ]);
                 } else {
-                    // Nessun risultato trovato per l'indirizzo
                     return response()->json([
                         'status' => 'not_found',
                         'message' => 'Indirizzo non trovato.',
@@ -1711,20 +1701,22 @@ class UsersController extends Controller
                     ], 404); // Codice di stato 404 Not Found
                 }
             } else {
-                // La richiesta HTTP a Nominatim non è andata a buon fine
-                // Puoi loggare l'errore o restituire un messaggio generico
-                Log::error('Nominatim API request failed: '.$response->status());
+                Log::error('Mapbox Geocoding API request failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'headers' => $response->headers(),
+                    'address' => $fullAddress,
+                ]);
 
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Errore durante la comunicazione con il servizio di validazione indirizzi.',
-                    'details' => $response->body(), // Potrebbe contenere informazioni sull'errore da Nominatim
-                ], $response->status()); // Usa il codice di stato della risposta di Nominatim
+                    'details' => $response->body(),
+                ], $response->status());
 
             }
         } catch (\Exception $e) {
-            // Gestione di eventuali eccezioni durante la richiesta
-            Log::error('Exception during Nominatim API call: '.$e->getMessage());
+            Log::error('Exception during Mapbox Geocoding API call: '.$e->getMessage());
 
             return response()->json([
                 'status' => 'error',

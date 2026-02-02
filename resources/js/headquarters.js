@@ -14,30 +14,46 @@ if (form) {
     const searchUrl = form.dataset.searchUrl;
 
     const mapContainer = document.getElementById("headquarter-map");
-    const mapApiKey = mapContainer?.dataset.apiKey;
+    const mapboxToken = mapContainer?.dataset.mapboxToken;
     let map;
     let marker;
 
-    const loadGoogleMapsScript = (apiKey) =>
+    const loadMapboxAssets = (accessToken) =>
         new Promise((resolve, reject) => {
-            if (window.google?.maps) {
+            if (window.mapboxgl) {
+                window.mapboxgl.accessToken = accessToken;
                 resolve();
                 return;
             }
 
-            const existing = document.querySelector("script[data-google-maps]");
+            const existing = document.querySelector("script[data-mapbox-gl]");
             if (existing) {
                 existing.addEventListener("load", resolve, { once: true });
                 existing.addEventListener("error", reject, { once: true });
                 return;
             }
 
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href =
+                "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css";
+            link.dataset.mapboxGl = "style";
+            document.head.appendChild(link);
+
             const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+            script.src =
+                "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js";
             script.async = true;
             script.defer = true;
-            script.dataset.googleMaps = "loader";
-            script.addEventListener("load", resolve, { once: true });
+            script.dataset.mapboxGl = "loader";
+            script.addEventListener(
+                "load",
+                () => {
+                    window.mapboxgl.accessToken = accessToken;
+                    resolve();
+                },
+                { once: true }
+            );
             script.addEventListener("error", reject, { once: true });
             document.head.appendChild(script);
         });
@@ -86,33 +102,44 @@ if (form) {
     };
 
     const updateMap = async (lat, lng, addressLabel) => {
-        if (!mapContainer || !mapApiKey) return;
+        if (!mapContainer || !mapboxToken) return;
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
-        const position = { lat, lng };
+        const position = [lng, lat];
 
         if (!map) {
             try {
-                await loadGoogleMapsScript(mapApiKey);
-                map = new google.maps.Map(mapContainer, {
+                await loadMapboxAssets(mapboxToken);
+                mapContainer.innerHTML = "";
+                map = new window.mapboxgl.Map({
+                    container: mapContainer,
+                    style: "mapbox://styles/mapbox/streets-v12",
                     center: position,
                     zoom: 14,
+                    attributionControl: false,
                 });
-                marker = new google.maps.Marker({
-                    position,
-                    map,
-                    title: addressLabel ?? "",
-                });
+                map.addControl(
+                    new window.mapboxgl.NavigationControl({
+                        showCompass: false,
+                    }),
+                    "top-right"
+                );
+                marker = new window.mapboxgl.Marker()
+                    .setLngLat(position)
+                    .addTo(map);
+                if (addressLabel) {
+                    marker.getElement().setAttribute("title", addressLabel);
+                }
             } catch (error) {
-                showError("Impossibile caricare la mappa Google.");
+                showError("Impossibile caricare Mapbox.");
             }
             return;
         }
 
         map.setCenter(position);
-        marker?.setPosition(position);
+        marker?.setLngLat(position);
         if (marker && addressLabel) {
-            marker.setTitle(addressLabel);
+            marker.getElement().setAttribute("title", addressLabel);
         }
     };
 

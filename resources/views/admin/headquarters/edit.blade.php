@@ -11,7 +11,7 @@
         </x-slot>
     </x-layouts.header>
 
-    @unless ($googleMapsApiKey)
+    @unless ($mapboxAccessToken)
         <div class="alert alert-warning mb-4">
             {{ __('headquarters.missing_api_key') }}
         </div>
@@ -120,7 +120,7 @@
 
                     <div class="mt-4">
                         <div id="headquarter-map" class="w-full h-64 rounded-lg bg-base-200"
-                            data-api-key="{{ $googleMapsApiKey }}"
+                            data-mapbox-token="{{ $mapboxAccessToken }}"
                             data-lat="{{ old('latitude', $headquarter->latitude) }}"
                             data-lng="{{ old('longitude', $headquarter->longitude) }}"
                             data-address="{{ $headquarter->address }}, {{ $headquarter->city }}">

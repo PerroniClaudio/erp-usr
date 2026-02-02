@@ -7,6 +7,7 @@ use App\Models\DailyTravelStructure;
 use App\Models\User;
 use App\Models\DailyTravelStep;
 use App\Models\Vehicle;
+use App\Support\MapboxAddressParser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -101,7 +102,7 @@ class DailyTravelStructureController extends Controller
             'vehicles' => $vehicles,
             'distancesBetweenSteps' => $distancesBetweenSteps,
             'mapSteps' => $mapSteps,
-            'googleMapsApiKey' => config('services.google_maps.api_key'),
+            'mapboxAccessToken' => config('services.mapbox.access_token'),
             'startLocation' => $startLocation,
         ]);
            
@@ -138,7 +139,7 @@ class DailyTravelStructureController extends Controller
         $validated['daily_travel_structure_id'] = $dailyTravelStructure->id;
         $validated['economic_value'] = round((float) ($validated['economic_value'] ?? 0), 2);
 
-        if ($coordinates = $this->geocodeWithGoogle($validated)) {
+        if ($coordinates = $this->geocodeWithMapbox($validated)) {
             $validated['latitude'] = $coordinates['latitude'];
             $validated['longitude'] = $coordinates['longitude'];
         }
@@ -236,7 +237,7 @@ class DailyTravelStructureController extends Controller
         ]);
         $validated['economic_value'] = round((float) ($validated['economic_value'] ?? 0), 2);
 
-        if ($coordinates = $this->geocodeWithGoogle($validated)) {
+        if ($coordinates = $this->geocodeWithMapbox($validated)) {
             $validated['latitude'] = $coordinates['latitude'];
             $validated['longitude'] = $coordinates['longitude'];
         }
@@ -368,11 +369,11 @@ class DailyTravelStructureController extends Controller
     }
 
     /**
-     * Verifica latitudine/longitudine con l'API di Google Maps.
+     * Verifica latitudine/longitudine con Mapbox Geocoding API.
      */
-    private function geocodeWithGoogle(array $data): ?array
+    private function geocodeWithMapbox(array $data): ?array
     {
-        $apiKey = config('services.google_maps.api_key');
+        $apiKey = config('services.mapbox.access_token');
         if (!$apiKey) {
             return null;
         }
@@ -389,36 +390,37 @@ class DailyTravelStructureController extends Controller
         }
 
         $fullAddress = implode(', ', $addressParts);
+        $encodedAddress = rawurlencode($fullAddress);
 
         try {
-            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
-                'address' => $fullAddress,
-                'key' => $apiKey,
+            $response = Http::get("https://api.mapbox.com/geocoding/v5/mapbox.places/{$encodedAddress}.json", [
+                'access_token' => $apiKey,
+                'limit' => 1,
+                'types' => 'address',
+                'language' => 'it',
+                'country' => 'it',
             ]);
 
             if ($response->successful()) {
                 $payload = $response->json();
-                $location = $payload['results'][0]['geometry']['location'] ?? null;
+                $feature = $payload['features'][0] ?? null;
+                $coordinates = $feature ? MapboxAddressParser::coordinates($feature) : null;
 
-                if ($location && isset($location['lat'], $location['lng'])) {
-                    return [
-                        'latitude' => (float) $location['lat'],
-                        'longitude' => (float) $location['lng'],
-                    ];
+                if ($coordinates) {
+                    return $coordinates;
                 }
 
-                Log::warning('Google geocoding senza risultati validi', [
-                    'status' => $payload['status'] ?? null,
+                Log::warning('Mapbox geocoding senza risultati validi', [
                     'address' => $fullAddress,
                 ]);
             } else {
-                Log::error('Errore HTTP geocoding Google', [
+                Log::error('Errore HTTP geocoding Mapbox', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
             }
         } catch (\Throwable $e) {
-            Log::error('Eccezione geocoding Google', [
+            Log::error('Eccezione geocoding Mapbox', [
                 'message' => $e->getMessage(),
             ]);
         }
