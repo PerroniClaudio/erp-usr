@@ -431,7 +431,16 @@ document.addEventListener("DOMContentLoaded", () => {
             script.dataset.mapboxGl = "loader";
             script.addEventListener("load", () => {
                 window.mapboxgl.accessToken = accessToken;
-                resolve();
+
+                const langScript = document.createElement("script");
+                langScript.src =
+                    "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-language/v1.0.0/mapbox-gl-language.js";
+                langScript.async = true;
+                langScript.defer = true;
+                langScript.dataset.mapboxGlLanguage = "loader";
+                langScript.addEventListener("load", resolve, { once: true });
+                langScript.addEventListener("error", resolve, { once: true });
+                document.head.appendChild(langScript);
             }, { once: true });
             script.addEventListener("error", reject, { once: true });
             document.head.appendChild(script);
@@ -465,6 +474,11 @@ document.addEventListener("DOMContentLoaded", () => {
             new window.mapboxgl.NavigationControl({ showCompass: false }),
             "top-right"
         );
+        if (window.MapboxLanguage) {
+            mapInstance.addControl(
+                new window.MapboxLanguage({ defaultLanguage: "it" })
+            );
+        }
 
         mapInstance.on("load", async () => {
             const bounds = new window.mapboxgl.LngLatBounds();

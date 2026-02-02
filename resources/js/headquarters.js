@@ -50,7 +50,19 @@ if (form) {
                 "load",
                 () => {
                     window.mapboxgl.accessToken = accessToken;
-                    resolve();
+                    const langScript = document.createElement("script");
+                    langScript.src =
+                        "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-language/v1.0.0/mapbox-gl-language.js";
+                    langScript.async = true;
+                    langScript.defer = true;
+                    langScript.dataset.mapboxGlLanguage = "loader";
+                    langScript.addEventListener("load", resolve, { once: true });
+                    langScript.addEventListener(
+                        "error",
+                        resolve,
+                        { once: true }
+                    );
+                    document.head.appendChild(langScript);
                 },
                 { once: true }
             );
@@ -124,6 +136,11 @@ if (form) {
                     }),
                     "top-right"
                 );
+                if (window.MapboxLanguage) {
+                    map.addControl(
+                        new window.MapboxLanguage({ defaultLanguage: "it" })
+                    );
+                }
                 marker = new window.mapboxgl.Marker()
                     .setLngLat(position)
                     .addTo(map);
