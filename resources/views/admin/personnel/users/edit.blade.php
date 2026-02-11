@@ -61,7 +61,11 @@
 
                 <input type="hidden" name="user_id" id="user_id" value="{{ $user->id }}">
 
-                <x-layouts.header :title="__('personnel.users_edit_user')" />
+                @php
+                    $displayUserName = preg_replace('/\s*-\s*iFortech$/', '', $user->name);
+                @endphp
+                <x-layouts.header :title="__('personnel.users_edit_user') . ' - ' . $displayUserName" />
+                
 
                 <div id="user-functions" class="flex flex-col gap-4">
                     <section class="function-section flex flex-col gap-4" data-function-section="personal-data"
