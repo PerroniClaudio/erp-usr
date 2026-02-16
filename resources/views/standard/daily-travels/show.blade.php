@@ -13,6 +13,18 @@
         </x-slot>
     </x-layouts.header>
 
+    @if (session('success'))
+        <div class="alert alert-success mb-4">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="alert alert-error mb-4">
+            {{ __('daily_travel.additional_expense_validation_error') }}
+        </div>
+    @endif
+
     <div class="grid md:grid-cols-2 gap-4">
         <div class="card bg-base-200">
             <div class="card-body space-y-3">
@@ -141,7 +153,188 @@
         </div>
     </div>
 
+    <div class="card bg-base-200 mt-4">
+        <div class="card-body space-y-4">
+            <div class="flex items-center justify-between">
+                <h4 class="font-semibold">{{ __('daily_travel.additional_expenses_title') }}</h4>
+                <button class="btn btn-primary btn-sm" onclick="document.getElementById('additional_expense_modal').showModal()">
+                    {{ __('daily_travel.additional_expense_add') }}
+                </button>
+            </div>
+            <hr>
+
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <th>{{ __('daily_travel.additional_expense_description') }}</th>
+                            <th>{{ __('daily_travel.additional_expense_amount') }}</th>
+                            <th>{{ __('daily_travel.additional_expense_occurred_at') }}</th>
+                            <th>{{ __('daily_travel.additional_expense_uploaded_by') }}</th>
+                            <th>{{ __('daily_travel.additional_expense_file') }}</th>
+                            <th>{{ __('daily_travel.expense_actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($additionalExpenses as $expense)
+                            <tr>
+                                <td>{{ $expense->description }}</td>
+                                <td>€ {{ number_format((float) $expense->amount, 2, ',', '.') }}</td>
+                                <td>{{ $expense->occurred_at?->format('d/m/Y H:i') }}</td>
+                                <td>{{ $expense->uploader?->name ?? '-' }}</td>
+                                <td>
+                                    <a href="{{ route('daily-travels.additional-expenses.download', [$dailyTravel, $expense]) }}"
+                                        class="btn btn-sm btn-outline">
+                                        {{ __('daily_travel.additional_expense_download') }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <button class="btn btn-sm btn-primary"
+                                            aria-label="{{ __('daily_travel.additional_expense_edit') }}"
+                                            onclick="document.getElementById('edit_additional_expense_modal_{{ $expense->id }}').showModal()">
+                                            <x-lucide-pencil class="w-4 h-4" />
+                                        </button>
+                                        <form method="POST"
+                                            action="{{ route('daily-travels.additional-expenses.destroy', [$dailyTravel, $expense]) }}"
+                                            onsubmit="return confirm('{{ __('daily_travel.additional_expense_delete_confirm') }}')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-error"
+                                                aria-label="{{ __('daily_travel.delete') }}">
+                                                <x-lucide-trash-2 class="w-4 h-4" />
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-sm text-base-content/70">
+                                    {{ __('daily_travel.additional_expenses_empty') }}
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <dialog id="additional_expense_modal" class="modal">
+        <div class="modal-box">
+            <div class="flex flex-row-reverse items-end">
+                <form method="dialog">
+                    <button class="btn btn-ghost">
+                        <x-lucide-x class="w-4 h-4" />
+                    </button>
+                </form>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">{{ __('daily_travel.additional_expense_add') }}</h3>
+            <form method="POST" action="{{ route('daily-travels.additional-expenses.store', $dailyTravel) }}"
+                enctype="multipart/form-data" class="grid gap-3">
+                @csrf
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_description') }}</legend>
+                    <input type="text" name="description" class="input input-bordered w-full"
+                        value="{{ old('description') }}" maxlength="255" required />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_amount') }}</legend>
+                    <input type="number" name="amount" class="input input-bordered w-full" value="{{ old('amount') }}"
+                        step="0.01" min="0" required />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_occurred_at') }}</legend>
+                    <input type="datetime-local" name="occurred_at" class="input input-bordered w-full"
+                        value="{{ old('occurred_at') }}" required />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_file') }}</legend>
+                    <input type="file" name="proof_file" class="file-input file-input-bordered w-full"
+                        accept="image/*,.pdf" required />
+                </fieldset>
+
+                <button type="submit" class="btn btn-primary">
+                    {{ __('daily_travel.additional_expense_add') }}
+                </button>
+            </form>
+        </div>
+    </dialog>
+
+    @foreach ($additionalExpenses as $expense)
+        <dialog id="edit_additional_expense_modal_{{ $expense->id }}" class="modal">
+            <div class="modal-box">
+                <div class="flex flex-row-reverse items-end">
+                    <form method="dialog">
+                        <button class="btn btn-ghost">
+                            <x-lucide-x class="w-4 h-4" />
+                        </button>
+                    </form>
+                </div>
+
+                <h3 class="text-xl font-semibold mb-4">{{ __('daily_travel.additional_expense_edit') }}</h3>
+                <form method="POST"
+                    action="{{ route('daily-travels.additional-expenses.update', [$dailyTravel, $expense]) }}"
+                    enctype="multipart/form-data" class="grid gap-3">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="editing_additional_expense_id" value="{{ $expense->id }}">
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_description') }}</legend>
+                        <input type="text" name="description" class="input input-bordered w-full"
+                            value="{{ old('editing_additional_expense_id') == $expense->id ? old('description') : $expense->description }}"
+                            maxlength="255" required />
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_amount') }}</legend>
+                        <input type="number" name="amount" class="input input-bordered w-full"
+                            value="{{ old('editing_additional_expense_id') == $expense->id ? old('amount') : $expense->amount }}"
+                            step="0.01" min="0" required />
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_occurred_at') }}</legend>
+                        <input type="datetime-local" name="occurred_at" class="input input-bordered w-full"
+                            value="{{ old('editing_additional_expense_id') == $expense->id
+                                ? old('occurred_at')
+                                : optional($expense->occurred_at)->format('Y-m-d\TH:i') }}"
+                            required />
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend class="fieldset-legend">{{ __('daily_travel.additional_expense_file') }}</legend>
+                        <input type="file" name="proof_file" class="file-input file-input-bordered w-full"
+                            accept="image/*,.pdf" />
+                    </fieldset>
+
+                    <button type="submit" class="btn btn-primary">
+                        {{ __('daily_travel.additional_expense_update') }}
+                    </button>
+                </form>
+            </div>
+        </dialog>
+    @endforeach
+
     @push('scripts')
         @vite('resources/js/daily-travel-structure.js')
+        @if ($errors->any())
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const editingId = @json(old('editing_additional_expense_id'));
+                    if (editingId) {
+                        document.getElementById(`edit_additional_expense_modal_${editingId}`)?.showModal();
+                        return;
+                    }
+                    document.getElementById('additional_expense_modal')?.showModal();
+                });
+            </script>
+        @endif
     @endpush
 </x-layouts.app>

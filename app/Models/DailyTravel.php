@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\DailyTravelRouteStep;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\DailyTravelRouteStep;
 
 class DailyTravel extends Model
 {
@@ -46,6 +46,11 @@ class DailyTravel extends Model
     public function routeSteps()
     {
         return $this->hasMany(DailyTravelRouteStep::class)->orderBy('step_number');
+    }
+
+    public function additionalExpenses()
+    {
+        return $this->hasMany(DailyTravelAdditionalExpense::class)->orderByDesc('occurred_at');
     }
 
     public function isApproved(): bool

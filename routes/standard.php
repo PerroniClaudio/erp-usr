@@ -69,6 +69,10 @@ Route::group([
     Route::get('/create', [DailyTravelController::class, 'create'])->name('daily-travels.create');
     Route::post('/', [DailyTravelController::class, 'store'])->name('daily-travels.store');
     Route::get('/{dailyTravel}/pdf', [DailyTravelController::class, 'pdf'])->name('daily-travels.pdf');
+    Route::post('/{dailyTravel}/additional-expenses', [DailyTravelController::class, 'storeAdditionalExpense'])->name('daily-travels.additional-expenses.store');
+    Route::put('/{dailyTravel}/additional-expenses/{additionalExpense}', [DailyTravelController::class, 'updateAdditionalExpense'])->name('daily-travels.additional-expenses.update');
+    Route::delete('/{dailyTravel}/additional-expenses/{additionalExpense}', [DailyTravelController::class, 'destroyAdditionalExpense'])->name('daily-travels.additional-expenses.destroy');
+    Route::get('/{dailyTravel}/additional-expenses/{additionalExpense}/download', [DailyTravelController::class, 'downloadAdditionalExpense'])->name('daily-travels.additional-expenses.download');
     Route::get('/{dailyTravel}', [DailyTravelController::class, 'show'])->name('daily-travels.show');
     Route::delete('/{dailyTravel}', [DailyTravelController::class, 'destroy'])->name('daily-travels.destroy');
 });

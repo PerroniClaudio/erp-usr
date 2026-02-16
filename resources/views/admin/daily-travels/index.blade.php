@@ -98,6 +98,7 @@
                                     <th>{{ __('daily_travel.indemnity') }}</th>
                                     <th>{{ __('daily_travel.economic_value') }}</th>
                                     <th>{{ __('daily_travel.total_label') }}</th>
+                                    <th>{{ __('daily_travel.additional_expenses_title') }}</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -117,6 +118,7 @@
                                         <td>€ {{ number_format($data['indemnity'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['economic_value'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($data['total'], 2, ',', '.') }}</td>
+                                        <td>€ {{ number_format($data['additional_expenses_total'], 2, ',', '.') }}</td>
                                         <td class="text-right">
                                             <a class="btn btn-sm btn-primary"
                                                 href="{{ route('admin.daily-travels.review', $data['travel']) }}">
@@ -129,13 +131,14 @@
                             @if ($totals)
                                 <tfoot>
                                     <tr class="font-semibold">
-                                        <td colspan="4">{{ __('daily_travel.admin_totals') }}</td>
+                                        <td colspan="3">{{ __('daily_travel.admin_totals') }}</td>
                                         <td>{{ number_format($totals['distance'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['distance_cost'], 2, ',', '.') }}</td>
                                         <td>{{ number_format($totals['travel_hours'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['indemnity'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['economic_value'], 2, ',', '.') }}</td>
                                         <td>€ {{ number_format($totals['grand_total'], 2, ',', '.') }}</td>
+                                        <td>€ {{ number_format($totals['additional_expenses_total'], 2, ',', '.') }}</td>
                                         <td></td>
                                     </tr>
                                 </tfoot>

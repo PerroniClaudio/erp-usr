@@ -207,6 +207,9 @@ Route::group([
     Route::post('/', [DailyTravelController::class, 'adminStore'])->name('admin.daily-travels.store');
     Route::get('/export', [DailyTravelController::class, 'adminPdfBatch'])->name('admin.daily-travels.export');
     Route::get('/{dailyTravel}/review', [DailyTravelController::class, 'adminReview'])->name('admin.daily-travels.review');
+    Route::put('/{dailyTravel}/additional-expenses/{additionalExpense}', [DailyTravelController::class, 'adminUpdateAdditionalExpense'])->name('admin.daily-travels.additional-expenses.update');
+    Route::delete('/{dailyTravel}/additional-expenses/{additionalExpense}', [DailyTravelController::class, 'adminDestroyAdditionalExpense'])->name('admin.daily-travels.additional-expenses.destroy');
+    Route::get('/{dailyTravel}/additional-expenses/{additionalExpense}/download', [DailyTravelController::class, 'adminDownloadAdditionalExpense'])->name('admin.daily-travels.additional-expenses.download');
     Route::put('/{dailyTravel}/review', [DailyTravelController::class, 'adminApprove'])->name('admin.daily-travels.review.update');
 });
 

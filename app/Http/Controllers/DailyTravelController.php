@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DailyTravelAdditionalExpense;
 use App\Models\DailyTravel;
 use App\Models\DailyTravelStructure;
 use App\Models\Headquarters;
@@ -10,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class DailyTravelController extends Controller
@@ -134,6 +136,10 @@ class DailyTravelController extends Controller
             abort(404);
         }
 
+        $dailyTravel->load([
+            'additionalExpenses' => fn ($query) => $query->with('uploader')->orderByDesc('occurred_at'),
+        ]);
+
         $structure = $dailyTravel->structure()->with('vehicle')->first();
         $routeSteps = $dailyTravel->routeSteps()->orderBy('step_number')->get();
         $mapSteps = $routeSteps->map(fn ($step) => [
@@ -150,6 +156,7 @@ class DailyTravelController extends Controller
             'steps' => $routeSteps,
             'mapSteps' => $mapSteps,
             'distancesBetweenSteps' => $distancesBetweenSteps,
+            'additionalExpenses' => $dailyTravel->additionalExpenses ?? collect(),
             'mapboxAccessToken' => config('services.mapbox.access_token'),
         ]);
     }
@@ -166,6 +173,163 @@ class DailyTravelController extends Controller
         return redirect()
             ->route('daily-travels.index')
             ->with('success', __('daily_travel.deleted_success'));
+    }
+
+    public function storeAdditionalExpense(Request $request, DailyTravel $dailyTravel)
+    {
+        $this->authorizeTravelOwnership($request, $dailyTravel);
+
+        $validated = $this->validateAdditionalExpensePayload($request, true);
+
+        $file = $request->file('proof_file');
+        $proofPath = $file->store('daily-travels/'.$dailyTravel->id.'/additional-expenses');
+
+        $dailyTravel->additionalExpenses()->create([
+            'user_id' => $request->user()->id,
+            'description' => $validated['description'],
+            'amount' => $validated['amount'],
+            'occurred_at' => $validated['occurred_at'],
+            'proof_file_path' => $proofPath,
+            'proof_file_name' => $file->getClientOriginalName(),
+            'proof_file_mime_type' => $file->getMimeType(),
+            'proof_file_size' => $file->getSize(),
+        ]);
+
+        return redirect()
+            ->route('daily-travels.show', $dailyTravel)
+            ->with('success', __('daily_travel.additional_expense_created'));
+    }
+
+    public function updateAdditionalExpense(
+        Request $request,
+        DailyTravel $dailyTravel,
+        DailyTravelAdditionalExpense $additionalExpense
+    ) {
+        $this->authorizeTravelOwnership($request, $dailyTravel);
+        $this->ensureAdditionalExpenseBelongsToTravel($dailyTravel, $additionalExpense);
+
+        $validated = $this->validateAdditionalExpensePayload($request, false);
+
+        $updateData = [
+            'description' => $validated['description'],
+            'amount' => $validated['amount'],
+            'occurred_at' => $validated['occurred_at'],
+        ];
+
+        if ($request->hasFile('proof_file') && $request->file('proof_file')->isValid()) {
+            $file = $request->file('proof_file');
+            $proofPath = $file->store('daily-travels/'.$dailyTravel->id.'/additional-expenses');
+
+            if (!empty($additionalExpense->proof_file_path)) {
+                Storage::delete($additionalExpense->proof_file_path);
+            }
+
+            $updateData = array_merge($updateData, [
+                'proof_file_path' => $proofPath,
+                'proof_file_name' => $file->getClientOriginalName(),
+                'proof_file_mime_type' => $file->getMimeType(),
+                'proof_file_size' => $file->getSize(),
+            ]);
+        }
+
+        $additionalExpense->update($updateData);
+
+        return redirect()
+            ->route('daily-travels.show', $dailyTravel)
+            ->with('success', __('daily_travel.additional_expense_updated'));
+    }
+
+    public function destroyAdditionalExpense(
+        Request $request,
+        DailyTravel $dailyTravel,
+        DailyTravelAdditionalExpense $additionalExpense
+    ) {
+        $this->authorizeTravelOwnership($request, $dailyTravel);
+        $this->ensureAdditionalExpenseBelongsToTravel($dailyTravel, $additionalExpense);
+
+        if (!empty($additionalExpense->proof_file_path)) {
+            Storage::delete($additionalExpense->proof_file_path);
+        }
+
+        $additionalExpense->delete();
+
+        return redirect()
+            ->route('daily-travels.show', $dailyTravel)
+            ->with('success', __('daily_travel.additional_expense_deleted'));
+    }
+
+    public function downloadAdditionalExpense(Request $request, DailyTravel $dailyTravel, DailyTravelAdditionalExpense $additionalExpense)
+    {
+        $this->authorizeTravelOwnership($request, $dailyTravel);
+        $this->ensureAdditionalExpenseBelongsToTravel($dailyTravel, $additionalExpense);
+
+        return Storage::download(
+            $additionalExpense->proof_file_path,
+            $additionalExpense->proof_file_name
+        );
+    }
+
+    public function adminDownloadAdditionalExpense(DailyTravel $dailyTravel, DailyTravelAdditionalExpense $additionalExpense)
+    {
+        $this->ensureAdditionalExpenseBelongsToTravel($dailyTravel, $additionalExpense);
+
+        return Storage::download(
+            $additionalExpense->proof_file_path,
+            $additionalExpense->proof_file_name
+        );
+    }
+
+    public function adminUpdateAdditionalExpense(
+        Request $request,
+        DailyTravel $dailyTravel,
+        DailyTravelAdditionalExpense $additionalExpense
+    ) {
+        $this->ensureAdditionalExpenseBelongsToTravel($dailyTravel, $additionalExpense);
+
+        $validated = $this->validateAdditionalExpensePayload($request, false);
+
+        $updateData = [
+            'description' => $validated['description'],
+            'amount' => $validated['amount'],
+            'occurred_at' => $validated['occurred_at'],
+        ];
+
+        if ($request->hasFile('proof_file') && $request->file('proof_file')->isValid()) {
+            $file = $request->file('proof_file');
+            $proofPath = $file->store('daily-travels/'.$dailyTravel->id.'/additional-expenses');
+
+            if (!empty($additionalExpense->proof_file_path)) {
+                Storage::delete($additionalExpense->proof_file_path);
+            }
+
+            $updateData = array_merge($updateData, [
+                'proof_file_path' => $proofPath,
+                'proof_file_name' => $file->getClientOriginalName(),
+                'proof_file_mime_type' => $file->getMimeType(),
+                'proof_file_size' => $file->getSize(),
+            ]);
+        }
+
+        $additionalExpense->update($updateData);
+
+        return redirect()
+            ->route('admin.daily-travels.review', $dailyTravel)
+            ->with('success', __('daily_travel.additional_expense_updated'));
+    }
+
+    public function adminDestroyAdditionalExpense(DailyTravel $dailyTravel, DailyTravelAdditionalExpense $additionalExpense)
+    {
+        $this->ensureAdditionalExpenseBelongsToTravel($dailyTravel, $additionalExpense);
+
+        if (!empty($additionalExpense->proof_file_path)) {
+            Storage::delete($additionalExpense->proof_file_path);
+        }
+
+        $additionalExpense->delete();
+
+        return redirect()
+            ->route('admin.daily-travels.review', $dailyTravel)
+            ->with('success', __('daily_travel.additional_expense_deleted'));
     }
 
     public function adminCreate(Request $request)
@@ -328,6 +492,7 @@ class DailyTravelController extends Controller
             'user',
             'structure.vehicle',
             'routeSteps' => fn ($q) => $q->orderBy('step_number'),
+            'additionalExpenses' => fn ($query) => $query->with('uploader')->orderByDesc('occurred_at'),
             'approver',
         ]);
 
@@ -339,6 +504,7 @@ class DailyTravelController extends Controller
             'structure' => $dailyTravel->structure,
             'routeSteps' => $routeSteps,
             'routeLegs' => $routeLegs,
+            'additionalExpenses' => $dailyTravel->additionalExpenses ?? collect(),
         ]);
     }
 
@@ -530,6 +696,8 @@ class DailyTravelController extends Controller
             'user',
             'approver',
         ])
+            ->withCount('additionalExpenses')
+            ->withSum('additionalExpenses', 'amount')
             ->where('user_id', $user->id)
             ->whereBetween('travel_date', [$startOfMonth, $endOfMonth])
             ->orderBy('travel_date')
@@ -550,11 +718,12 @@ class DailyTravelController extends Controller
 
             $costPerKm = (float) ($travel->structure?->cost_per_km ?? 0);
             $economicValue = (float) ($travel->structure?->economic_value ?? 0);
+            $additionalExpensesTotal = (float) ($travel->additional_expenses_sum_amount ?? 0);
 
             $distanceCost = $distance * $costPerKm;
             $timeCost = $costPerKm * $travelHours;
             $indemnity = $distanceCost + $timeCost;
-            $total = $indemnity + $economicValue;
+            $total = $indemnity + $economicValue + $additionalExpensesTotal;
 
             return [
                 'travel' => $travel,
@@ -565,7 +734,9 @@ class DailyTravelController extends Controller
                 'time_cost' => $timeCost,
                 'indemnity' => $indemnity,
                 'economic_value' => $economicValue,
+                'additional_expenses_total' => $additionalExpensesTotal,
                 'total' => $total,
+                'additional_expenses_count' => (int) ($travel->additional_expenses_count ?? 0),
                 'start_location' => $travel->structure?->start_location,
             ];
         });
@@ -577,7 +748,9 @@ class DailyTravelController extends Controller
             'time_cost' => $travelsData->sum('time_cost'),
             'indemnity' => $travelsData->sum('indemnity'),
             'economic_value' => $travelsData->sum('economic_value'),
+            'additional_expenses_total' => $travelsData->sum('additional_expenses_total'),
             'grand_total' => $travelsData->sum('total'),
+            'additional_expenses_count' => $travelsData->sum('additional_expenses_count'),
         ];
 
         return [$travelsData, $totals];
@@ -847,5 +1020,34 @@ class DailyTravelController extends Controller
         }
 
         return $distance > 0 ? $distance : null;
+    }
+
+    private function authorizeTravelOwnership(Request $request, DailyTravel $dailyTravel): void
+    {
+        if ((int) $dailyTravel->user_id !== (int) $request->user()->id) {
+            abort(404);
+        }
+    }
+
+    private function ensureAdditionalExpenseBelongsToTravel(
+        DailyTravel $dailyTravel,
+        DailyTravelAdditionalExpense $additionalExpense
+    ): void {
+        if ((int) $additionalExpense->daily_travel_id !== (int) $dailyTravel->id) {
+            abort(404);
+        }
+    }
+
+    private function validateAdditionalExpensePayload(Request $request, bool $proofFileRequired): array
+    {
+        $proofFileRules = ['file', 'max:5120', 'mimes:jpg,jpeg,png,webp,pdf'];
+        array_unshift($proofFileRules, $proofFileRequired ? 'required' : 'nullable');
+
+        return $request->validate([
+            'description' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'occurred_at' => ['required', 'date'],
+            'proof_file' => $proofFileRules,
+        ]);
     }
 }
