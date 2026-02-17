@@ -1222,7 +1222,9 @@ class UsersController extends Controller
 
     public function updateData(Request $request, User $user)
     {
-        $request->validate([
+        $isAdmin = $request->user()?->hasRole('admin') ?? false;
+
+        $validationRules = [
             'title' => 'required|string|max:50',
             'cfp' => 'required|string|max:16',
             'birth_date' => 'required|date',
@@ -1236,9 +1238,15 @@ class UsersController extends Controller
             'employee_code' => 'nullable|string|max:50',
             'business_trips_access' => 'nullable|boolean',
             'headquarter_id' => 'nullable|exists:headquarters,id',
-        ]);
+        ];
 
-        $payload = $request->only([
+        if ($isAdmin) {
+            $validationRules['attendance_submission_window_minutes'] = 'nullable|integer|min:0|max:1440';
+        }
+
+        $request->validate($validationRules);
+
+        $payloadKeys = [
             'title',
             'cfp',
             'birth_date',
@@ -1250,7 +1258,13 @@ class UsersController extends Controller
             'weekly_hours',
             'badge_code',
             'employee_code',
-        ]);
+        ];
+
+        if ($isAdmin && $request->has('attendance_submission_window_minutes')) {
+            $payloadKeys[] = 'attendance_submission_window_minutes';
+        }
+
+        $payload = $request->only($payloadKeys);
 
         $original = $user->getOriginal();
         $user->fill($payload);

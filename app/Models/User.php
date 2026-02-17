@@ -32,6 +32,7 @@ class User extends Authenticatable
         'phone_number',
         'category',
         'weekly_hours',
+        'attendance_submission_window_minutes',
         'badge_code',
         'company_name',
         'vat_number',

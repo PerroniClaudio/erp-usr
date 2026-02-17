@@ -137,7 +137,7 @@ class AttendanceController extends Controller
                 }
             }
 
-            if (! $this->isWithinSubmissionWindow($fields['date'], $fields['time_in'])) {
+            if (! $this->isWithinSubmissionWindow($fields['date'], $fields['time_in'], $user)) {
                 return back()->withErrors([
                     'message' => __('attendance_errors.attendance_creation_window_exceeded'),
                 ])->withInput();
@@ -277,7 +277,7 @@ class AttendanceController extends Controller
         return $startsNearSlot && $end <= $slotEnd;
     }
 
-    private function isWithinSubmissionWindow(string $date, string $timeIn): bool
+    private function isWithinSubmissionWindow(string $date, string $timeIn, User $user): bool
     {
         try {
             $start = Carbon::parse($date.' '.$timeIn);
@@ -285,9 +285,10 @@ class AttendanceController extends Controller
             return true;
         }
 
+        $submissionWindowMinutes = max(0, (int) ($user->attendance_submission_window_minutes ?? 30));
         $now = Carbon::now();
         $windowStart = (clone $start)->subHour();
-        $windowEnd = (clone $start)->addMinutes(30);
+        $windowEnd = (clone $start)->addMinutes($submissionWindowMinutes);
 
         return $now->gte($windowStart) && $now->lte($windowEnd);
     }

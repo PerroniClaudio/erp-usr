@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Request;
 
 class Attendance extends Model {
     use HasFactory, SoftDeletes;
@@ -14,6 +15,8 @@ class Attendance extends Model {
         "user_id",
         "company_id",
         "inserted_by",
+        "ip",
+        "agent",
         "date",
         "time_in",
         "time_out",
@@ -25,6 +28,25 @@ class Attendance extends Model {
     protected $casts = [
         'hours' => 'float',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $attendance): void {
+            if (! app()->bound('request')) {
+                return;
+            }
+
+            $request = Request::instance();
+
+            if (! $attendance->ip) {
+                $attendance->ip = $request->ip();
+            }
+
+            if (! $attendance->agent) {
+                $attendance->agent = $request->userAgent();
+            }
+        });
+    }
 
     public function user() {
         return $this->belongsTo(User::class);

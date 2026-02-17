@@ -205,6 +205,19 @@
                                             placeholder="{{ __('personnel.users_weekly_hours') }}" />
                                     </fieldset>
 
+                                    @if ($canManageRoles)
+                                        <fieldset class="fieldset">
+                                            <legend class="fieldset-legend">
+                                                {{ __('personnel.users_attendance_submission_window_minutes') }}
+                                            </legend>
+                                            <input type="number" name="attendance_submission_window_minutes"
+                                                class="input w-full form-input-activable" min="0" max="1440"
+                                                step="1" disabled
+                                                value="{{ old('attendance_submission_window_minutes', $user->attendance_submission_window_minutes ?? 30) }}"
+                                                placeholder="{{ __('personnel.users_minutes') }}" />
+                                        </fieldset>
+                                    @endif
+
                                     <fieldset class="fieldset">
                                         <legend class="fieldset-legend">{{ __('personnel.users_category') }}</legend>
                                         <select name="category" class="select w-full form-input-activable" disabled>

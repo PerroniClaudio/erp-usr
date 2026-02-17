@@ -58,6 +58,7 @@ return [
     "users_phone_number" => "Numero di telefono",
     "users_category" => "Categoria",
     "users_weekly_hours" => "Ore settimanali",
+    "users_attendance_submission_window_minutes" => "Minuti finestra inserimento presenza",
     "users_category_employee" => "Dipendente",
     "users_category_consultant" => "Consulente",
     "users_category_intern" => "Stagista",
